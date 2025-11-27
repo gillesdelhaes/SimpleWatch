@@ -91,6 +91,141 @@
         </div>
     </div>
 
+    <div id="addMonitorToServiceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold mb-2">Add Monitor to Service</h3>
+            <p class="text-sm text-gray-600 mb-4">Service: <span id="targetServiceName" class="font-semibold"></span></p>
+            <input type="hidden" id="targetServiceId">
+
+            <div id="addMonitorTypeSelection" class="space-y-3">
+                <button onclick="selectAddMonitorType('website')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Website Monitor</div>
+                    <div class="text-sm text-gray-600">Check if a URL responds</div>
+                </button>
+                <button onclick="selectAddMonitorType('api')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">API Monitor</div>
+                    <div class="text-sm text-gray-600">Call API endpoint with validation</div>
+                </button>
+                <button onclick="selectAddMonitorType('metric_threshold')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Metric Threshold Monitor</div>
+                    <div class="text-sm text-gray-600">Receive numbers, alert on thresholds</div>
+                </button>
+                <button onclick="selectAddMonitorType('port')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Port Monitor</div>
+                    <div class="text-sm text-gray-600">Test if TCP port is open</div>
+                </button>
+                <button onclick="hideAddMonitorToServiceModal()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 mt-4">Cancel</button>
+            </div>
+
+            <div id="addWebsiteMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Website Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Website URL</label>
+                    <input type="url" id="addWebsiteUrl" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="addWebsiteInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="1">Every 1 minute</option>
+                        <option value="5" selected>Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Timeout (seconds)</label>
+                    <input type="number" id="addWebsiteTimeout" value="10" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="addWebsiteMonitorToService()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Add Monitor</button>
+                    <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="addApiMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">API Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">API URL</label>
+                    <input type="url" id="addApiUrl" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">HTTP Method</label>
+                    <select id="addApiMethod" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Expected Status Code</label>
+                    <input type="number" id="addApiStatusCode" value="200" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="addApiInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="1">Every 1 minute</option>
+                        <option value="5" selected>Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="addApiMonitorToService()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Add Monitor</button>
+                    <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="addMetricMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Metric Threshold Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Warning Threshold</label>
+                    <input type="number" step="0.1" id="addMetricWarning" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Critical Threshold</label>
+                    <input type="number" step="0.1" id="addMetricCritical" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Comparison Type</label>
+                    <select id="addMetricComparison" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="greater">Value exceeds threshold (greater than)</option>
+                        <option value="less">Value below threshold (less than)</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="addMetricMonitorToService()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Add Monitor</button>
+                    <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="addPortMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Port Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Host</label>
+                    <input type="text" id="addPortHost" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Port</label>
+                    <input type="number" id="addPortNumber" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="addPortInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="5">Every 5 minutes</option>
+                        <option value="15" selected>Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="addPortMonitorToService()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Add Monitor</button>
+                    <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="quickMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
             <h3 class="text-xl font-bold mb-4">Quick Monitor Setup</h3>
@@ -419,12 +554,27 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
 
                                 ${monitorsByService[service.id] ? `
                                 <div class="mt-3 space-y-2">
-                                    ${monitorsByService[service.id].map(monitor => `
+                                    ${monitorsByService[service.id].map(monitor => {
+                                        let description = '';
+                                        if (monitor.monitor_type === 'website') {
+                                            description = monitor.config.url;
+                                        } else if (monitor.monitor_type === 'api') {
+                                            description = `${monitor.config.method || 'GET'} ${monitor.config.url}`;
+                                        } else if (monitor.monitor_type === 'metric_threshold') {
+                                            const comparison = monitor.config.comparison === 'greater' ? '>' : '<';
+                                            description = `Warning ${comparison} ${monitor.config.warning_threshold}, Critical ${comparison} ${monitor.config.critical_threshold}`;
+                                        } else if (monitor.monitor_type === 'port') {
+                                            description = `${monitor.config.host}:${monitor.config.port}`;
+                                        }
+                                        return `
                                         <div class="flex items-center justify-between text-sm border-t pt-2">
-                                            <div>
-                                                <span class="font-medium">${monitor.monitor_type}</span>
-                                                <span class="text-gray-600">- Every ${monitor.check_interval_minutes}min</span>
-                                                ${monitor.is_active ? '<span class="ml-2 text-green-600">Active</span>' : '<span class="ml-2 text-gray-400">Inactive</span>'}
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-medium">${monitor.monitor_type}</span>
+                                                    ${monitor.is_active ? '<span class="text-green-600">Active</span>' : '<span class="text-gray-400">Inactive</span>'}
+                                                </div>
+                                                <div class="text-xs text-gray-600 mt-1 truncate" title="${description}">${description}</div>
+                                                <div class="text-xs text-gray-500">Every ${monitor.check_interval_minutes}min</div>
                                             </div>
                                             <div class="flex space-x-1">
                                                 <button onclick="editMonitor(${monitor.id})" class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded" title="Edit monitor">
@@ -439,11 +589,17 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                                                 </button>
                                             </div>
                                         </div>
-                                    `).join('')}
+                                        `;
+                                    }).join('')}
                                 </div>
                                 ` : ''}
                             </div>
                             <div class="flex space-x-1 ml-4">
+                                <button onclick="showAddMonitorToServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')" class="p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded" title="Add monitor to this service">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </button>
                                 <button onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}')" class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded" title="Edit service">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -789,6 +945,125 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                 alert('Failed to update monitor: ' + error.message);
             }
         });
+
+        // Add Monitor to Existing Service functions
+        function showAddMonitorToServiceModal(serviceId, serviceName) {
+            document.getElementById('targetServiceId').value = serviceId;
+            document.getElementById('targetServiceName').textContent = serviceName;
+            document.getElementById('addMonitorToServiceModal').classList.remove('hidden');
+        }
+
+        function hideAddMonitorToServiceModal() {
+            document.getElementById('addMonitorToServiceModal').classList.add('hidden');
+            backToAddMonitorSelection();
+        }
+
+        function selectAddMonitorType(type) {
+            document.getElementById('addMonitorTypeSelection').classList.add('hidden');
+            document.getElementById(`add${type.charAt(0).toUpperCase() + type.slice(1).replace('_', '')}MonitorForm`).classList.remove('hidden');
+        }
+
+        function backToAddMonitorSelection() {
+            document.getElementById('addMonitorTypeSelection').classList.remove('hidden');
+            document.getElementById('addWebsiteMonitorForm').classList.add('hidden');
+            document.getElementById('addApiMonitorForm').classList.add('hidden');
+            document.getElementById('addMetricMonitorForm').classList.add('hidden');
+            document.getElementById('addPortMonitorForm').classList.add('hidden');
+        }
+
+        async function addWebsiteMonitorToService() {
+            try {
+                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+
+                await api.createMonitor({
+                    service_id: serviceId,
+                    monitor_type: 'website',
+                    config: {
+                        url: document.getElementById('addWebsiteUrl').value,
+                        timeout_seconds: parseInt(document.getElementById('addWebsiteTimeout').value),
+                        follow_redirects: true,
+                        verify_ssl: true
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('addWebsiteInterval').value)
+                });
+
+                hideAddMonitorToServiceModal();
+                loadServices();
+                alert('Website monitor added successfully!');
+            } catch (error) {
+                alert('Failed to add monitor: ' + error.message);
+            }
+        }
+
+        async function addApiMonitorToService() {
+            try {
+                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+
+                await api.createMonitor({
+                    service_id: serviceId,
+                    monitor_type: 'api',
+                    config: {
+                        url: document.getElementById('addApiUrl').value,
+                        method: document.getElementById('addApiMethod').value,
+                        expected_status_code: parseInt(document.getElementById('addApiStatusCode').value),
+                        timeout_seconds: 10
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('addApiInterval').value)
+                });
+
+                hideAddMonitorToServiceModal();
+                loadServices();
+                alert('API monitor added successfully!');
+            } catch (error) {
+                alert('Failed to add monitor: ' + error.message);
+            }
+        }
+
+        async function addMetricMonitorToService() {
+            try {
+                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+
+                await api.createMonitor({
+                    service_id: serviceId,
+                    monitor_type: 'metric_threshold',
+                    config: {
+                        warning_threshold: parseFloat(document.getElementById('addMetricWarning').value),
+                        critical_threshold: parseFloat(document.getElementById('addMetricCritical').value),
+                        comparison: document.getElementById('addMetricComparison').value
+                    },
+                    check_interval_minutes: 15
+                });
+
+                hideAddMonitorToServiceModal();
+                loadServices();
+                alert('Metric monitor added successfully!');
+            } catch (error) {
+                alert('Failed to add monitor: ' + error.message);
+            }
+        }
+
+        async function addPortMonitorToService() {
+            try {
+                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+
+                await api.createMonitor({
+                    service_id: serviceId,
+                    monitor_type: 'port',
+                    config: {
+                        host: document.getElementById('addPortHost').value,
+                        port: parseInt(document.getElementById('addPortNumber').value),
+                        timeout_seconds: 5
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('addPortInterval').value)
+                });
+
+                hideAddMonitorToServiceModal();
+                loadServices();
+                alert('Port monitor added successfully!');
+            } catch (error) {
+                alert('Failed to add monitor: ' + error.message);
+            }
+        }
 
         loadServices();
     </script>
