@@ -193,6 +193,14 @@
                         <option value="less">Value below threshold (less than)</option>
                     </select>
                 </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 mb-2">After creating this monitor, send metrics via API:</p>
+                    <code class="text-xs bg-white p-2 block rounded border">
+curl -X POST http://localhost:5050/api/v1/metric/<span id="addMetricServiceNamePreview">SERVICE_NAME</span> \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{"api_key":"YOUR_KEY","value":87.5}'
+                    </code>
+                </div>
                 <div class="flex space-x-2">
                     <button onclick="addMetricMonitorToService()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Add Monitor</button>
                     <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
@@ -460,6 +468,7 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
             <h3 class="text-xl font-bold mb-4">Edit Metric Monitor</h3>
             <form id="editMetricMonitorForm" class="space-y-4">
                 <input type="hidden" id="editMetricMonitorId">
+                <input type="hidden" id="editMetricServiceName">
                 <div>
                     <label class="block text-sm font-medium mb-2">Warning Threshold</label>
                     <input type="number" step="0.1" id="editMetricWarning" class="w-full px-4 py-2 border rounded-lg" required>
@@ -474,6 +483,14 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                         <option value="greater">Value exceeds threshold (greater than)</option>
                         <option value="less">Value below threshold (less than)</option>
                     </select>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 mb-2">Send metrics via API:</p>
+                    <code class="text-xs bg-white p-2 block rounded border">
+curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceNamePreview">SERVICE_NAME</span> \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{"api_key":"YOUR_KEY","value":87.5}'
+                    </code>
                 </div>
                 <div class="flex space-x-2">
                     <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
@@ -639,7 +656,16 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
 
         function selectMonitorType(type) {
             document.getElementById('monitorTypeSelection').classList.add('hidden');
-            document.getElementById(`${type}MonitorForm`).classList.remove('hidden');
+
+            // Map monitor type to form ID
+            const formIds = {
+                'website': 'websiteMonitorForm',
+                'api': 'apiMonitorForm',
+                'metric_threshold': 'metricMonitorForm',
+                'port': 'portMonitorForm'
+            };
+
+            document.getElementById(formIds[type]).classList.remove('hidden');
         }
 
         function backToMonitorSelection() {
@@ -823,6 +849,13 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
             try {
                 const monitor = await api.getMonitor(monitorId);
 
+                // Fetch service name for metric monitors
+                let serviceName = '';
+                if (monitor.monitor_type === 'metric_threshold') {
+                    const service = await api.getService(monitor.service_id);
+                    serviceName = service.name;
+                }
+
                 if (monitor.monitor_type === 'website') {
                     document.getElementById('editWebsiteMonitorId').value = monitor.id;
                     document.getElementById('editWebsiteUrl').value = monitor.config.url;
@@ -841,6 +874,7 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                     document.getElementById('editMetricWarning').value = monitor.config.warning_threshold;
                     document.getElementById('editMetricCritical').value = monitor.config.critical_threshold;
                     document.getElementById('editMetricComparison').value = monitor.config.comparison || 'greater';
+                    document.getElementById('editMetricServiceNamePreview').textContent = serviceName;
                     document.getElementById('editMetricMonitorModal').classList.remove('hidden');
                 } else if (monitor.monitor_type === 'port') {
                     document.getElementById('editPortMonitorId').value = monitor.id;
@@ -960,7 +994,22 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
 
         function selectAddMonitorType(type) {
             document.getElementById('addMonitorTypeSelection').classList.add('hidden');
-            document.getElementById(`add${type.charAt(0).toUpperCase() + type.slice(1).replace('_', '')}MonitorForm`).classList.remove('hidden');
+
+            // Map monitor type to form ID
+            const formIds = {
+                'website': 'addWebsiteMonitorForm',
+                'api': 'addApiMonitorForm',
+                'metric_threshold': 'addMetricMonitorForm',
+                'port': 'addPortMonitorForm'
+            };
+
+            document.getElementById(formIds[type]).classList.remove('hidden');
+
+            // Update service name preview for metric monitor
+            if (type === 'metric_threshold') {
+                const serviceName = document.getElementById('targetServiceName').textContent;
+                document.getElementById('addMetricServiceNamePreview').textContent = serviceName;
+            }
         }
 
         function backToAddMonitorSelection() {
