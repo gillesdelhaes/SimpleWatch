@@ -66,6 +66,31 @@
         </div>
     </div>
 
+    <div id="editServiceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Service</h3>
+            <form id="editServiceForm" class="space-y-4">
+                <input type="hidden" id="editServiceId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
+                    <input type="text" id="editServiceName" required class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea id="editServiceDescription" class="w-full px-4 py-2 border rounded-lg" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <input type="text" id="editServiceCategory" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
+                    <button type="button" onclick="hideEditServiceModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="quickMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
             <h3 class="text-xl font-bold mb-4">Quick Monitor Setup</h3>
@@ -223,6 +248,137 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
         </div>
     </div>
 
+    <!-- Edit Website Monitor Modal -->
+    <div id="editWebsiteMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Website Monitor</h3>
+            <form id="editWebsiteMonitorForm" class="space-y-4">
+                <input type="hidden" id="editWebsiteMonitorId">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Website URL</label>
+                    <input type="url" id="editWebsiteUrl" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="editWebsiteInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="1">Every 1 minute</option>
+                        <option value="5">Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Timeout (seconds)</label>
+                    <input type="number" id="editWebsiteTimeout" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
+                    <button type="button" onclick="hideEditMonitorModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit API Monitor Modal -->
+    <div id="editApiMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit API Monitor</h3>
+            <form id="editApiMonitorForm" class="space-y-4">
+                <input type="hidden" id="editApiMonitorId">
+                <div>
+                    <label class="block text-sm font-medium mb-2">API URL</label>
+                    <input type="url" id="editApiUrl" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">HTTP Method</label>
+                    <select id="editApiMethod" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Expected Status Code</label>
+                    <input type="number" id="editApiStatusCode" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="editApiInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="1">Every 1 minute</option>
+                        <option value="5">Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
+                    <button type="button" onclick="hideEditMonitorModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Metric Monitor Modal -->
+    <div id="editMetricMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Metric Monitor</h3>
+            <form id="editMetricMonitorForm" class="space-y-4">
+                <input type="hidden" id="editMetricMonitorId">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Warning Threshold</label>
+                    <input type="number" step="0.1" id="editMetricWarning" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Critical Threshold</label>
+                    <input type="number" step="0.1" id="editMetricCritical" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Comparison Type</label>
+                    <select id="editMetricComparison" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="greater">Value exceeds threshold (greater than)</option>
+                        <option value="less">Value below threshold (less than)</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
+                    <button type="button" onclick="hideEditMonitorModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Port Monitor Modal -->
+    <div id="editPortMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Port Monitor</h3>
+            <form id="editPortMonitorForm" class="space-y-4">
+                <input type="hidden" id="editPortMonitorId">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Host</label>
+                    <input type="text" id="editPortHost" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Port</label>
+                    <input type="number" id="editPortNumber" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="editPortInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="5">Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
+                    <button type="button" onclick="hideEditMonitorModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
     <script>
@@ -270,13 +426,35 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                                                 <span class="text-gray-600">- Every ${monitor.check_interval_minutes}min</span>
                                                 ${monitor.is_active ? '<span class="ml-2 text-green-600">Active</span>' : '<span class="ml-2 text-gray-400">Inactive</span>'}
                                             </div>
-                                            <button onclick="deleteMonitor(${monitor.id})" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                                            <div class="flex space-x-1">
+                                                <button onclick="editMonitor(${monitor.id})" class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded" title="Edit monitor">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                    </svg>
+                                                </button>
+                                                <button onclick="deleteMonitor(${monitor.id})" class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded" title="Delete monitor">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     `).join('')}
                                 </div>
                                 ` : ''}
                             </div>
-                            <button onclick="deleteService(${service.id})" class="text-red-600 hover:text-red-800 text-sm ml-4">Delete</button>
+                            <div class="flex space-x-1 ml-4">
+                                <button onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}')" class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded" title="Edit service">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                                <button onclick="deleteService(${service.id})" class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded" title="Delete service">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('');
@@ -452,6 +630,165 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                 alert('Failed to delete monitor: ' + error.message);
             }
         }
+
+        function showEditServiceModal(serviceId, name, description, category) {
+            document.getElementById('editServiceId').value = serviceId;
+            document.getElementById('editServiceName').value = name;
+            document.getElementById('editServiceDescription').value = description;
+            document.getElementById('editServiceCategory').value = category;
+            document.getElementById('editServiceModal').classList.remove('hidden');
+        }
+
+        function hideEditServiceModal() {
+            document.getElementById('editServiceModal').classList.add('hidden');
+            document.getElementById('editServiceForm').reset();
+        }
+
+        document.getElementById('editServiceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const serviceId = document.getElementById('editServiceId').value;
+
+            try {
+                await api.updateService(serviceId, {
+                    name: document.getElementById('editServiceName').value,
+                    description: document.getElementById('editServiceDescription').value || null,
+                    category: document.getElementById('editServiceCategory').value || null
+                });
+
+                hideEditServiceModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to update service: ' + error.message);
+            }
+        });
+
+        async function editMonitor(monitorId) {
+            try {
+                const monitor = await api.getMonitor(monitorId);
+
+                if (monitor.monitor_type === 'website') {
+                    document.getElementById('editWebsiteMonitorId').value = monitor.id;
+                    document.getElementById('editWebsiteUrl').value = monitor.config.url;
+                    document.getElementById('editWebsiteInterval').value = monitor.check_interval_minutes;
+                    document.getElementById('editWebsiteTimeout').value = monitor.config.timeout_seconds || 10;
+                    document.getElementById('editWebsiteMonitorModal').classList.remove('hidden');
+                } else if (monitor.monitor_type === 'api') {
+                    document.getElementById('editApiMonitorId').value = monitor.id;
+                    document.getElementById('editApiUrl').value = monitor.config.url;
+                    document.getElementById('editApiMethod').value = monitor.config.method || 'GET';
+                    document.getElementById('editApiStatusCode').value = monitor.config.expected_status_code || 200;
+                    document.getElementById('editApiInterval').value = monitor.check_interval_minutes;
+                    document.getElementById('editApiMonitorModal').classList.remove('hidden');
+                } else if (monitor.monitor_type === 'metric_threshold') {
+                    document.getElementById('editMetricMonitorId').value = monitor.id;
+                    document.getElementById('editMetricWarning').value = monitor.config.warning_threshold;
+                    document.getElementById('editMetricCritical').value = monitor.config.critical_threshold;
+                    document.getElementById('editMetricComparison').value = monitor.config.comparison || 'greater';
+                    document.getElementById('editMetricMonitorModal').classList.remove('hidden');
+                } else if (monitor.monitor_type === 'port') {
+                    document.getElementById('editPortMonitorId').value = monitor.id;
+                    document.getElementById('editPortHost').value = monitor.config.host;
+                    document.getElementById('editPortNumber').value = monitor.config.port;
+                    document.getElementById('editPortInterval').value = monitor.check_interval_minutes;
+                    document.getElementById('editPortMonitorModal').classList.remove('hidden');
+                }
+            } catch (error) {
+                alert('Failed to load monitor: ' + error.message);
+            }
+        }
+
+        function hideEditMonitorModal() {
+            document.getElementById('editWebsiteMonitorModal').classList.add('hidden');
+            document.getElementById('editApiMonitorModal').classList.add('hidden');
+            document.getElementById('editMetricMonitorModal').classList.add('hidden');
+            document.getElementById('editPortMonitorModal').classList.add('hidden');
+        }
+
+        document.getElementById('editWebsiteMonitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const monitorId = document.getElementById('editWebsiteMonitorId').value;
+
+            try {
+                await api.updateMonitor(monitorId, {
+                    config: {
+                        url: document.getElementById('editWebsiteUrl').value,
+                        timeout_seconds: parseInt(document.getElementById('editWebsiteTimeout').value),
+                        follow_redirects: true,
+                        verify_ssl: true
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('editWebsiteInterval').value)
+                });
+
+                hideEditMonitorModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to update monitor: ' + error.message);
+            }
+        });
+
+        document.getElementById('editApiMonitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const monitorId = document.getElementById('editApiMonitorId').value;
+
+            try {
+                await api.updateMonitor(monitorId, {
+                    config: {
+                        url: document.getElementById('editApiUrl').value,
+                        method: document.getElementById('editApiMethod').value,
+                        expected_status_code: parseInt(document.getElementById('editApiStatusCode').value),
+                        timeout_seconds: 10
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('editApiInterval').value)
+                });
+
+                hideEditMonitorModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to update monitor: ' + error.message);
+            }
+        });
+
+        document.getElementById('editMetricMonitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const monitorId = document.getElementById('editMetricMonitorId').value;
+
+            try {
+                await api.updateMonitor(monitorId, {
+                    config: {
+                        warning_threshold: parseFloat(document.getElementById('editMetricWarning').value),
+                        critical_threshold: parseFloat(document.getElementById('editMetricCritical').value),
+                        comparison: document.getElementById('editMetricComparison').value
+                    }
+                });
+
+                hideEditMonitorModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to update monitor: ' + error.message);
+            }
+        });
+
+        document.getElementById('editPortMonitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const monitorId = document.getElementById('editPortMonitorId').value;
+
+            try {
+                await api.updateMonitor(monitorId, {
+                    config: {
+                        host: document.getElementById('editPortHost').value,
+                        port: parseInt(document.getElementById('editPortNumber').value),
+                        timeout_seconds: 5
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('editPortInterval').value)
+                });
+
+                hideEditMonitorModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to update monitor: ' + error.message);
+            }
+        });
 
         loadServices();
     </script>
