@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SimpleWatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-800">SimpleWatch</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/static/dashboard.html" class="text-blue-600 font-medium">Dashboard</a>
+                    <a href="/static/services.html" class="text-gray-600 hover:text-gray-800">Services</a>
+                    <a href="/static/settings.html" class="text-gray-600 hover:text-gray-800">Settings</a>
+                    <a href="/static/users.html" class="text-gray-600 hover:text-gray-800" id="usersLink">Users</a>
+                    <span class="text-gray-600" id="usernameDisplay"></span>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
+            <div class="flex space-x-2">
+                <span id="lastUpdate" class="text-sm text-gray-600"></span>
+            </div>
+        </div>
+
+        <div id="dashboardGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+
+        <div id="emptyState" class="hidden text-center py-12">
+            <p class="text-gray-600 text-lg mb-4">No services configured yet</p>
+            <a href="/static/services.html" class="text-blue-600 hover:text-blue-800 font-medium">
+                Go to Services to add your first monitor
+            </a>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/polling.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <script>
+        requireAuth();
+
+        const userInfo = getUserInfo();
+        document.getElementById('usernameDisplay').textContent = userInfo.username;
+
+        if (!userInfo.isAdmin) {
+            document.getElementById('usersLink').style.display = 'none';
+        }
+
+        let statusPoller;
+
+        function getStatusColor(status) {
+            const colors = {
+                'operational': 'bg-green-500',
+                'degraded': 'bg-yellow-500',
+                'down': 'bg-red-500',
+                'maintenance': 'bg-blue-500',
+                'unknown': 'bg-gray-500'
+            };
+            return colors[status] || colors['unknown'];
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'operational': 'Operational',
+                'degraded': 'Degraded',
+                'down': 'Down',
+                'maintenance': 'Maintenance',
+                'unknown': 'Unknown'
+            };
+            return texts[status] || 'Unknown';
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
+        }
+
+        function createStatusWidget(service) {
+            return `
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-800">${service.service}</h3>
+                        </div>
+                        <div class="w-3 h-3 rounded-full ${getStatusColor(service.status)}"></div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Status:</span>
+                            <span class="text-sm font-medium ${service.status === 'operational' ? 'text-green-600' : service.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'}">
+                                ${getStatusText(service.status)}
+                            </span>
+                        </div>
+                        ${service.response_time_ms ? `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Response:</span>
+                            <span class="text-sm font-medium text-gray-800">${service.response_time_ms}ms</span>
+                        </div>
+                        ` : ''}
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Last check:</span>
+                            <span class="text-sm text-gray-600">${formatTimestamp(service.timestamp)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadDashboard() {
+            try {
+                const data = await api.getAllStatus();
+                const dashboardGrid = document.getElementById('dashboardGrid');
+                const emptyState = document.getElementById('emptyState');
+
+                if (data.services.length === 0) {
+                    dashboardGrid.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+
+                dashboardGrid.innerHTML = data.services
+                    .map(service => createStatusWidget(service))
+                    .join('');
+
+                const lastUpdate = document.getElementById('lastUpdate');
+                const now = new Date();
+                lastUpdate.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        loadDashboard();
+
+        statusPoller = new Poller(loadDashboard, 10000);
+        statusPoller.start();
+
+        window.addEventListener('beforeunload', () => {
+            if (statusPoller) {
+                statusPoller.stop();
+            }
+        });
+    </script>
+</body>
+</html>

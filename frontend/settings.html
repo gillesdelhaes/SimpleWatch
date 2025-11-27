@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - SimpleWatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-800">SimpleWatch</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/static/dashboard.html" class="text-gray-600 hover:text-gray-800">Dashboard</a>
+                    <a href="/static/services.html" class="text-gray-600 hover:text-gray-800">Services</a>
+                    <a href="/static/settings.html" class="text-blue-600 font-medium">Settings</a>
+                    <a href="/static/users.html" class="text-gray-600 hover:text-gray-800" id="usersLink">Users</a>
+                    <span class="text-gray-600" id="usernameDisplay"></span>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">User Profile</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="email" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">API Key</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Your API Key</label>
+                    <div class="flex space-x-2">
+                        <input type="password" id="apiKey" readonly class="flex-1 px-4 py-2 border rounded-lg bg-gray-50 font-mono text-sm">
+                        <button onclick="toggleApiKeyVisibility()" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Show</button>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">Use this key to authenticate API requests</p>
+                </div>
+                <button onclick="regenerateApiKey()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    Regenerate API Key
+                </button>
+                <p class="text-xs text-red-600">Warning: Regenerating will invalidate the current key</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">API Documentation</h3>
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2">Update Service Status</h4>
+                    <code class="text-xs block bg-white p-2 rounded border">
+curl -X POST http://localhost:5050/api/v1/status \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{<br>
+    "api_key": "<span id="apiKeyPreview1">YOUR_API_KEY</span>",<br>
+    "service": "my_service",<br>
+    "status": "operational"<br>
+  }'
+                    </code>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2">Send Metric Value</h4>
+                    <code class="text-xs block bg-white p-2 rounded border">
+curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{<br>
+    "api_key": "<span id="apiKeyPreview2">YOUR_API_KEY</span>",<br>
+    "value": 87.5<br>
+  }'
+                    </code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        const userInfo = getUserInfo();
+        document.getElementById('usernameDisplay').textContent = userInfo.username;
+
+        if (!userInfo.isAdmin) {
+            document.getElementById('usersLink').style.display = 'none';
+        }
+
+        async function loadUserInfo() {
+            try {
+                const user = await api.getCurrentUser();
+                document.getElementById('username').value = user.username;
+                document.getElementById('email').value = user.email || '';
+                document.getElementById('apiKey').value = user.api_key;
+                document.getElementById('apiKeyPreview1').textContent = user.api_key;
+                document.getElementById('apiKeyPreview2').textContent = user.api_key;
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+            }
+        }
+
+        function toggleApiKeyVisibility() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const button = event.target;
+
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                button.textContent = 'Hide';
+            } else {
+                apiKeyInput.type = 'password';
+                button.textContent = 'Show';
+            }
+        }
+
+        async function regenerateApiKey() {
+            if (!confirm('Are you sure? This will invalidate your current API key.')) return;
+
+            try {
+                const user = await api.regenerateApiKey();
+                localStorage.setItem('apiKey', user.api_key);
+                loadUserInfo();
+                alert('API key regenerated successfully!');
+            } catch (error) {
+                alert('Failed to regenerate API key: ' + error.message);
+            }
+        }
+
+        loadUserInfo();
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  simplewatch:
+    build: .
+    container_name: simplewatch
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - DATABASE_PATH=/data/simplewatch.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_USE_TLS=${SMTP_USE_TLS:-true}
+      - PUBLIC_STATUS_PAGE=${PUBLIC_STATUS_PAGE:-false}
+      - DATA_RETENTION_DAYS=${DATA_RETENTION_DAYS:-90}
+      - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS:-10}
+      - CREATE_EXAMPLES=${CREATE_EXAMPLES:-true}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5050/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

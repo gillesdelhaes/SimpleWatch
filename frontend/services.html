@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - SimpleWatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-800">SimpleWatch</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/static/dashboard.html" class="text-gray-600 hover:text-gray-800">Dashboard</a>
+                    <a href="/static/services.html" class="text-blue-600 font-medium">Services</a>
+                    <a href="/static/settings.html" class="text-gray-600 hover:text-gray-800">Settings</a>
+                    <a href="/static/users.html" class="text-gray-600 hover:text-gray-800" id="usersLink">Users</a>
+                    <span class="text-gray-600" id="usernameDisplay"></span>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Services & Monitors</h2>
+            <div class="flex space-x-2">
+                <button onclick="showAddServiceModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    Add Service
+                </button>
+                <button onclick="showQuickMonitorModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    Quick Monitor
+                </button>
+            </div>
+        </div>
+
+        <div id="servicesList" class="space-y-4">
+        </div>
+    </div>
+
+    <div id="addServiceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Add Service</h3>
+            <form id="addServiceForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
+                    <input type="text" id="serviceName" required class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea id="serviceDescription" class="w-full px-4 py-2 border rounded-lg" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <input type="text" id="serviceCategory" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Create</button>
+                    <button type="button" onclick="hideAddServiceModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="quickMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4">Quick Monitor Setup</h3>
+
+            <div id="monitorTypeSelection" class="space-y-3">
+                <button onclick="selectMonitorType('website')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Website Monitor</div>
+                    <div class="text-sm text-gray-600">Check if a URL responds (60 seconds setup)</div>
+                </button>
+                <button onclick="selectMonitorType('api')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">API Monitor</div>
+                    <div class="text-sm text-gray-600">Call API endpoint with validation (2 minutes)</div>
+                </button>
+                <button onclick="selectMonitorType('metric_threshold')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Metric Threshold Monitor</div>
+                    <div class="text-sm text-gray-600">Receive numbers, alert on thresholds (90 seconds)</div>
+                </button>
+                <button onclick="selectMonitorType('port')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Port Monitor</div>
+                    <div class="text-sm text-gray-600">Test if TCP port is open (45 seconds)</div>
+                </button>
+                <button onclick="hideQuickMonitorModal()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 mt-4">Cancel</button>
+            </div>
+
+            <div id="websiteMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Website Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Service Name</label>
+                    <input type="text" id="websiteServiceName" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Website URL</label>
+                    <input type="url" id="websiteUrl" class="w-full px-4 py-2 border rounded-lg" placeholder="https://example.com" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="websiteInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="1">Every 1 minute</option>
+                        <option value="5" selected>Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Timeout (seconds)</label>
+                    <input type="number" id="websiteTimeout" value="10" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="createWebsiteMonitor()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Create Monitor</button>
+                    <button onclick="backToMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="apiMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">API Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Service Name</label>
+                    <input type="text" id="apiServiceName" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">API URL</label>
+                    <input type="url" id="apiUrl" class="w-full px-4 py-2 border rounded-lg" placeholder="https://api.example.com/health" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">HTTP Method</label>
+                    <select id="apiMethod" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Expected Status Code</label>
+                    <input type="number" id="apiStatusCode" value="200" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="apiInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="1">Every 1 minute</option>
+                        <option value="5" selected>Every 5 minutes</option>
+                        <option value="15">Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="createApiMonitor()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Create Monitor</button>
+                    <button onclick="backToMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="metricMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Metric Threshold Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Service Name</label>
+                    <input type="text" id="metricServiceName" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Warning Threshold</label>
+                    <input type="number" step="0.1" id="metricWarning" class="w-full px-4 py-2 border rounded-lg" placeholder="75" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Critical Threshold</label>
+                    <input type="number" step="0.1" id="metricCritical" class="w-full px-4 py-2 border rounded-lg" placeholder="90" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Comparison Type</label>
+                    <select id="metricComparison" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="greater">Value exceeds threshold (greater than)</option>
+                        <option value="less">Value below threshold (less than)</option>
+                    </select>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 mb-2">After creating this monitor, send metrics via API:</p>
+                    <code class="text-xs bg-white p-2 block rounded border">
+curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePreview">SERVICE_NAME</span> \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{"api_key":"YOUR_KEY","value":87.5}'
+                    </code>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="createMetricMonitor()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Create Monitor</button>
+                    <button onclick="backToMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="portMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Port Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Service Name</label>
+                    <input type="text" id="portServiceName" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Host</label>
+                    <input type="text" id="portHost" class="w-full px-4 py-2 border rounded-lg" placeholder="example.com or 1.1.1.1" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Port</label>
+                    <input type="number" id="portNumber" class="w-full px-4 py-2 border rounded-lg" placeholder="80" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Check Interval</label>
+                    <select id="portInterval" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="5">Every 5 minutes</option>
+                        <option value="15" selected>Every 15 minutes</option>
+                        <option value="30">Every 30 minutes</option>
+                        <option value="60">Every 60 minutes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="createPortMonitor()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Create Monitor</button>
+                    <button onclick="backToMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        const userInfo = getUserInfo();
+        document.getElementById('usernameDisplay').textContent = userInfo.username;
+
+        if (!userInfo.isAdmin) {
+            document.getElementById('usersLink').style.display = 'none';
+        }
+
+        document.getElementById('metricServiceName').addEventListener('input', (e) => {
+            document.getElementById('metricServiceNamePreview').textContent = e.target.value || 'SERVICE_NAME';
+        });
+
+        async function loadServices() {
+            try {
+                const services = await api.listServices();
+                const monitors = await api.listMonitors();
+
+                const monitorsByService = {};
+                monitors.forEach(monitor => {
+                    if (!monitorsByService[monitor.service_id]) {
+                        monitorsByService[monitor.service_id] = [];
+                    }
+                    monitorsByService[monitor.service_id].push(monitor);
+                });
+
+                const servicesList = document.getElementById('servicesList');
+                servicesList.innerHTML = services.map(service => `
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-800">${service.name}</h3>
+                                ${service.description ? `<p class="text-sm text-gray-600 mt-1">${service.description}</p>` : ''}
+                                ${service.category ? `<span class="inline-block mt-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">${service.category}</span>` : ''}
+
+                                ${monitorsByService[service.id] ? `
+                                <div class="mt-3 space-y-2">
+                                    ${monitorsByService[service.id].map(monitor => `
+                                        <div class="flex items-center justify-between text-sm border-t pt-2">
+                                            <div>
+                                                <span class="font-medium">${monitor.monitor_type}</span>
+                                                <span class="text-gray-600">- Every ${monitor.check_interval_minutes}min</span>
+                                                ${monitor.is_active ? '<span class="ml-2 text-green-600">Active</span>' : '<span class="ml-2 text-gray-400">Inactive</span>'}
+                                            </div>
+                                            <button onclick="deleteMonitor(${monitor.id})" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ` : ''}
+                            </div>
+                            <button onclick="deleteService(${service.id})" class="text-red-600 hover:text-red-800 text-sm ml-4">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load services:', error);
+            }
+        }
+
+        function showAddServiceModal() {
+            document.getElementById('addServiceModal').classList.remove('hidden');
+        }
+
+        function hideAddServiceModal() {
+            document.getElementById('addServiceModal').classList.add('hidden');
+            document.getElementById('addServiceForm').reset();
+        }
+
+        function showQuickMonitorModal() {
+            document.getElementById('quickMonitorModal').classList.remove('hidden');
+        }
+
+        function hideQuickMonitorModal() {
+            document.getElementById('quickMonitorModal').classList.add('hidden');
+            backToMonitorSelection();
+        }
+
+        function selectMonitorType(type) {
+            document.getElementById('monitorTypeSelection').classList.add('hidden');
+            document.getElementById(`${type}MonitorForm`).classList.remove('hidden');
+        }
+
+        function backToMonitorSelection() {
+            document.getElementById('monitorTypeSelection').classList.remove('hidden');
+            document.getElementById('websiteMonitorForm').classList.add('hidden');
+            document.getElementById('apiMonitorForm').classList.add('hidden');
+            document.getElementById('metricMonitorForm').classList.add('hidden');
+            document.getElementById('portMonitorForm').classList.add('hidden');
+        }
+
+        document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            try {
+                await api.createService({
+                    name: document.getElementById('serviceName').value,
+                    description: document.getElementById('serviceDescription').value || null,
+                    category: document.getElementById('serviceCategory').value || null
+                });
+
+                hideAddServiceModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to create service: ' + error.message);
+            }
+        });
+
+        async function createWebsiteMonitor() {
+            try {
+                const serviceName = document.getElementById('websiteServiceName').value;
+                const service = await api.createService({ name: serviceName, description: 'Website monitor', category: 'Monitor' });
+
+                await api.createMonitor({
+                    service_id: service.id,
+                    monitor_type: 'website',
+                    config: {
+                        url: document.getElementById('websiteUrl').value,
+                        timeout_seconds: parseInt(document.getElementById('websiteTimeout').value),
+                        follow_redirects: true,
+                        verify_ssl: true
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('websiteInterval').value)
+                });
+
+                hideQuickMonitorModal();
+                loadServices();
+                alert('Website monitor created successfully!');
+            } catch (error) {
+                alert('Failed to create monitor: ' + error.message);
+            }
+        }
+
+        async function createApiMonitor() {
+            try {
+                const serviceName = document.getElementById('apiServiceName').value;
+                const service = await api.createService({ name: serviceName, description: 'API monitor', category: 'Monitor' });
+
+                await api.createMonitor({
+                    service_id: service.id,
+                    monitor_type: 'api',
+                    config: {
+                        url: document.getElementById('apiUrl').value,
+                        method: document.getElementById('apiMethod').value,
+                        expected_status_code: parseInt(document.getElementById('apiStatusCode').value),
+                        timeout_seconds: 10
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('apiInterval').value)
+                });
+
+                hideQuickMonitorModal();
+                loadServices();
+                alert('API monitor created successfully!');
+            } catch (error) {
+                alert('Failed to create monitor: ' + error.message);
+            }
+        }
+
+        async function createMetricMonitor() {
+            try {
+                const serviceName = document.getElementById('metricServiceName').value;
+                const service = await api.createService({ name: serviceName, description: 'Metric threshold monitor', category: 'Monitor' });
+
+                await api.createMonitor({
+                    service_id: service.id,
+                    monitor_type: 'metric_threshold',
+                    config: {
+                        warning_threshold: parseFloat(document.getElementById('metricWarning').value),
+                        critical_threshold: parseFloat(document.getElementById('metricCritical').value),
+                        comparison: document.getElementById('metricComparison').value
+                    },
+                    check_interval_minutes: 15
+                });
+
+                hideQuickMonitorModal();
+                loadServices();
+                alert(`Metric monitor created! Send values to: POST /api/v1/metric/${serviceName}`);
+            } catch (error) {
+                alert('Failed to create monitor: ' + error.message);
+            }
+        }
+
+        async function createPortMonitor() {
+            try {
+                const serviceName = document.getElementById('portServiceName').value;
+                const service = await api.createService({ name: serviceName, description: 'Port monitor', category: 'Monitor' });
+
+                await api.createMonitor({
+                    service_id: service.id,
+                    monitor_type: 'port',
+                    config: {
+                        host: document.getElementById('portHost').value,
+                        port: parseInt(document.getElementById('portNumber').value),
+                        timeout_seconds: 5
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('portInterval').value)
+                });
+
+                hideQuickMonitorModal();
+                loadServices();
+                alert('Port monitor created successfully!');
+            } catch (error) {
+                alert('Failed to create monitor: ' + error.message);
+            }
+        }
+
+        async function deleteService(serviceId) {
+            if (!confirm('Are you sure you want to delete this service?')) return;
+
+            try {
+                await api.deleteService(serviceId);
+                loadServices();
+            } catch (error) {
+                alert('Failed to delete service: ' + error.message);
+            }
+        }
+
+        async function deleteMonitor(monitorId) {
+            if (!confirm('Are you sure you want to delete this monitor?')) return;
+
+            try {
+                await api.deleteMonitor(monitorId);
+                loadServices();
+            } catch (error) {
+                alert('Failed to delete monitor: ' + error.message);
+            }
+        }
+
+        loadServices();
+    </script>
+</body>
+</html>
