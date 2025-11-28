@@ -56,6 +56,7 @@ def check_monitor(monitor_id: int):
 
         status_update = StatusUpdate(
             service_id=monitor.service_id,
+            monitor_id=monitor.id,
             status=result.get("status", "unknown"),
             timestamp=datetime.utcnow(),
             response_time_ms=result.get("response_time_ms"),

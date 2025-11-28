@@ -17,16 +17,21 @@ class HeartbeatRequest(BaseModel):
 
 
 @router.post("/{service_name}")
+@router.post("/{service_name}/{monitor_name}")
 def receive_heartbeat(
     service_name: str,
     heartbeat: HeartbeatRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    monitor_name: str = None
 ):
     """
     Receive a heartbeat ping for a deadman monitor.
 
     This endpoint is called by external processes (cron jobs, backups, etc.)
     to signal they are still alive and running.
+
+    If monitor_name is provided, updates the specific monitor with that name.
+    Otherwise, updates the first active deadman monitor found (backward compatibility).
     """
     # Find service by name
     service = db.query(Service).filter(
@@ -37,18 +42,40 @@ def receive_heartbeat(
     if not service:
         raise HTTPException(status_code=404, detail=f"Service '{service_name}' not found")
 
-    # Find deadman monitor for this service
-    monitor = db.query(Monitor).filter(
-        Monitor.service_id == service.id,
-        Monitor.monitor_type == "deadman",
-        Monitor.is_active == True
-    ).first()
+    # Find deadman monitor by name if provided, otherwise get first one
+    if monitor_name:
+        # Look for monitor with matching name in config
+        monitors = db.query(Monitor).filter(
+            Monitor.service_id == service.id,
+            Monitor.monitor_type == "deadman",
+            Monitor.is_active == True
+        ).all()
 
-    if not monitor:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No active deadman monitor found for service '{service_name}'"
-        )
+        monitor = None
+        for m in monitors:
+            config = json.loads(m.config_json)
+            if config.get("name") == monitor_name:
+                monitor = m
+                break
+
+        if not monitor:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No active deadman monitor named '{monitor_name}' found for service '{service_name}'"
+            )
+    else:
+        # Backward compatibility: get first monitor
+        monitor = db.query(Monitor).filter(
+            Monitor.service_id == service.id,
+            Monitor.monitor_type == "deadman",
+            Monitor.is_active == True
+        ).first()
+
+        if not monitor:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No active deadman monitor found for service '{service_name}'"
+            )
 
     # Verify API key
     from api.auth import get_user_from_api_key
@@ -60,6 +87,7 @@ def receive_heartbeat(
     # Create a status update marking the heartbeat as received
     status_update = StatusUpdate(
         service_id=service.id,
+        monitor_id=monitor.id,
         status="operational",
         timestamp=datetime.utcnow(),
         response_time_ms=0,

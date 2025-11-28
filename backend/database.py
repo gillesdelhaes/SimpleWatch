@@ -59,12 +59,14 @@ class StatusUpdate(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     service_id = Column(Integer, ForeignKey("services.id"), index=True)
+    monitor_id = Column(Integer, ForeignKey("monitors.id"), index=True, nullable=True)
     status = Column(String(50), nullable=False)
     timestamp = Column(TIMESTAMP, default=datetime.utcnow, index=True)
     response_time_ms = Column(Integer)
     metadata_json = Column(Text)
 
     service = relationship("Service", back_populates="status_updates")
+    monitor = relationship("Monitor")
 
 
 class DashboardLayout(Base):
