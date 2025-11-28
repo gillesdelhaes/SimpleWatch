@@ -58,14 +58,15 @@ The dashboard automatically refreshes every 10 seconds, showing the latest statu
 Each widget displays:
 - Service name
 - Current status
-- Response time (if available)
+- Response time (for website/API monitors)
+- Last heartbeat timestamp (for deadman monitors)
 - Last check time
 
 ---
 
 ## Creating Monitors
 
-SimpleWatch offers 4 types of built-in monitors that require NO coding.
+SimpleWatch offers 5 types of built-in monitors that require NO coding.
 
 ### Quick Monitor Feature
 
@@ -202,6 +203,66 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
 - Track internal services
 - Monitor DNS servers (port 53)
 
+### Monitor Type 5: Deadman Monitor
+
+**Use Case:** Alert if a scheduled task/process doesn't report in regularly
+
+**Setup Time:** 60 seconds
+
+**Steps:**
+1. Select "Deadman Monitor"
+2. Enter service name (e.g., "Nightly Backup")
+3. Set expected interval (how often should it ping? e.g., 24 hours)
+4. Set grace period (extra time before alerting, e.g., 1 hour)
+5. Create
+
+**After Creation:**
+You'll see the API endpoint to send heartbeats:
+
+```bash
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_KEY"}'
+```
+
+**How It Works:**
+- Your cron job/script sends a heartbeat ping after each run
+- If no ping received within expected interval + grace period, status goes DOWN
+- If ping is late but within grace period, status goes DEGRADED
+- Dashboard shows timestamp of last heartbeat
+
+**Example Uses:**
+- Monitor cron jobs (ping after each run)
+- Track backup completion (ping after backup finishes)
+- Watch scheduled tasks (ping from Windows Task Scheduler)
+- Monitor data pipelines (ping at pipeline end)
+- Verify batch processes (ping after processing)
+
+**Practical Example - Daily Backup:**
+
+Create a deadman monitor with:
+- Expected interval: 24 hours
+- Grace period: 1 hour
+
+Add to your backup script:
+```bash
+#!/bin/bash
+# Run backup
+/usr/local/bin/backup.sh
+
+# If successful, send heartbeat
+if [ $? -eq 0 ]; then
+  curl -X POST http://localhost:5050/api/v1/heartbeat/nightly_backup \
+    -H "Content-Type: application/json" \
+    -d '{"api_key":"YOUR_KEY"}'
+fi
+```
+
+**Status Logic:**
+- ✅ **Operational:** Heartbeat received within expected interval
+- ⚠️ **Degraded:** Heartbeat overdue but within grace period
+- ❌ **Down:** No heartbeat for more than interval + grace period
+
 ---
 
 ## Managing Services
@@ -213,8 +274,8 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
 3. Each service shows:
    - Name and description
    - Category tag
-   - Associated monitors
-   - Monitor status (Active/Inactive)
+   - Associated monitors (can have multiple!)
+   - Monitor details and status (Active/Inactive)
 
 ### Adding a Service Manually
 
@@ -227,28 +288,56 @@ If you want to create a service without a monitor (for API-only updates):
 
 ### Editing a Service
 
-Services are edited by managing their monitors. To change monitor settings:
+To update service details:
 
-1. Delete the old monitor
-2. Create a new one with updated settings
+1. Click **Services**
+2. Find the service
+3. Click the **Edit** button (pencil icon)
+4. Update name, description, or category
+5. Click **Update**
+
+### Adding Multiple Monitors to One Service
+
+You can monitor a service in different ways:
+
+1. Click **Services**
+2. Find the service
+3. Click the **Add Monitor** button (+ icon)
+4. Select monitor type (website, API, metric, port, or deadman)
+5. Configure and create
+
+**Example:** A "Payment Gateway" service might have:
+- Website monitor (check landing page)
+- API monitor (check health endpoint)
+- Metric monitor (track transaction rate)
+
+### Editing a Monitor
+
+To update monitor configuration:
+
+1. Click **Services**
+2. Find the monitor under its service
+3. Click the **Edit** button (pencil icon)
+4. Update configuration
+5. Click **Update**
 
 ### Deleting a Service
 
 1. Click **Services**
 2. Find the service
-3. Click **Delete**
+3. Click **Delete** button (X icon)
 4. Confirm deletion
 
-**Note:** This archives the service. Historical data is retained based on retention policy.
+**Note:** This archives the service and all its monitors. Historical data is retained based on retention policy.
 
 ### Deleting a Monitor
 
 1. Click **Services**
 2. Find the service with the monitor
-3. Click **Delete** next to the monitor
+3. Click **Delete** button (X icon) next to the monitor
 4. Confirm deletion
 
-The service remains, but monitoring stops.
+The service remains with other monitors intact.
 
 ---
 
@@ -301,6 +390,39 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
 ```
 
 SimpleWatch automatically determines if the value is OK, warning, or critical.
+
+### Sending Heartbeats
+
+For deadman monitors (cron jobs, backups, scheduled tasks):
+
+```bash
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "YOUR_API_KEY"
+  }'
+```
+
+**Cron Example:**
+```bash
+# Add to crontab - runs daily at 2am and reports success
+0 2 * * * /usr/local/bin/backup.sh && curl -X POST http://localhost:5050/api/v1/heartbeat/nightly_backup -H "Content-Type: application/json" -d '{"api_key":"YOUR_KEY"}'
+```
+
+**Windows Task Scheduler:**
+Create a batch file:
+```batch
+@echo off
+REM Run your task
+C:\Scripts\backup.bat
+
+REM If successful, send heartbeat
+IF %ERRORLEVEL% EQU 0 (
+    curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job ^
+    -H "Content-Type: application/json" ^
+    -d "{\"api_key\":\"YOUR_KEY\"}"
+)
+```
 
 ### Integration with Automation Tools
 

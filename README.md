@@ -1,5 +1,11 @@
 # SimpleWatch
 
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg)
+![SQLite](https://img.shields.io/badge/sqlite-3-003B57.svg)
+![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
 A self-hosted monitoring dashboard designed for business users to track the status of internal and external services. Built with simplicity and ease of use in mind.
 
 ## Features
@@ -9,10 +15,14 @@ A self-hosted monitoring dashboard designed for business users to track the stat
 - **API Monitor** - Call API endpoints with validation (2-minute setup)
 - **Metric Threshold Monitor** - Receive numbers, alert on thresholds (90-second setup)
 - **Port Monitor** - Test if TCP ports are open (45-second setup)
+- **Deadman Monitor** - Alert if no heartbeat received within expected interval (perfect for cron jobs and scheduled tasks)
 
 ### Key Capabilities
+- Multiple monitors per service (track services in different ways)
+- Full CRUD operations (create, read, update, delete) for services and monitors
 - Drag-and-drop dashboard customization
 - Real-time status updates (10-second polling)
+- Last heartbeat timestamp display for deadman monitors
 - Simple REST API for automation
 - Built-in background scheduler (no Redis/Celery needed)
 - 4 working example monitors included
@@ -125,6 +135,16 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
   }'
 ```
 
+### Send Heartbeat (Deadman Monitor)
+
+```bash
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "YOUR_API_KEY"
+  }'
+```
+
 Get your API key from Settings page after logging in.
 
 ## Project Structure
@@ -137,16 +157,24 @@ simplewatch/
 │   ├── models.py           # Pydantic models for validation
 │   ├── scheduler.py        # APScheduler background monitor scheduler
 │   ├── api/                # API endpoints
+│   │   ├── auth.py         # Authentication endpoints
+│   │   ├── status.py       # Status update endpoints
+│   │   ├── services.py     # Service CRUD endpoints
+│   │   ├── monitors.py     # Monitor CRUD endpoints
+│   │   ├── users.py        # User management endpoints
+│   │   ├── webhooks.py     # Webhook endpoints
+│   │   └── heartbeat.py    # Heartbeat API for deadman monitors
 │   ├── monitors/           # Monitor implementations
 │   │   ├── website.py      # Website monitor
 │   │   ├── api.py          # API monitor
 │   │   ├── metric.py       # Metric threshold monitor
-│   │   └── port.py         # Port monitor
+│   │   ├── port.py         # Port monitor
+│   │   └── deadman.py      # Deadman/heartbeat monitor
 │   ├── utils/              # Utility functions
 │   └── examples/           # Example scripts
 ├── frontend/
-│   ├── dashboard.html      # Main dashboard
-│   ├── services.html       # Service management + Quick Monitor
+│   ├── dashboard.html      # Main dashboard (shows last heartbeat)
+│   ├── services.html       # Service management + Quick Monitor + Edit
 │   ├── settings.html       # User settings and API keys
 │   ├── users.html          # User management (admin only)
 │   └── js/                 # JavaScript utilities

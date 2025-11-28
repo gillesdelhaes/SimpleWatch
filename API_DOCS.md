@@ -227,6 +227,60 @@ curl -X POST http://localhost:5050/api/v1/metric/daily_sales \
 - Disk usage (alert when high)
 - Any numeric business metric
 
+#### POST /api/v1/heartbeat/{service_name}
+
+Send a heartbeat ping for a deadman monitor.
+
+**Request:**
+```json
+{
+  "api_key": "your_key"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Heartbeat received for 'backup_job'",
+  "timestamp": "2025-01-15T10:30:00Z"
+}
+```
+
+**curl Example:**
+```bash
+curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"your_key"}'
+```
+
+**Use Cases:**
+- Cron job monitoring (ping after each successful run)
+- Backup verification (ping after backup completes)
+- Scheduled task monitoring (ping from task scheduler)
+- Data pipeline health (ping at pipeline completion)
+- Watchdog processes (periodic health pings)
+
+**How It Works:**
+1. Create a deadman monitor for your service
+2. Your script/cron sends a heartbeat ping after running
+3. If no ping received within expected interval + grace period, monitor goes DOWN
+4. Dashboard shows last heartbeat timestamp
+
+**Example Cron Integration:**
+```bash
+#!/bin/bash
+# Run backup
+/usr/local/bin/backup.sh
+
+# If successful, send heartbeat
+if [ $? -eq 0 ]; then
+  curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
+    -H "Content-Type: application/json" \
+    -d '{"api_key":"YOUR_KEY"}'
+fi
+```
+
 ---
 
 ### Services
@@ -403,6 +457,21 @@ Create a new monitor.
   "check_interval_minutes": 15
 }
 ```
+
+**Deadman Monitor Example:**
+```json
+{
+  "service_id": 5,
+  "monitor_type": "deadman",
+  "config": {
+    "expected_interval_hours": 24,
+    "grace_period_hours": 1
+  },
+  "check_interval_minutes": 5
+}
+```
+
+**Note:** Deadman monitors expect regular heartbeat pings. Service goes DOWN if no heartbeat received within `expected_interval_hours + grace_period_hours`. Perfect for monitoring cron jobs, backups, and scheduled tasks.
 
 #### GET /api/v1/monitors/{monitor_id}
 
@@ -636,6 +705,14 @@ response = requests.post(
         "value": 0.5
     }
 )
+
+# Send heartbeat (for deadman monitor)
+response = requests.post(
+    f"{api_url}/heartbeat/backup_job",
+    json={
+        "api_key": api_key
+    }
+)
 ```
 
 ### Shell Script
@@ -655,6 +732,12 @@ fi
 curl -X POST "$API_URL/status" \
   -H "Content-Type: application/json" \
   -d "{\"api_key\":\"$API_KEY\",\"service\":\"myservice\",\"status\":\"$STATUS\"}"
+
+# Send heartbeat after successful backup
+/usr/local/bin/backup.sh && \
+curl -X POST "$API_URL/heartbeat/backup_job" \
+  -H "Content-Type: application/json" \
+  -d "{\"api_key\":\"$API_KEY\"}"
 ```
 
 ### Node.js
@@ -674,7 +757,15 @@ async function updateStatus(service, status) {
   return response.data;
 }
 
+async function sendHeartbeat(serviceName) {
+  const response = await axios.post(`${apiUrl}/heartbeat/${serviceName}`, {
+    api_key: apiKey
+  });
+  return response.data;
+}
+
 updateStatus('my_app', 'operational');
+sendHeartbeat('backup_job');
 ```
 
 ---
