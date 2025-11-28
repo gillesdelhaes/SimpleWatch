@@ -169,7 +169,7 @@ curl "http://localhost:5050/api/v1/status/my_service?api_key=your_key"
 
 #### GET /api/v1/status/all
 
-Get current status for all services.
+Get current status for all services with aggregated monitor status.
 
 **Parameters:**
 - `api_key` (query parameter)
@@ -184,15 +184,39 @@ Get current status for all services.
       "status": "operational",
       "timestamp": "2025-01-15T10:30:00Z",
       "response_time_ms": 120,
-      "metadata": {}
+      "monitor_count": 3,
+      "monitors": [
+        {
+          "monitor_id": 1,
+          "monitor_type": "website",
+          "config": {"url": "https://example.com"},
+          "check_interval_minutes": 5,
+          "is_active": true,
+          "status": "operational",
+          "timestamp": "2025-01-15T10:30:00Z",
+          "response_time_ms": 120,
+          "metadata": {}
+        }
+      ]
     }
   ]
 }
 ```
 
+**Status Aggregation:**
+- `operational` - All monitors are operational
+- `degraded` - Some monitors are failing but not all
+- `down` - All monitors are down
+- `unknown` - No status data available
+
 #### POST /api/v1/metric/{service_name}
+#### POST /api/v1/metric/{service_name}/{monitor_name}
 
 Ultra-simple metric update API. Automatically determines status based on thresholds.
+
+**Routes:**
+- `/api/v1/metric/{service_name}` - Updates first metric monitor (backward compatible)
+- `/api/v1/metric/{service_name}/{monitor_name}` - Updates specific named monitor
 
 **Request:**
 ```json
@@ -213,12 +237,21 @@ Ultra-simple metric update API. Automatically determines status based on thresho
 }
 ```
 
-**curl Example:**
+**curl Examples:**
 ```bash
-curl -X POST http://localhost:5050/api/v1/metric/daily_sales \
+# Update unnamed monitor or first monitor
+curl -X POST http://localhost:5050/api/v1/metric/server_metrics \
   -H "Content-Type: application/json" \
-  -d '{"api_key":"your_key","value":15420}'
+  -d '{"api_key":"your_key","value":87.5}'
+
+# Update specific named monitor
+curl -X POST http://localhost:5050/api/v1/metric/server_metrics/disk_usage \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"your_key","value":87.5}'
 ```
+
+**Monitor Names:**
+When creating a metric monitor, you can optionally specify a `name` in the config. This allows multiple metric monitors per service. If no name is specified, use the route without the monitor name parameter.
 
 **Use Cases:**
 - Daily sales numbers (alert if below target)
@@ -226,10 +259,16 @@ curl -X POST http://localhost:5050/api/v1/metric/daily_sales \
 - Queue lengths (alert if backed up)
 - Disk usage (alert when high)
 - Any numeric business metric
+- Multiple metrics per service (CPU, memory, disk on one server)
 
 #### POST /api/v1/heartbeat/{service_name}
+#### POST /api/v1/heartbeat/{service_name}/{monitor_name}
 
 Send a heartbeat ping for a deadman monitor.
+
+**Routes:**
+- `/api/v1/heartbeat/{service_name}` - Pings first deadman monitor (backward compatible)
+- `/api/v1/heartbeat/{service_name}/{monitor_name}` - Pings specific named monitor
 
 **Request:**
 ```json
@@ -247,12 +286,21 @@ Send a heartbeat ping for a deadman monitor.
 }
 ```
 
-**curl Example:**
+**curl Examples:**
 ```bash
+# Ping unnamed monitor or first monitor
 curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
   -H "Content-Type: application/json" \
   -d '{"api_key":"your_key"}'
+
+# Ping specific named monitor
+curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job/database_backup \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"your_key"}'
 ```
+
+**Monitor Names:**
+When creating a deadman monitor, you can optionally specify a `name` in the config. This allows multiple deadman monitors per service (e.g., separate monitors for database backup, file backup, and log rotation). If no name is specified, use the route without the monitor name parameter.
 
 **Use Cases:**
 - Cron job monitoring (ping after each successful run)
@@ -260,6 +308,7 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
 - Scheduled task monitoring (ping from task scheduler)
 - Data pipeline health (ping at pipeline completion)
 - Watchdog processes (periodic health pings)
+- Multiple tasks per service (database backup, file backup, cleanup job)
 
 **How It Works:**
 1. Create a deadman monitor for your service
@@ -275,7 +324,7 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
 
 # If successful, send heartbeat
 if [ $? -eq 0 ]; then
-  curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
+  curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job/database_backup \
     -H "Content-Type: application/json" \
     -d '{"api_key":"YOUR_KEY"}'
 fi
@@ -436,6 +485,7 @@ Create a new monitor.
   "service_id": 3,
   "monitor_type": "metric_threshold",
   "config": {
+    "name": "disk_usage",
     "warning_threshold": 75.0,
     "critical_threshold": 90.0,
     "comparison": "greater"
@@ -443,6 +493,8 @@ Create a new monitor.
   "check_interval_minutes": 15
 }
 ```
+
+**Note:** The `name` field is optional but recommended if you have multiple metric monitors for one service. Use the name when posting values via `/api/v1/metric/{service_name}/{monitor_name}`.
 
 **Port Monitor Example:**
 ```json
@@ -464,6 +516,7 @@ Create a new monitor.
   "service_id": 5,
   "monitor_type": "deadman",
   "config": {
+    "name": "database_backup",
     "expected_interval_hours": 24,
     "grace_period_hours": 1
   },
@@ -471,7 +524,7 @@ Create a new monitor.
 }
 ```
 
-**Note:** Deadman monitors expect regular heartbeat pings. Service goes DOWN if no heartbeat received within `expected_interval_hours + grace_period_hours`. Perfect for monitoring cron jobs, backups, and scheduled tasks.
+**Note:** Deadman monitors expect regular heartbeat pings. Service goes DOWN if no heartbeat received within `expected_interval_hours + grace_period_hours`. Perfect for monitoring cron jobs, backups, and scheduled tasks. The `name` field is optional but recommended if you have multiple deadman monitors for one service. Use the name when sending heartbeats via `/api/v1/heartbeat/{service_name}/{monitor_name}`.
 
 #### GET /api/v1/monitors/{monitor_id}
 

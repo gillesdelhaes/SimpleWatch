@@ -56,11 +56,24 @@ The dashboard automatically refreshes every 10 seconds, showing the latest statu
 
 **Widget Information:**
 Each widget displays:
-- Service name
-- Current status
-- Response time (for website/API monitors)
-- Last heartbeat timestamp (for deadman monitors)
+- Service name with monitor summary (e.g., "2 ✓, 1 ✗" for 2 operational, 1 down)
+- Overall service status (aggregated from all monitors)
+- Average response time (for website/API/port monitors)
 - Last check time
+
+**Monitor Summary Symbols:**
+- ✓ - Operational monitors
+- ~ - Degraded monitors
+- ✗ - Down monitors
+- ? - Unknown status monitors
+
+**Detailed Monitor View:**
+Click any service card to open a modal showing:
+- Individual monitor statuses
+- Monitor type and configuration
+- Response times or last heartbeat timestamps
+- Check intervals
+- Status reasons for degraded/down monitors
 
 ---
 
@@ -143,19 +156,28 @@ The fastest way to create a monitor:
 
 **Steps:**
 1. Select "Metric Threshold Monitor"
-2. Enter service name (e.g., "Daily Sales")
-3. Set warning threshold (e.g., 75)
-4. Set critical threshold (e.g., 90)
-5. Choose comparison type:
+2. Enter service name (e.g., "Server Metrics")
+3. Optionally enter monitor name (e.g., "disk_usage")
+   - Use names when you need multiple metric monitors per service
+   - Example: "cpu", "memory", "disk" for one server
+4. Set warning threshold (e.g., 75)
+5. Set critical threshold (e.g., 90)
+6. Choose comparison type:
    - "Greater than" for things that shouldn't be too high (disk usage, error rates)
    - "Less than" for things that shouldn't be too low (sales, inventory)
-6. Create
+7. Create
 
 **After Creation:**
 You'll see the API endpoint to send values:
 
 ```bash
+# Without monitor name
 curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_KEY","value":87.5}'
+
+# With monitor name
+curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/disk_usage \
   -H "Content-Type: application/json" \
   -d '{"api_key":"YOUR_KEY","value":87.5}'
 ```
@@ -211,16 +233,25 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
 
 **Steps:**
 1. Select "Deadman Monitor"
-2. Enter service name (e.g., "Nightly Backup")
-3. Set expected interval (how often should it ping? e.g., 24 hours)
-4. Set grace period (extra time before alerting, e.g., 1 hour)
-5. Create
+2. Enter service name (e.g., "Backup Jobs")
+3. Optionally enter monitor name (e.g., "database_backup")
+   - Use names when you need multiple deadman monitors per service
+   - Example: "database_backup", "file_backup", "log_rotation" for one service
+4. Set expected interval (how often should it ping? e.g., 24 hours)
+5. Set grace period (extra time before alerting, e.g., 1 hour)
+6. Create
 
 **After Creation:**
 You'll see the API endpoint to send heartbeats:
 
 ```bash
+# Without monitor name
 curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"YOUR_KEY"}'
+
+# With monitor name
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/database_backup \
   -H "Content-Type: application/json" \
   -d '{"api_key":"YOUR_KEY"}'
 ```
@@ -381,7 +412,16 @@ curl -X POST http://localhost:5050/api/v1/status \
 For metric threshold monitors:
 
 ```bash
+# Update unnamed monitor or first monitor
 curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "YOUR_API_KEY",
+    "value": 87.5
+  }'
+
+# Update specific named monitor (if you have multiple)
+curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/disk_usage \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY",
@@ -391,12 +431,33 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
 
 SimpleWatch automatically determines if the value is OK, warning, or critical.
 
+**Multiple Metrics Example:**
+If monitoring a server with multiple metrics:
+```bash
+# CPU usage
+curl -X POST http://localhost:5050/api/v1/metric/webserver/cpu -d '{"api_key":"KEY","value":45.2}'
+
+# Memory usage
+curl -X POST http://localhost:5050/api/v1/metric/webserver/memory -d '{"api_key":"KEY","value":68.5}'
+
+# Disk usage
+curl -X POST http://localhost:5050/api/v1/metric/webserver/disk -d '{"api_key":"KEY","value":82.3}'
+```
+
 ### Sending Heartbeats
 
 For deadman monitors (cron jobs, backups, scheduled tasks):
 
 ```bash
+# Ping unnamed monitor or first monitor
 curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "YOUR_API_KEY"
+  }'
+
+# Ping specific named monitor (if you have multiple)
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/database_backup \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY"

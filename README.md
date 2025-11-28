@@ -19,6 +19,9 @@ A self-hosted monitoring dashboard designed for business users to track the stat
 
 ### Key Capabilities
 - Multiple monitors per service (track services in different ways)
+- Named monitors for metric and deadman types (multiple metrics/heartbeats per service)
+- Aggregated status display (see which monitors are operational/degraded/down)
+- Clickable dashboard cards with detailed monitor modals
 - Full CRUD operations (create, read, update, delete) for services and monitors
 - Drag-and-drop dashboard customization
 - Real-time status updates (10-second polling)
@@ -127,7 +130,16 @@ curl -X POST http://localhost:5050/api/v1/status \
 ### Send Metric Value
 
 ```bash
+# Update unnamed monitor or first monitor
 curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "YOUR_API_KEY",
+    "value": 87.5
+  }'
+
+# Update specific named monitor (if you have multiple metric monitors)
+curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY",
@@ -138,7 +150,15 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
 ### Send Heartbeat (Deadman Monitor)
 
 ```bash
+# Ping unnamed monitor or first monitor
 curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "YOUR_API_KEY"
+  }'
+
+# Ping specific named monitor (if you have multiple deadman monitors)
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY"
@@ -146,6 +166,8 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
 ```
 
 Get your API key from Settings page after logging in.
+
+**Note:** Monitor names are optional. Use them when you have multiple metric or deadman monitors per service (e.g., `cpu`, `memory`, and `disk` monitors for one server).
 
 ## Project Structure
 
