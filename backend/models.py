@@ -134,9 +134,14 @@ class PortMonitorConfig(MonitorConfig):
     timeout_seconds: int = 5
 
 
+class DeadmanMonitorConfig(MonitorConfig):
+    expected_interval_hours: float
+    grace_period_hours: float
+
+
 class MonitorCreate(BaseModel):
     service_id: int
-    monitor_type: str = Field(..., pattern="^(website|api|metric_threshold|port)$")
+    monitor_type: str = Field(..., pattern="^(website|api|metric_threshold|port|deadman)$")
     config: Dict[str, Any]
     check_interval_minutes: int = 5
 

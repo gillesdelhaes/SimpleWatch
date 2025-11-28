@@ -10,6 +10,7 @@ from monitors.website import WebsiteMonitor
 from monitors.api import APIMonitor
 from monitors.metric import MetricThresholdMonitor
 from monitors.port import PortMonitor
+from monitors.deadman import DeadmanMonitor
 import json
 import time
 
@@ -42,6 +43,9 @@ def check_monitor(monitor_id: int):
             return
         elif monitor.monitor_type == "port":
             monitor_instance = PortMonitor(config)
+        elif monitor.monitor_type == "deadman":
+            # Deadman monitor needs last_check_at timestamp
+            monitor_instance = DeadmanMonitor(config, monitor.last_check_at)
         else:
             logger.error(f"Unknown monitor type: {monitor.monitor_type}")
             return

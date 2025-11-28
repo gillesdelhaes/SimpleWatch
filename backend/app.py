@@ -14,7 +14,7 @@ from database import init_db, SessionLocal
 from utils.db import create_default_admin
 from scheduler import start_scheduler, stop_scheduler
 
-from api import auth, status, services, users, monitors, webhooks
+from api import auth, status, services, users, monitors, webhooks, heartbeat
 
 load_dotenv()
 
@@ -76,6 +76,7 @@ app.include_router(services.router)
 app.include_router(users.router)
 app.include_router(monitors.router)
 app.include_router(webhooks.router)
+app.include_router(heartbeat.router)
 
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")

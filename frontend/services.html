@@ -114,6 +114,10 @@
                     <div class="font-semibold">Port Monitor</div>
                     <div class="text-sm text-gray-600">Test if TCP port is open</div>
                 </button>
+                <button onclick="selectAddMonitorType('deadman')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Deadman Monitor</div>
+                    <div class="text-sm text-gray-600">Alert if no heartbeat received within interval</div>
+                </button>
                 <button onclick="hideAddMonitorToServiceModal()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 mt-4">Cancel</button>
             </div>
 
@@ -231,6 +235,32 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="addMetricServiceNameP
                     <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
                 </div>
             </div>
+
+            <div id="addDeadmanMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Deadman Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Expected Interval (hours)</label>
+                    <input type="number" step="0.5" id="addDeadmanExpectedInterval" value="24" class="w-full px-4 py-2 border rounded-lg" required>
+                    <p class="text-xs text-gray-500 mt-1">How often you expect to receive a heartbeat</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Grace Period (hours)</label>
+                    <input type="number" step="0.5" id="addDeadmanGracePeriod" value="1" class="w-full px-4 py-2 border rounded-lg" required>
+                    <p class="text-xs text-gray-500 mt-1">Extra time before marking as DOWN</p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 mb-2">After creating this monitor, send heartbeats via API:</p>
+                    <code class="text-xs bg-white p-2 block rounded border">
+curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="addDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{"api_key":"YOUR_KEY"}'
+                    </code>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="addDeadmanMonitorToService()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Add Monitor</button>
+                    <button onclick="backToAddMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -254,6 +284,10 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="addMetricServiceNameP
                 <button onclick="selectMonitorType('port')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
                     <div class="font-semibold">Port Monitor</div>
                     <div class="text-sm text-gray-600">Test if TCP port is open (45 seconds)</div>
+                </button>
+                <button onclick="selectMonitorType('deadman')" class="w-full text-left p-4 border-2 rounded-lg hover:border-blue-500">
+                    <div class="font-semibold">Deadman Monitor</div>
+                    <div class="text-sm text-gray-600">Alert if no heartbeat received within interval</div>
                 </button>
                 <button onclick="hideQuickMonitorModal()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 mt-4">Cancel</button>
             </div>
@@ -385,6 +419,36 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="metricServiceNamePrev
                 </div>
                 <div class="flex space-x-2">
                     <button onclick="createPortMonitor()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Create Monitor</button>
+                    <button onclick="backToMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
+                </div>
+            </div>
+
+            <div id="deadmanMonitorForm" class="hidden space-y-4">
+                <h4 class="font-semibold">Deadman Monitor Configuration</h4>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Service Name</label>
+                    <input type="text" id="deadmanServiceName" class="w-full px-4 py-2 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Expected Interval (hours)</label>
+                    <input type="number" step="0.5" id="deadmanExpectedInterval" value="24" class="w-full px-4 py-2 border rounded-lg" required>
+                    <p class="text-xs text-gray-500 mt-1">How often you expect to receive a heartbeat</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Grace Period (hours)</label>
+                    <input type="number" step="0.5" id="deadmanGracePeriod" value="1" class="w-full px-4 py-2 border rounded-lg" required>
+                    <p class="text-xs text-gray-500 mt-1">Extra time before marking as DOWN</p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 mb-2">After creating this monitor, send heartbeats via API:</p>
+                    <code class="text-xs bg-white p-2 block rounded border">
+curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="deadmanServiceNamePreview">SERVICE_NAME</span> \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{"api_key":"YOUR_KEY"}'
+                    </code>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="createDeadmanMonitor()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Create Monitor</button>
                     <button onclick="backToMonitorSelection()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Back</button>
                 </div>
             </div>
@@ -531,6 +595,39 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
         </div>
     </div>
 
+    <!-- Edit Deadman Monitor Modal -->
+    <div id="editDeadmanMonitorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Deadman Monitor</h3>
+            <form id="editDeadmanMonitorForm" class="space-y-4">
+                <input type="hidden" id="editDeadmanMonitorId">
+                <input type="hidden" id="editDeadmanServiceName">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Expected Interval (hours)</label>
+                    <input type="number" step="0.5" id="editDeadmanExpectedInterval" class="w-full px-4 py-2 border rounded-lg" required>
+                    <p class="text-xs text-gray-500 mt-1">How often you expect to receive a heartbeat</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Grace Period (hours)</label>
+                    <input type="number" step="0.5" id="editDeadmanGracePeriod" class="w-full px-4 py-2 border rounded-lg" required>
+                    <p class="text-xs text-gray-500 mt-1">Extra time before marking as DOWN</p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 mb-2">Send heartbeats via API:</p>
+                    <code class="text-xs bg-white p-2 block rounded border">
+curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="editDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>
+  -H "Content-Type: application/json" \<br>
+  -d '{"api_key":"YOUR_KEY"}'
+                    </code>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Update</button>
+                    <button type="button" onclick="hideEditMonitorModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
     <script>
@@ -545,6 +642,10 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
 
         document.getElementById('metricServiceName').addEventListener('input', (e) => {
             document.getElementById('metricServiceNamePreview').textContent = e.target.value || 'SERVICE_NAME';
+        });
+
+        document.getElementById('deadmanServiceName').addEventListener('input', (e) => {
+            document.getElementById('deadmanServiceNamePreview').textContent = e.target.value || 'SERVICE_NAME';
         });
 
         async function loadServices() {
@@ -582,6 +683,8 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
                                             description = `Warning ${comparison} ${monitor.config.warning_threshold}, Critical ${comparison} ${monitor.config.critical_threshold}`;
                                         } else if (monitor.monitor_type === 'port') {
                                             description = `${monitor.config.host}:${monitor.config.port}`;
+                                        } else if (monitor.monitor_type === 'deadman') {
+                                            description = `Expect heartbeat every ${monitor.config.expected_interval_hours}h (grace: ${monitor.config.grace_period_hours}h)`;
                                         }
                                         return `
                                         <div class="flex items-center justify-between text-sm border-t pt-2">
@@ -662,7 +765,8 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
                 'website': 'websiteMonitorForm',
                 'api': 'apiMonitorForm',
                 'metric_threshold': 'metricMonitorForm',
-                'port': 'portMonitorForm'
+                'port': 'portMonitorForm',
+                'deadman': 'deadmanMonitorForm'
             };
 
             document.getElementById(formIds[type]).classList.remove('hidden');
@@ -674,6 +778,7 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
             document.getElementById('apiMonitorForm').classList.add('hidden');
             document.getElementById('metricMonitorForm').classList.add('hidden');
             document.getElementById('portMonitorForm').classList.add('hidden');
+            document.getElementById('deadmanMonitorForm').classList.add('hidden');
         }
 
         document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
@@ -791,6 +896,29 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
             }
         }
 
+        async function createDeadmanMonitor() {
+            try {
+                const serviceName = document.getElementById('deadmanServiceName').value;
+                const service = await api.createService({ name: serviceName, description: 'Deadman monitor', category: 'Monitor' });
+
+                await api.createMonitor({
+                    service_id: service.id,
+                    monitor_type: 'deadman',
+                    config: {
+                        expected_interval_hours: parseFloat(document.getElementById('deadmanExpectedInterval').value),
+                        grace_period_hours: parseFloat(document.getElementById('deadmanGracePeriod').value)
+                    },
+                    check_interval_minutes: 5
+                });
+
+                hideQuickMonitorModal();
+                loadServices();
+                alert(`Deadman monitor created! Send heartbeats to: POST /api/v1/heartbeat/${serviceName}`);
+            } catch (error) {
+                alert('Failed to create monitor: ' + error.message);
+            }
+        }
+
         async function deleteService(serviceId) {
             if (!confirm('Are you sure you want to delete this service?')) return;
 
@@ -849,9 +977,9 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
             try {
                 const monitor = await api.getMonitor(monitorId);
 
-                // Fetch service name for metric monitors
+                // Fetch service name for metric and deadman monitors
                 let serviceName = '';
-                if (monitor.monitor_type === 'metric_threshold') {
+                if (monitor.monitor_type === 'metric_threshold' || monitor.monitor_type === 'deadman') {
                     const service = await api.getService(monitor.service_id);
                     serviceName = service.name;
                 }
@@ -882,6 +1010,12 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
                     document.getElementById('editPortNumber').value = monitor.config.port;
                     document.getElementById('editPortInterval').value = monitor.check_interval_minutes;
                     document.getElementById('editPortMonitorModal').classList.remove('hidden');
+                } else if (monitor.monitor_type === 'deadman') {
+                    document.getElementById('editDeadmanMonitorId').value = monitor.id;
+                    document.getElementById('editDeadmanExpectedInterval').value = monitor.config.expected_interval_hours;
+                    document.getElementById('editDeadmanGracePeriod').value = monitor.config.grace_period_hours;
+                    document.getElementById('editDeadmanServiceNamePreview').textContent = serviceName;
+                    document.getElementById('editDeadmanMonitorModal').classList.remove('hidden');
                 }
             } catch (error) {
                 alert('Failed to load monitor: ' + error.message);
@@ -893,6 +1027,7 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
             document.getElementById('editApiMonitorModal').classList.add('hidden');
             document.getElementById('editMetricMonitorModal').classList.add('hidden');
             document.getElementById('editPortMonitorModal').classList.add('hidden');
+            document.getElementById('editDeadmanMonitorModal').classList.add('hidden');
         }
 
         document.getElementById('editWebsiteMonitorForm').addEventListener('submit', async (e) => {
@@ -980,6 +1115,25 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
             }
         });
 
+        document.getElementById('editDeadmanMonitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const monitorId = document.getElementById('editDeadmanMonitorId').value;
+
+            try {
+                await api.updateMonitor(monitorId, {
+                    config: {
+                        expected_interval_hours: parseFloat(document.getElementById('editDeadmanExpectedInterval').value),
+                        grace_period_hours: parseFloat(document.getElementById('editDeadmanGracePeriod').value)
+                    }
+                });
+
+                hideEditMonitorModal();
+                loadServices();
+            } catch (error) {
+                alert('Failed to update monitor: ' + error.message);
+            }
+        });
+
         // Add Monitor to Existing Service functions
         function showAddMonitorToServiceModal(serviceId, serviceName) {
             document.getElementById('targetServiceId').value = serviceId;
@@ -1000,15 +1154,19 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
                 'website': 'addWebsiteMonitorForm',
                 'api': 'addApiMonitorForm',
                 'metric_threshold': 'addMetricMonitorForm',
-                'port': 'addPortMonitorForm'
+                'port': 'addPortMonitorForm',
+                'deadman': 'addDeadmanMonitorForm'
             };
 
             document.getElementById(formIds[type]).classList.remove('hidden');
 
-            // Update service name preview for metric monitor
+            // Update service name preview for metric and deadman monitors
             if (type === 'metric_threshold') {
                 const serviceName = document.getElementById('targetServiceName').textContent;
                 document.getElementById('addMetricServiceNamePreview').textContent = serviceName;
+            } else if (type === 'deadman') {
+                const serviceName = document.getElementById('targetServiceName').textContent;
+                document.getElementById('addDeadmanServiceNamePreview').textContent = serviceName;
             }
         }
 
@@ -1018,6 +1176,7 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
             document.getElementById('addApiMonitorForm').classList.add('hidden');
             document.getElementById('addMetricMonitorForm').classList.add('hidden');
             document.getElementById('addPortMonitorForm').classList.add('hidden');
+            document.getElementById('addDeadmanMonitorForm').classList.add('hidden');
         }
 
         async function addWebsiteMonitorToService() {
@@ -1109,6 +1268,28 @@ curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceName
                 hideAddMonitorToServiceModal();
                 loadServices();
                 alert('Port monitor added successfully!');
+            } catch (error) {
+                alert('Failed to add monitor: ' + error.message);
+            }
+        }
+
+        async function addDeadmanMonitorToService() {
+            try {
+                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+
+                await api.createMonitor({
+                    service_id: serviceId,
+                    monitor_type: 'deadman',
+                    config: {
+                        expected_interval_hours: parseFloat(document.getElementById('addDeadmanExpectedInterval').value),
+                        grace_period_hours: parseFloat(document.getElementById('addDeadmanGracePeriod').value)
+                    },
+                    check_interval_minutes: 5
+                });
+
+                hideAddMonitorToServiceModal();
+                loadServices();
+                alert('Deadman monitor added successfully!');
             } catch (error) {
                 alert('Failed to add monitor: ' + error.message);
             }

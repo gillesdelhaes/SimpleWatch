@@ -110,7 +110,12 @@
                                 ${getStatusText(service.status)}
                             </span>
                         </div>
-                        ${service.response_time_ms ? `
+                        ${service.metadata && service.metadata.type === 'heartbeat' && service.metadata.heartbeat_time ? `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Last heartbeat:</span>
+                            <span class="text-sm font-medium text-gray-800">${formatTimestamp(service.metadata.heartbeat_time)}</span>
+                        </div>
+                        ` : service.response_time_ms ? `
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Response:</span>
                             <span class="text-sm font-medium text-gray-800">${service.response_time_ms}ms</span>
