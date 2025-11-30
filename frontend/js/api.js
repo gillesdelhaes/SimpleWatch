@@ -161,6 +161,16 @@ class APIClient {
         });
     }
 
+    async changePassword(userId, currentPassword, newPassword) {
+        return this.request(`${API_BASE}/users/${userId}/password`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword
+            })
+        });
+    }
+
     async regenerateApiKey() {
         return this.request(`${API_BASE}/users/me/regenerate-api-key`, {
             method: 'POST'

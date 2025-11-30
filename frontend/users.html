@@ -65,6 +65,32 @@
         </div>
     </div>
 
+    <div id="changePasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Change Password</h3>
+            <p class="text-sm text-gray-600 mb-4">Changing password for: <span id="changePasswordUsername" class="font-medium"></span></p>
+            <form id="changePasswordForm" class="space-y-4">
+                <div id="currentPasswordField" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                    <input type="password" id="currentPassword" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                    <input type="password" id="changeNewPassword" required minlength="8" class="w-full px-4 py-2 border rounded-lg">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" required minlength="8" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Change Password</button>
+                    <button type="button" onclick="hideChangePasswordModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
     <script>
@@ -102,8 +128,12 @@
                                         ${user.is_admin ? '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Admin</span>' : '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">User</span>'}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">${new Date(user.created_at).toLocaleDateString()}</td>
-                                    <td class="px-6 py-4 text-sm">
-                                        ${user.username !== userInfo.username ? `<button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800">Delete</button>` : '-'}
+                                    <td class="px-6 py-4 text-sm space-x-2">
+                                        ${user.is_admin && user.username !== userInfo.username
+                                            ? '<span class="text-gray-400">-</span>'
+                                            : `<button onclick="showChangePasswordModal(${user.id}, '${user.username}', ${user.is_admin})" class="text-blue-600 hover:text-blue-800">Change Password</button>`
+                                        }
+                                        ${user.username !== userInfo.username ? `<button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800 ml-2">Delete</button>` : ''}
                                     </td>
                                 </tr>
                             `).join('')}
@@ -152,6 +182,62 @@
                 alert('Failed to delete user: ' + error.message);
             }
         }
+
+        let currentPasswordChangeUserId = null;
+
+        function showChangePasswordModal(userId, username, isAdmin) {
+            currentPasswordChangeUserId = userId;
+            document.getElementById('changePasswordUsername').textContent = username;
+
+            // Show current password field only if changing own password
+            const isOwnPassword = userInfo.username === username;
+            const currentPasswordField = document.getElementById('currentPasswordField');
+            const currentPasswordInput = document.getElementById('currentPassword');
+
+            if (isOwnPassword) {
+                currentPasswordField.classList.remove('hidden');
+                currentPasswordInput.required = true;
+            } else {
+                currentPasswordField.classList.add('hidden');
+                currentPasswordInput.required = false;
+            }
+
+            document.getElementById('changePasswordModal').classList.remove('hidden');
+        }
+
+        function hideChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.add('hidden');
+            document.getElementById('changePasswordForm').reset();
+            currentPasswordChangeUserId = null;
+        }
+
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('changeNewPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            const currentPassword = document.getElementById('currentPassword').value;
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+
+            // Validate password length
+            if (newPassword.length < 8) {
+                alert('Password must be at least 8 characters long');
+                return;
+            }
+
+            try {
+                await api.changePassword(currentPasswordChangeUserId, currentPassword, newPassword);
+                alert('Password changed successfully');
+                hideChangePasswordModal();
+            } catch (error) {
+                alert('Failed to change password: ' + error.message);
+            }
+        });
 
         loadUsers();
     </script>

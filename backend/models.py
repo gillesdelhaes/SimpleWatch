@@ -89,6 +89,11 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class PasswordChangeRequest(BaseModel):
+    current_password: Optional[str] = None  # Required when changing own password
+    new_password: str = Field(..., min_length=8)
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
