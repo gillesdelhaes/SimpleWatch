@@ -64,7 +64,11 @@ def check_monitor(monitor_id: int):
         )
         db.add(status_update)
 
-        monitor.last_check_at = datetime.utcnow()
+        # For deadman monitors, last_check_at should only be updated by heartbeat API
+        # For other monitors, update last_check_at to track when the check ran
+        if monitor.monitor_type != "deadman":
+            monitor.last_check_at = datetime.utcnow()
+
         monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
 
         db.commit()

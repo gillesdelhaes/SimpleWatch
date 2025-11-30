@@ -218,6 +218,10 @@ def get_all_status(api_key: str, db: Session = Depends(get_db)):
                 if latest_status:
                     metadata = json.loads(latest_status.metadata_json) if latest_status.metadata_json else {}
 
+                    # For deadman monitors, use monitor.last_check_at (actual heartbeat time)
+                    # For other monitors, use latest_status.timestamp (last check time)
+                    timestamp = monitor.last_check_at if monitor.monitor_type == "deadman" else latest_status.timestamp
+
                     monitor_statuses.append({
                         "monitor_id": monitor.id,
                         "monitor_type": monitor.monitor_type,
@@ -225,7 +229,7 @@ def get_all_status(api_key: str, db: Session = Depends(get_db)):
                         "check_interval_minutes": monitor.check_interval_minutes,
                         "is_active": monitor.is_active,
                         "status": latest_status.status,
-                        "timestamp": latest_status.timestamp,
+                        "timestamp": timestamp,
                         "response_time_ms": latest_status.response_time_ms,
                         "metadata": metadata
                     })
