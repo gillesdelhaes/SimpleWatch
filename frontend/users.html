@@ -4,142 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Users - SimpleWatch</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        .main-container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .page-title { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, var(--text-primary), var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        .users-list { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 1rem; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--border-color); transition: background var(--transition-normal); }
+        .user-item:last-child { border-bottom: none; }
+        .user-item:hover { background: var(--bg-primary); }
+        .user-info { flex: 1; }
+        .user-name { font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .user-meta { font-size: 0.875rem; color: var(--text-secondary); }
+        .user-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; background: var(--accent-glow); color: var(--accent-primary); margin-left: 0.5rem; }
+        .user-actions { display: flex; gap: 0.5rem; }
+        .icon-btn { background: none; border: none; padding: 0.5rem; cursor: pointer; color: var(--text-secondary); transition: all var(--transition-normal); border-radius: 0.5rem; }
+        .icon-btn:hover { color: var(--accent-primary); background: var(--bg-tertiary); }
+        .icon-btn.delete:hover { color: var(--status-down); }
+
+        .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn var(--transition-normal); }
+        .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 1.5rem; padding: 2rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg); animation: scaleIn var(--transition-normal); }
+        .modal-header { margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; }
+        .modal-subtitle { color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem; }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-input { width: 100%; padding: 0.75rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 0.5rem; color: var(--text-primary); transition: all var(--transition-normal); }
+        .form-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .form-hint { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.75rem; }
+
+        .hidden { display: none; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <h1 class="text-xl font-bold text-gray-800">SimpleWatch</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/static/dashboard.html" class="text-gray-600 hover:text-gray-800">Dashboard</a>
-                    <a href="/static/services.html" class="text-gray-600 hover:text-gray-800">Services</a>
-                    <a href="/static/settings.html" class="text-gray-600 hover:text-gray-800">Settings</a>
-                    <a href="/static/users.html" class="text-blue-600 font-medium">Users</a>
-                    <span class="text-gray-600" id="usernameDisplay"></span>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800">Logout</button>
-                </div>
+<body>
+    <div id="navigation" data-page="users"></div>
+
+    <div class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">User Management</h1>
+                <p style="color: var(--text-secondary);">Manage system users and permissions</p>
             </div>
-        </div>
-    </nav>
-
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">User Management</h2>
-            <button onclick="showAddUserModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                Add User
-            </button>
+            <button onclick="showAddUserModal()" class="btn btn-primary">+ Add User</button>
         </div>
 
-        <div id="usersList" class="bg-white rounded-lg shadow">
-        </div>
+        <div id="usersList" class="users-list"></div>
     </div>
 
-    <div id="addUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold mb-4">Add User</h3>
-            <form id="addUserForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                    <input type="text" id="newUsername" required class="w-full px-4 py-2 border rounded-lg">
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add User</h3>
+            </div>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="newUsername" class="form-input" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <input type="password" id="newPassword" required class="w-full px-4 py-2 border rounded-lg">
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="newPassword" class="form-input" required minlength="8">
+                    <p class="form-hint">Minimum 8 characters</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email (optional)</label>
-                    <input type="email" id="newEmail" class="w-full px-4 py-2 border rounded-lg">
+                <div class="form-group">
+                    <label class="form-label">Email (Optional)</label>
+                    <input type="email" id="newEmail" class="form-input">
                 </div>
-                <div class="flex items-center">
-                    <input type="checkbox" id="newIsAdmin" class="mr-2">
-                    <label for="newIsAdmin" class="text-sm text-gray-700">Admin privileges</label>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="newIsAdmin" style="width: auto;">
+                        <label for="newIsAdmin" style="margin: 0; text-transform: none;">Grant admin privileges</label>
+                    </div>
                 </div>
-                <div class="flex space-x-2">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Create</button>
-                    <button type="button" onclick="hideAddUserModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Create User</button>
+                    <button type="button" onclick="hideAddUserModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="changePasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold mb-4">Change Password</h3>
-            <p class="text-sm text-gray-600 mb-4">Changing password for: <span id="changePasswordUsername" class="font-medium"></span></p>
-            <form id="changePasswordForm" class="space-y-4">
-                <div id="currentPasswordField" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                    <input type="password" id="currentPassword" class="w-full px-4 py-2 border rounded-lg">
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Change Password</h3>
+                <p class="modal-subtitle">User: <span id="changePasswordUsername"></span></p>
+            </div>
+            <form id="changePasswordForm">
+                <div id="currentPasswordField" class="form-group hidden">
+                    <label class="form-label">Current Password</label>
+                    <input type="password" id="currentPassword" class="form-input">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                    <input type="password" id="changeNewPassword" required minlength="8" class="w-full px-4 py-2 border rounded-lg">
-                    <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input type="password" id="changeNewPassword" class="form-input" required minlength="8">
+                    <p class="form-hint">Minimum 8 characters</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" required minlength="8" class="w-full px-4 py-2 border rounded-lg">
+                <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" class="form-input" required minlength="8">
                 </div>
-                <div class="flex space-x-2">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Change Password</button>
-                    <button type="button" onclick="hideChangePasswordModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Change Password</button>
+                    <button type="button" onclick="hideChangePasswordModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
+    <script src="/static/js/nav.js"></script>
     <script>
         requireAuth();
 
         const userInfo = getUserInfo();
-        document.getElementById('usernameDisplay').textContent = userInfo.username;
 
         if (!userInfo.isAdmin) {
             window.location.href = '/static/dashboard.html';
         }
+
+        let changingUserId = null;
 
         async function loadUsers() {
             try {
                 const users = await api.listUsers();
                 const usersList = document.getElementById('usersList');
 
-                usersList.innerHTML = `
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            ${users.map(user => `
-                                <tr>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${user.username}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-600">${user.email || '-'}</td>
-                                    <td class="px-6 py-4 text-sm">
-                                        ${user.is_admin ? '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Admin</span>' : '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">User</span>'}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-600">${new Date(user.created_at).toLocaleDateString()}</td>
-                                    <td class="px-6 py-4 text-sm space-x-2">
-                                        ${user.is_admin && user.username !== userInfo.username
-                                            ? '<span class="text-gray-400">-</span>'
-                                            : `<button onclick="showChangePasswordModal(${user.id}, '${user.username}', ${user.is_admin})" class="text-blue-600 hover:text-blue-800">Change Password</button>`
-                                        }
-                                        ${user.username !== userInfo.username ? `<button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800 ml-2">Delete</button>` : ''}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                usersList.innerHTML = users.map(user => `
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-name">
+                                ${user.username}
+                                ${user.is_admin ? '<span class="user-badge">Admin</span>' : ''}
+                            </div>
+                            <div class="user-meta">${user.email || 'No email'}</div>
+                        </div>
+                        <div class="user-actions">
+                            ${!(user.username != userInfo.username && user.is_admin) ? `
+                                <button class="icon-btn" onclick="showChangePasswordModal(${user.id}, '${user.username}')" title="Change password">
+                                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                            ${user.id != userInfo.id ? `
+                                <button class="icon-btn delete" onclick="deleteUser(${user.id}, '${user.username}')" title="Delete user">
+                                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
             } catch (error) {
                 console.error('Failed to load users:', error);
             }
@@ -154,52 +178,16 @@
             document.getElementById('addUserForm').reset();
         }
 
-        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            try {
-                await api.createUser({
-                    username: document.getElementById('newUsername').value,
-                    password: document.getElementById('newPassword').value,
-                    email: document.getElementById('newEmail').value || null,
-                    is_admin: document.getElementById('newIsAdmin').checked
-                });
-
-                hideAddUserModal();
-                loadUsers();
-            } catch (error) {
-                alert('Failed to create user: ' + error.message);
-            }
-        });
-
-        async function deleteUser(userId) {
-            if (!confirm('Are you sure you want to delete this user?')) return;
-
-            try {
-                await api.deleteUser(userId);
-                loadUsers();
-            } catch (error) {
-                alert('Failed to delete user: ' + error.message);
-            }
-        }
-
-        let currentPasswordChangeUserId = null;
-
-        function showChangePasswordModal(userId, username, isAdmin) {
-            currentPasswordChangeUserId = userId;
+        function showChangePasswordModal(userId, username) {
+            changingUserId = userId;
             document.getElementById('changePasswordUsername').textContent = username;
 
-            // Show current password field only if changing own password
-            const isOwnPassword = userInfo.username === username;
-            const currentPasswordField = document.getElementById('currentPasswordField');
-            const currentPasswordInput = document.getElementById('currentPassword');
-
-            if (isOwnPassword) {
-                currentPasswordField.classList.remove('hidden');
-                currentPasswordInput.required = true;
+            if (username === userInfo.username) {
+                document.getElementById('currentPasswordField').classList.remove('hidden');
+                document.getElementById('currentPassword').required = true;
             } else {
-                currentPasswordField.classList.add('hidden');
-                currentPasswordInput.required = false;
+                document.getElementById('currentPasswordField').classList.add('hidden');
+                document.getElementById('currentPassword').required = false;
             }
 
             document.getElementById('changePasswordModal').classList.remove('hidden');
@@ -208,35 +196,66 @@
         function hideChangePasswordModal() {
             document.getElementById('changePasswordModal').classList.add('hidden');
             document.getElementById('changePasswordForm').reset();
-            currentPasswordChangeUserId = null;
+            changingUserId = null;
         }
+
+        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await api.createUser({
+                    username: document.getElementById('newUsername').value,
+                    password: document.getElementById('newPassword').value,
+                    email: document.getElementById('newEmail').value || null,
+                    is_admin: document.getElementById('newIsAdmin').checked
+                });
+                hideAddUserModal();
+                loadUsers();
+                alert('User created successfully!');
+            } catch (error) {
+                alert('Failed to create user: ' + error.message);
+            }
+        });
 
         document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const newPassword = document.getElementById('changeNewPassword').value;
             const confirmPassword = document.getElementById('confirmNewPassword').value;
-            const currentPassword = document.getElementById('currentPassword').value;
+            const currentPassword = document.getElementById('currentPassword').value;  
 
-            // Validate passwords match
             if (newPassword !== confirmPassword) {
-                alert('New passwords do not match');
-                return;
-            }
-
-            // Validate password length
-            if (newPassword.length < 8) {
-                alert('Password must be at least 8 characters long');
+                alert('Passwords do not match!');
                 return;
             }
 
             try {
-                await api.changePassword(currentPasswordChangeUserId, currentPassword, newPassword);
-                alert('Password changed successfully');
+                await api.changePassword(changingUserId, currentPassword, newPassword);
                 hideChangePasswordModal();
+                alert('Password changed successfully!');
             } catch (error) {
                 alert('Failed to change password: ' + error.message);
             }
+        });
+
+        async function deleteUser(userId, username) {
+            if (!confirm(`Are you sure you want to delete user "${username}"?`)) return;
+
+            try {
+                await api.deleteUser(userId);
+                loadUsers();
+                alert('User deleted successfully!');
+            } catch (error) {
+                alert('Failed to delete user: ' + error.message);
+            }
+        }
+
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
         });
 
         loadUsers();

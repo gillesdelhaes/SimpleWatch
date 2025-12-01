@@ -4,137 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - SimpleWatch</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        .main-container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-title { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, var(--text-primary), var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 3rem; }
+
+        .settings-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 1rem; padding: 2rem; margin-bottom: 2rem; }
+        .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-primary); }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; border-bottom: 1px solid var(--border-color); }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-info { flex: 1; }
+        .setting-label { font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .setting-desc { font-size: 0.875rem; color: var(--text-secondary); }
+
+        .api-key-display { font-family: var(--font-mono); background: var(--bg-primary); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); margin: 1rem 0; word-break: break-all; }
+        .hidden { display: none; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <h1 class="text-xl font-bold text-gray-800">SimpleWatch</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/static/dashboard.html" class="text-gray-600 hover:text-gray-800">Dashboard</a>
-                    <a href="/static/services.html" class="text-gray-600 hover:text-gray-800">Services</a>
-                    <a href="/static/settings.html" class="text-blue-600 font-medium">Settings</a>
-                    <a href="/static/users.html" class="text-gray-600 hover:text-gray-800" id="usersLink">Users</a>
-                    <span class="text-gray-600" id="usernameDisplay"></span>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800">Logout</button>
-                </div>
-            </div>
-        </div>
-    </nav>
+<body>
+    <div id="navigation" data-page="settings"></div>
 
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+    <div class="main-container">
+        <h1 class="page-title">Settings</h1>
 
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">User Profile</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                    <input type="text" id="username" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50">
+        <!-- Appearance Settings -->
+        <div class="settings-section">
+            <h2 class="section-title">⚡ Appearance</h2>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="setting-label">Theme</div>
+                    <div class="setting-desc">Switch between light and dark mode</div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" id="email" readonly class="w-full px-4 py-2 border rounded-lg bg-gray-50">
-                </div>
+                <div id="settingsThemeToggle"></div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">API Key</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Your API Key</label>
-                    <div class="flex space-x-2">
-                        <input type="password" id="apiKey" readonly class="flex-1 px-4 py-2 border rounded-lg bg-gray-50 font-mono text-sm">
-                        <button onclick="toggleApiKeyVisibility()" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Show</button>
-                    </div>
-                    <p class="text-xs text-gray-600 mt-2">Use this key to authenticate API requests</p>
-                </div>
-                <button onclick="regenerateApiKey()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
-                    Regenerate API Key
+        <!-- API Key -->
+        <div class="settings-section">
+            <h2 class="section-title">🔑 API Key</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Use this key to authenticate API requests from your scripts and applications.</p>
+
+            <div class="api-key-display" id="apiKeyDisplay">
+                <span id="apiKeyValue">••••••••••••••••••••••••••••••••</span>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button onclick="toggleApiKeyVisibility()" class="btn btn-secondary" id="toggleBtn">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    Show Key
                 </button>
-                <p class="text-xs text-red-600">Warning: Regenerating will invalidate the current key</p>
+                <button onclick="copyApiKey()" class="btn btn-secondary">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;">
+                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path>
+                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path>
+                    </svg>
+                    Copy Key
+                </button>
+                <button onclick="regenerateApiKey()" class="btn btn-danger">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                    </svg>
+                    Regenerate
+                </button>
             </div>
+            <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">⚠️ Warning: Regenerating will invalidate your current key</p>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">API Documentation</h3>
-            <div class="space-y-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-semibold mb-2">Update Service Status</h4>
-                    <code class="text-xs block bg-white p-2 rounded border">
-curl -X POST http://localhost:5050/api/v1/status \<br>
-  -H "Content-Type: application/json" \<br>
-  -d '{<br>
-    "api_key": "<span id="apiKeyPreview1">YOUR_API_KEY</span>",<br>
-    "service": "my_service",<br>
-    "status": "operational"<br>
-  }'
-                    </code>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-semibold mb-2">Send Metric Value</h4>
-                    <code class="text-xs block bg-white p-2 rounded border">
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \<br>
-  -H "Content-Type: application/json" \<br>
-  -d '{<br>
-    "api_key": "<span id="apiKeyPreview2">YOUR_API_KEY</span>",<br>
-    "value": 87.5<br>
-  }'
-                    </code>
-                </div>
+        <!-- API Examples -->
+        <div class="settings-section">
+            <h2 class="section-title">📚 API Examples</h2>
+
+            <div class="code-example">
+                <div class="code-example-title">Send Metric Value</div>
+                <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
+            </div>
+
+            <div class="code-example">
+                <div class="code-example-title">Send Heartbeat (Deadman Monitor)</div>
+                <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
+            </div>
+
+            <div class="code-example">
+                <div class="code-example-title">Update Service Status</div>
+                <div class="code-block">curl -X POST http://localhost:5050/api/v1/status \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "service": "my_service",<br>    "status": "operational"<br>  }'</div>
             </div>
         </div>
     </div>
 
+    <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
+    <script src="/static/js/nav.js"></script>
     <script>
         requireAuth();
+        insertThemeToggle('settingsThemeToggle');
 
         const userInfo = getUserInfo();
-        document.getElementById('usernameDisplay').textContent = userInfo.username;
-
-        if (!userInfo.isAdmin) {
-            document.getElementById('usersLink').style.display = 'none';
-        }
+        let currentApiKey = '';
+        let keyVisible = false;
 
         async function loadUserInfo() {
             try {
                 const user = await api.getCurrentUser();
-                document.getElementById('username').value = user.username;
-                document.getElementById('email').value = user.email || '';
-                document.getElementById('apiKey').value = user.api_key;
-                document.getElementById('apiKeyPreview1').textContent = user.api_key;
-                document.getElementById('apiKeyPreview2').textContent = user.api_key;
+                currentApiKey = user.api_key;
             } catch (error) {
                 console.error('Failed to load user info:', error);
             }
         }
 
         function toggleApiKeyVisibility() {
-            const apiKeyInput = document.getElementById('apiKey');
-            const button = event.target;
+            const display = document.getElementById('apiKeyValue');
+            const btn = document.getElementById('toggleBtn');
 
-            if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                button.textContent = 'Hide';
+            if (keyVisible) {
+                display.textContent = '••••••••••••••••••••••••••••••••';
+                btn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>Show Key';
+                keyVisible = false;
             } else {
-                apiKeyInput.type = 'password';
-                button.textContent = 'Show';
+                display.textContent = currentApiKey;
+                btn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"></path><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"></path></svg>Hide Key';
+                keyVisible = true;
             }
         }
 
+        function copyApiKey() {
+            navigator.clipboard.writeText(currentApiKey).then(() => {
+                alert('API key copied to clipboard!');
+            });
+        }
+
         async function regenerateApiKey() {
-            if (!confirm('Are you sure? This will invalidate your current API key.')) return;
+            if (!confirm('Are you sure? This will invalidate your current API key and may break existing integrations.')) return;
 
             try {
                 const user = await api.regenerateApiKey();
+                currentApiKey = user.api_key;
                 localStorage.setItem('apiKey', user.api_key);
-                loadUserInfo();
+                if (keyVisible) {
+                    document.getElementById('apiKeyValue').textContent = currentApiKey;
+                }
                 alert('API key regenerated successfully!');
             } catch (error) {
                 alert('Failed to regenerate API key: ' + error.message);

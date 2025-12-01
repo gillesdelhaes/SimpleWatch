@@ -4,57 +4,265 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SimpleWatch</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        .background-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .background-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                circle at 50% 50%,
+                var(--accent-glow) 0%,
+                transparent 70%
+            );
+            opacity: 0.4;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        /* Login container */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            padding: 3rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Logo animation */
+        .logo {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo-text {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .logo-subtitle {
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Form styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all var(--transition-normal);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+            opacity: 0;
+            transition: opacity var(--transition-normal);
+        }
+
+        .submit-btn:hover::before {
+            opacity: 1;
+        }
+
+        .submit-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Error message */
+        .error-message {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--status-down-bg);
+            border: 1px solid var(--status-down);
+            border-radius: 0.75rem;
+            color: var(--status-down);
+            font-size: 0.875rem;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Theme toggle in corner */
+        .corner-theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 20;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">SimpleWatch</h1>
-            <p class="text-gray-600 mt-2">Monitor your services with ease</p>
+<body>
+    <!-- Background effects -->
+    <div class="background-grid"></div>
+    <div class="background-glow"></div>
+
+    <!-- Theme toggle -->
+    <div class="corner-theme-toggle">
+        <div id="themeToggleContainer"></div>
+    </div>
+
+    <!-- Login container -->
+    <div class="login-container">
+        <div class="logo">
+            <h1 class="logo-text">SimpleWatch</h1>
+            <p class="logo-subtitle">Mission Control</p>
         </div>
 
-        <form id="loginForm" class="space-y-6">
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+        <form id="loginForm">
+            <div id="errorMessage" class="error-message hidden"></div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
                 <input
                     type="text"
                     id="username"
                     name="username"
                     required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your username"
+                    placeholder="Enter username"
+                    autocomplete="username"
                 >
             </div>
 
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <div class="form-group">
+                <label for="password">Password</label>
                 <input
                     type="password"
                     id="password"
                     name="password"
                     required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your password"
+                    placeholder="Enter password"
+                    autocomplete="current-password"
                 >
             </div>
 
-            <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"></div>
-
-            <button
-                type="submit"
-                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-                Login
+            <button type="submit" class="submit-btn">
+                <span>Access System</span>
             </button>
         </form>
-
-        <div class="mt-6 text-center text-sm text-gray-600">
-            <p>Default credentials: admin / changeme</p>
-        </div>
     </div>
 
+    <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script>
+        // Insert theme toggle
+        insertThemeToggle('themeToggleContainer');
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
