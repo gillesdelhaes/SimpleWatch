@@ -11,10 +11,10 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 from database import init_db, SessionLocal
-from utils.db import create_default_admin
+from utils.db import create_default_admin, initialize_encryption_key
 from scheduler import start_scheduler, stop_scheduler
 
-from api import auth, status, services, users, monitors, webhooks, heartbeat
+from api import auth, status, services, users, monitors, heartbeat, notifications
 
 load_dotenv()
 
@@ -37,6 +37,9 @@ async def lifespan(app: FastAPI):
     try:
         create_default_admin(db)
         logger.info("Default admin user checked")
+
+        initialize_encryption_key(db)
+        logger.info("Encryption key initialized")
 
         create_examples = os.getenv("CREATE_EXAMPLES", "true").lower() == "true"
         if create_examples:
@@ -75,8 +78,8 @@ app.include_router(status.router)
 app.include_router(services.router)
 app.include_router(users.router)
 app.include_router(monitors.router)
-app.include_router(webhooks.router)
 app.include_router(heartbeat.router)
+app.include_router(notifications.router)
 
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")

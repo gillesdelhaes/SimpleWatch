@@ -31,11 +31,6 @@
         .monitor-interval { font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; }
         .monitor-actions { display: flex; gap: 0.5rem; }
 
-        /* Icon buttons */
-        .icon-btn { background: none; border: none; padding: 0.5rem; cursor: pointer; color: var(--text-secondary); transition: all var(--transition-normal); border-radius: 0.5rem; }
-        .icon-btn:hover { color: var(--accent-primary); background: var(--bg-tertiary); }
-        .icon-btn.delete:hover { color: var(--status-down); }
-
         /* Form styling */
         .form-group { margin-bottom: 1.5rem; }
         .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -126,6 +121,55 @@
                     <label class="form-label">Category</label>
                     <input type="text" id="editServiceCategory" class="form-input">
                 </div>
+
+                <!-- Notification Settings Section -->
+                <div style="border-top: 1px solid var(--border-color); margin-top: 2rem; padding-top: 2rem;">
+                    <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">🔔 Notification Settings</h4>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editNotificationsEnabled" class="form-checkbox" checked>
+                            <span>Enable notifications for this service</span>
+                        </label>
+                    </div>
+
+                    <div id="notificationSettingsContent">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="editEmailEnabled" class="form-checkbox">
+                                <span>Send email notifications</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group" id="emailRecipientsGroup" style="display: none;">
+                            <label class="form-label">Email Recipients (comma-separated)</label>
+                            <input type="text" id="editEmailRecipients" class="form-input" placeholder="admin@example.com, ops@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Webhook Channels</label>
+                            <div id="webhookChannelsList" style="font-size: 0.875rem; color: var(--text-secondary);">
+                                Loading channels...
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cooldown Period (minutes)</label>
+                            <input type="number" id="editCooldownMinutes" class="form-input" value="5" min="1">
+                            <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">
+                                Minimum time between notifications to prevent spam
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="editNotifyOnRecovery" class="form-checkbox" checked>
+                                <span>Send recovery notifications</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
                     <button type="button" onclick="hideEditServiceModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
@@ -814,11 +858,15 @@
             document.getElementById('quickMonitorModal').classList.add('hidden');
             backToMonitorSelection();
         }
-        function showEditServiceModal(id, name, desc, cat) {
+        async function showEditServiceModal(id, name, desc, cat) {
             document.getElementById('editServiceId').value = id;
             document.getElementById('editServiceName').value = name;
             document.getElementById('editServiceDescription').value = desc;
             document.getElementById('editServiceCategory').value = cat;
+
+            // Load notification settings for this service
+            await loadNotificationSettingsForService(id);
+
             document.getElementById('editServiceModal').classList.remove('hidden');
         }
         function hideEditServiceModal() { document.getElementById('editServiceModal').classList.add('hidden'); }
@@ -866,11 +914,30 @@
             e.preventDefault();
             try {
                 const id = document.getElementById('editServiceId').value;
+
+                // Update service details
                 await api.updateService(id, {
                     name: document.getElementById('editServiceName').value,
                     description: document.getElementById('editServiceDescription').value,
                     category: document.getElementById('editServiceCategory').value
                 });
+
+                // Update notification settings
+                const channelCheckboxes = document.querySelectorAll('input[name="webhook_channel"]:checked');
+                const selectedChannelIds = Array.from(channelCheckboxes).map(cb => cb.value);
+
+                await authenticatedFetch(`/api/v1/notifications/services/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        enabled: document.getElementById('editNotificationsEnabled').checked,
+                        email_enabled: document.getElementById('editEmailEnabled').checked,
+                        email_recipients: document.getElementById('editEmailRecipients').value || null,
+                        channel_ids: selectedChannelIds.length > 0 ? JSON.stringify(selectedChannelIds.map(Number)) : null,
+                        cooldown_minutes: parseInt(document.getElementById('editCooldownMinutes').value),
+                        notify_on_recovery: document.getElementById('editNotifyOnRecovery').checked
+                    })
+                });
+
                 hideEditServiceModal();
                 loadServices();
             } catch (error) {
@@ -1417,6 +1484,102 @@
                 }
             });
         });
+
+        // ============================================
+        // Notification Settings Functions
+        // ============================================
+
+        // Toggle email recipients field visibility
+        document.getElementById('editEmailEnabled').addEventListener('change', (e) => {
+            const recipientsGroup = document.getElementById('emailRecipientsGroup');
+            if (e.target.checked) {
+                recipientsGroup.style.display = 'block';
+            } else {
+                recipientsGroup.style.display = 'none';
+            }
+        });
+
+        // Toggle notification settings content visibility
+        document.getElementById('editNotificationsEnabled').addEventListener('change', (e) => {
+            const content = document.getElementById('notificationSettingsContent');
+            if (e.target.checked) {
+                content.style.opacity = '1';
+                content.style.pointerEvents = 'auto';
+            } else {
+                content.style.opacity = '0.5';
+                content.style.pointerEvents = 'none';
+            }
+        });
+
+        async function loadNotificationSettingsForService(serviceId) {
+            try {
+                // Load all active webhook channels (tested or not)
+                const channelsResponse = await authenticatedFetch('/api/v1/notifications/channels');
+                const activeChannels = (channelsResponse.channels || []).filter(c => c.is_active);
+
+                // Render webhook channels checkboxes
+                const webhookList = document.getElementById('webhookChannelsList');
+                if (activeChannels.length === 0) {
+                    webhookList.innerHTML = '<span style="color: var(--text-tertiary);">No webhook channels configured. <a href="/static/notifications.html" style="color: var(--accent-primary);">Add channels</a></span>';
+                } else {
+                    webhookList.innerHTML = activeChannels.map(channel => `
+                        <label class="checkbox-label" style="margin-bottom: 0.5rem;">
+                            <input type="checkbox" name="webhook_channel" value="${channel.id}" class="form-checkbox">
+                            <span>${channel.label} (${channel.channel_type})${channel.is_tested ? ' ✓' : ' (not tested)'}</span>
+                        </label>
+                    `).join('');
+                }
+
+                // Load existing notification settings (API returns settings object directly)
+                const settings = await authenticatedFetch(`/api/v1/notifications/services/${serviceId}`);
+                if (settings && settings.service_id) {
+
+                    document.getElementById('editNotificationsEnabled').checked = settings.enabled;
+                    document.getElementById('editEmailEnabled').checked = settings.email_enabled;
+                    document.getElementById('editEmailRecipients').value = settings.email_recipients || '';
+                    document.getElementById('editCooldownMinutes').value = settings.cooldown_minutes;
+                    document.getElementById('editNotifyOnRecovery').checked = settings.notify_on_recovery;
+
+                    // Show/hide email recipients group
+                    document.getElementById('emailRecipientsGroup').style.display = settings.email_enabled ? 'block' : 'none';
+
+                    // Check selected channels
+                    if (settings.channel_ids) {
+                        try {
+                            const selectedIds = JSON.parse(settings.channel_ids);
+                            selectedIds.forEach(id => {
+                                const checkbox = document.querySelector(`input[name="webhook_channel"][value="${id}"]`);
+                                if (checkbox) checkbox.checked = true;
+                            });
+                        } catch (e) {
+                            console.error('Failed to parse channel_ids:', e);
+                        }
+                    }
+
+                    // Update content visibility
+                    const content = document.getElementById('notificationSettingsContent');
+                    if (settings.enabled) {
+                        content.style.opacity = '1';
+                        content.style.pointerEvents = 'auto';
+                    } else {
+                        content.style.opacity = '0.5';
+                        content.style.pointerEvents = 'none';
+                    }
+                } else {
+                    // No settings exist, use defaults
+                    document.getElementById('editNotificationsEnabled').checked = true;
+                    document.getElementById('editEmailEnabled').checked = false;
+                    document.getElementById('editEmailRecipients').value = '';
+                    document.getElementById('editCooldownMinutes').value = 5;
+                    document.getElementById('editNotifyOnRecovery').checked = true;
+                    document.getElementById('emailRecipientsGroup').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load notification settings:', error);
+                // Use defaults on error
+                document.getElementById('webhookChannelsList').innerHTML = '<span style="color: var(--text-tertiary);">Failed to load channels</span>';
+            }
+        }
 
         loadServices();
     </script>

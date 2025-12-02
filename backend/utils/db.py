@@ -2,8 +2,9 @@
 Database utility functions.
 """
 from sqlalchemy.orm import Session
-from database import User, Service
+from database import User, Service, EncryptionKey
 from utils.auth import hash_password, generate_api_key
+from cryptography.fernet import Fernet
 import os
 
 
@@ -57,3 +58,34 @@ def create_service_if_not_exists(db: Session, name: str, description: str = None
         db.commit()
         db.refresh(service)
     return service
+
+
+def initialize_encryption_key(db: Session):
+    """
+    Initialize encryption key for SMTP password encryption.
+    Creates a new Fernet key on first deployment if not exists.
+    This is called automatically during app startup.
+    """
+    existing_key = db.query(EncryptionKey).first()
+    if not existing_key:
+        # Generate new Fernet key (32 url-safe base64-encoded bytes)
+        new_key = Fernet.generate_key()
+        encryption_key = EncryptionKey(
+            key_value=new_key.decode()  # Store as string
+        )
+        db.add(encryption_key)
+        db.commit()
+        print("Encryption key auto-generated and stored in database")
+        return new_key.decode()
+    return existing_key.key_value
+
+
+def get_encryption_key(db: Session) -> str:
+    """
+    Get the encryption key from database.
+    Returns the key as a string (base64-encoded).
+    """
+    key_record = db.query(EncryptionKey).first()
+    if not key_record:
+        raise RuntimeError("Encryption key not initialized. This should not happen - check app startup.")
+    return key_record.key_value

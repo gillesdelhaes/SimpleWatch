@@ -5,12 +5,13 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from database import SessionLocal, Monitor, StatusUpdate, Service
+from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings
 from monitors.website import WebsiteMonitor
 from monitors.api import APIMonitor
 from monitors.metric import MetricThresholdMonitor
 from monitors.port import PortMonitor
 from monitors.deadman import DeadmanMonitor
+from services.notification_service import determine_service_status, send_service_notification
 import json
 import time
 
@@ -72,6 +73,21 @@ def check_monitor(monitor_id: int):
         monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
 
         db.commit()
+
+        # Check if service status changed and send notifications
+        new_service_status = determine_service_status(db, monitor.service_id)
+
+        # Get previous service status from notification settings
+        settings = db.query(ServiceNotificationSettings).filter(
+            ServiceNotificationSettings.service_id == monitor.service_id
+        ).first()
+
+        old_service_status = settings.last_notified_status if settings else "unknown"
+
+        # If status changed, send notification
+        if new_service_status != old_service_status:
+            logger.info(f"Service {monitor.service_id} status changed: {old_service_status} → {new_service_status}")
+            send_service_notification(db, monitor.service_id, old_service_status, new_service_status)
 
         logger.info(f"Monitor {monitor.id} check completed: {result.get('status')}")
 

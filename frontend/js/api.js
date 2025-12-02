@@ -202,3 +202,36 @@ class APIClient {
 }
 
 const api = new APIClient();
+
+// Helper function for authenticated fetch (used by some pages)
+async function authenticatedFetch(url, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('apiKey');
+        window.location.href = '/static/login.html';
+        throw new Error('Unauthorized');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.error || data.detail || 'Request failed');
+    }
+
+    return data;
+}

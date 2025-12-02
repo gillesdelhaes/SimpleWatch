@@ -44,3 +44,6 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+#Custom
+*.backup

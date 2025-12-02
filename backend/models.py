@@ -172,25 +172,87 @@ class MonitorResponse(BaseModel):
         from_attributes = True
 
 
-class WebhookCreate(BaseModel):
-    url: str
-    event_types: List[str]
-    secret_token: Optional[str] = None
+class DashboardLayoutUpdate(BaseModel):
+    layout_json: str
 
 
-class WebhookResponse(BaseModel):
+# ============================================
+# Notification Models
+# ============================================
+
+class SMTPConfigBase(BaseModel):
+    host: str
+    port: int = 587
+    username: str
+    from_address: str
+    use_tls: bool = True
+
+
+class SMTPConfigCreate(SMTPConfigBase):
+    password: str  # Plain text, will be encrypted
+
+
+class SMTPConfigUpdate(SMTPConfigBase):
+    password: Optional[str] = None  # Only if changing
+
+
+class SMTPConfigResponse(SMTPConfigBase):
     id: int
-    url: str
-    event_types: str
-    is_active: bool
-    secret_token: Optional[str]
+    is_tested: bool
+    tested_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 
-class DashboardLayoutUpdate(BaseModel):
-    layout_json: str
+class NotificationChannelBase(BaseModel):
+    label: str
+    channel_type: str  # 'slack', 'discord', 'generic'
+    webhook_url: str
+    secret_token: Optional[str] = None
+    custom_payload_template: Optional[str] = None
+
+
+class NotificationChannelCreate(NotificationChannelBase):
+    pass
+
+
+class NotificationChannelUpdate(NotificationChannelBase):
+    pass
+
+
+class NotificationChannelResponse(NotificationChannelBase):
+    id: int
+    user_id: int
+    is_active: bool
+    is_tested: bool
+    tested_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ServiceNotificationSettingsBase(BaseModel):
+    enabled: bool = True
+    email_enabled: bool = False
+    email_recipients: Optional[str] = None
+    channel_ids: Optional[str] = None  # JSON array string
+    cooldown_minutes: int = 5
+    notify_on_recovery: bool = True
+
+
+class ServiceNotificationSettingsUpdate(ServiceNotificationSettingsBase):
+    pass
+
+
+class ServiceNotificationSettingsResponse(ServiceNotificationSettingsBase):
+    id: int
+    service_id: int
+    last_notification_sent_at: Optional[datetime] = None
+    last_notified_status: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 
 class ErrorResponse(BaseModel):

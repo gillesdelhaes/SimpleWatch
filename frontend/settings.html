@@ -73,25 +73,6 @@
             <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">⚠️ Warning: Regenerating will invalidate your current key</p>
         </div>
 
-        <!-- API Examples -->
-        <div class="settings-section">
-            <h2 class="section-title">📚 API Examples</h2>
-
-            <div class="code-example">
-                <div class="code-example-title">Send Metric Value</div>
-                <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-            </div>
-
-            <div class="code-example">
-                <div class="code-example-title">Send Heartbeat (Deadman Monitor)</div>
-                <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-            </div>
-
-            <div class="code-example">
-                <div class="code-example-title">Update Service Status</div>
-                <div class="code-block">curl -X POST http://localhost:5050/api/v1/status \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "service": "my_service",<br>    "status": "operational"<br>  }'</div>
-            </div>
-        </div>
     </div>
 
     <script src="/static/js/theme.js"></script>

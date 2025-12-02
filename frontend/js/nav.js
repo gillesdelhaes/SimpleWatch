@@ -12,6 +12,7 @@ function createNavigation(activePage) {
                 <div style="display: flex; align-items: center; gap: 2rem;">
                     <a href="/static/dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a>
                     <a href="/static/services.html" class="nav-link ${activePage === 'services' ? 'active' : ''}">Services</a>
+                    <a href="/static/notifications.html" class="nav-link ${activePage === 'notifications' ? 'active' : ''}">Notifications</a>
                     <a href="/static/settings.html" class="nav-link ${activePage === 'settings' ? 'active' : ''}">Settings</a>
                     ${userInfo.isAdmin ? `<a href="/static/users.html" class="nav-link ${activePage === 'users' ? 'active' : ''}">Users</a>` : ''}
                     <div id="navThemeToggle"></div>

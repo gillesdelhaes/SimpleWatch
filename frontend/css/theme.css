@@ -457,3 +457,59 @@ label {
   overflow-x: auto;
   line-height: 1.6;
 }
+
+/* ============================================ */
+/* Form Elements - Checkboxes & Icon Buttons */
+/* ============================================ */
+
+/* Checkbox styling - consistent across all pages */
+.form-checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-right: 0.75rem;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 0;
+}
+
+.checkbox-label span {
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Icon buttons - consistent across all pages */
+.icon-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-tertiary);
+}
+
+.icon-btn.delete:hover {
+  color: var(--status-down);
+}
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
