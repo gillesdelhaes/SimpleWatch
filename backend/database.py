@@ -50,7 +50,6 @@ class Service(Base):
 
     owner = relationship("User", back_populates="services")
     status_updates = relationship("StatusUpdate", back_populates="service")
-    incidents = relationship("Incident", back_populates="service")
     monitors = relationship("Monitor", back_populates="service")
 
 
@@ -78,19 +77,6 @@ class DashboardLayout(Base):
     updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="dashboard_layouts")
-
-
-class Incident(Base):
-    __tablename__ = "incidents"
-
-    id = Column(Integer, primary_key=True, index=True)
-    service_id = Column(Integer, ForeignKey("services.id"), index=True)
-    started_at = Column(TIMESTAMP, default=datetime.utcnow)
-    resolved_at = Column(TIMESTAMP)
-    severity = Column(String(50))
-    description = Column(Text)
-
-    service = relationship("Service", back_populates="incidents")
 
 
 class Monitor(Base):

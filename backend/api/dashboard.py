@@ -1,18 +1,13 @@
 """
 Dashboard API endpoints.
-Provides read-only status endpoints and metric monitor updates.
+Provides read-only status queries for the dashboard.
 All status is derived from monitors - no arbitrary status updates allowed.
 """
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from database import get_db, StatusUpdate, Service, Incident
-from models import (
-    MetricUpdateRequest,
-    MetricUpdateResponse,
-    StatusResponse
-)
+from database import get_db, StatusUpdate, Service
+from models import StatusResponse
 from api.auth import get_user_from_api_key
-from utils.db import get_service_by_name
 from datetime import datetime
 import json
 from typing import List, Optional
@@ -49,112 +44,6 @@ def calculate_service_status_from_counts(operational: int, degraded: int, down: 
     else:
         # Some monitors failing = degraded
         return "degraded"
-
-
-# ============================================
-# Metric Monitor Endpoints
-# ============================================
-
-@router.post("/metric/{service_name}", response_model=MetricUpdateResponse)
-@router.post("/metric/{service_name}/{monitor_name}", response_model=MetricUpdateResponse)
-def update_metric(
-    service_name: str,
-    request: MetricUpdateRequest,
-    db: Session = Depends(get_db),
-    monitor_name: str = None
-):
-    """
-    Update metric for a service.
-
-    If monitor_name is provided, updates the specific monitor with that name.
-    Otherwise, updates the first active metric monitor found (backward compatibility).
-    """
-    user = get_user_from_api_key(request.api_key, db)
-
-    service = get_service_by_name(db, service_name)
-    if not service:
-        raise HTTPException(status_code=404, detail="Service not found")
-
-    from database import Monitor
-
-    # Find monitor by name if provided, otherwise get first one
-    if monitor_name:
-        # Look for monitor with matching name in config
-        monitors = db.query(Monitor).filter(
-            Monitor.service_id == service.id,
-            Monitor.monitor_type == "metric_threshold",
-            Monitor.is_active == True
-        ).all()
-
-        monitor = None
-        for m in monitors:
-            config = json.loads(m.config_json)
-            if config.get("name") == monitor_name:
-                monitor = m
-                break
-
-        if not monitor:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No active metric threshold monitor named '{monitor_name}' found for service '{service_name}'"
-            )
-    else:
-        # Backward compatibility: get first monitor
-        monitor = db.query(Monitor).filter(
-            Monitor.service_id == service.id,
-            Monitor.monitor_type == "metric_threshold",
-            Monitor.is_active == True
-        ).first()
-
-        if not monitor:
-            raise HTTPException(
-                status_code=404,
-                detail="No active metric threshold monitor configured for this service"
-            )
-
-    config = json.loads(monitor.config_json)
-    warning_threshold = config.get("warning_threshold")
-    critical_threshold = config.get("critical_threshold")
-    comparison = config.get("comparison", "greater")
-
-    status = "operational"
-    reason = f"Value {request.value} is within normal range"
-
-    if comparison == "greater":
-        if request.value >= critical_threshold:
-            status = "down"
-            reason = f"Value {request.value} exceeds critical threshold of {critical_threshold}"
-        elif request.value >= warning_threshold:
-            status = "degraded"
-            reason = f"Value {request.value} exceeds warning threshold of {warning_threshold}"
-    else:
-        if request.value <= critical_threshold:
-            status = "down"
-            reason = f"Value {request.value} is below critical threshold of {critical_threshold}"
-        elif request.value <= warning_threshold:
-            status = "degraded"
-            reason = f"Value {request.value} is below warning threshold of {warning_threshold}"
-
-    status_update = StatusUpdate(
-        service_id=service.id,
-        monitor_id=monitor.id,
-        status=status,
-        timestamp=datetime.utcnow(),
-        metadata_json=json.dumps({"value": request.value, "reason": reason})
-    )
-    db.add(status_update)
-
-    handle_incident_tracking(db, service, status)
-
-    db.commit()
-
-    return MetricUpdateResponse(
-        success=True,
-        service=service_name,
-        value=request.value,
-        status=status,
-        reason=reason
-    )
 
 
 # ============================================
@@ -310,28 +199,3 @@ def get_status(
         response_time_ms=latest_status.response_time_ms,
         metadata=metadata
     )
-
-
-def handle_incident_tracking(db: Session, service: Service, new_status: str):
-    """Track incidents based on status changes."""
-    latest_incident = db.query(Incident).filter(
-        Incident.service_id == service.id,
-        Incident.resolved_at == None
-    ).first()
-
-    if new_status in ["down", "degraded"]:
-        if not latest_incident:
-            incident = Incident(
-                service_id=service.id,
-                started_at=datetime.utcnow(),
-                severity=new_status,
-                description=f"Service entered {new_status} state"
-            )
-            db.add(incident)
-        elif latest_incident.severity != new_status:
-            latest_incident.severity = new_status
-            latest_incident.description = f"Service status changed to {new_status}"
-
-    elif new_status == "operational":
-        if latest_incident:
-            latest_incident.resolved_at = datetime.utcnow()
