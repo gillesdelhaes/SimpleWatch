@@ -26,6 +26,8 @@ A self-hosted monitoring dashboard designed for business users to track the stat
 - Drag-and-drop dashboard customization
 - Real-time status updates (10-second polling)
 - Last heartbeat timestamp display for deadman monitors
+- **Notification system** - Email (SMTP), Slack, Discord, and custom webhooks
+- Service-level notification settings with cooldown and recovery alerts
 - Simple REST API for automation
 - Built-in background scheduler (no Redis/Celery needed)
 - 4 working example monitors included
@@ -88,17 +90,8 @@ ADMIN_PASSWORD=changeme
 # Database
 DATABASE_PATH=/data/simplewatch.db
 
-# Email Notifications (Optional)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your_email@gmail.com
-SMTP_PASSWORD=your_app_password
-SMTP_FROM=alerts@yourdomain.com
-SMTP_USE_TLS=true
-
 # Features
 CREATE_EXAMPLES=true
-PUBLIC_STATUS_PAGE=false
 DATA_RETENTION_DAYS=90
 ```
 
@@ -113,32 +106,42 @@ When `CREATE_EXAMPLES=true` (default), SimpleWatch creates 4 example monitors:
 
 These examples demonstrate all monitor types and can be deleted after testing.
 
+## Notifications
+
+SimpleWatch includes a built-in notification system to alert you when service status changes.
+
+### Supported Channels
+- **Email (SMTP)** - Configure in Settings → Email Notifications
+- **Slack** - Add webhook URL in Settings → Notification Channels
+- **Discord** - Add webhook URL in Settings → Notification Channels
+- **Custom Webhooks** - Generic JSON webhooks for any system
+
+### Per-Service Configuration
+For each service, you can configure:
+- Enable/disable notifications
+- Email recipients (comma-separated)
+- Webhook channels to notify
+- Cooldown period (prevent alert spam)
+- Recovery notifications (alert when service comes back up)
+
+**Setup:**
+1. Go to Settings → Configure SMTP or add webhook channels
+2. Test your configuration
+3. Go to Services → Click notification icon for a service
+4. Enable notifications and select channels
+5. Save
+
+Notifications are sent automatically when:
+- Service status changes (operational ↔ degraded ↔ down)
+- Respects cooldown period (default: 5 minutes)
+- Always sends recovery notifications (when service comes back up)
+
 ## Ultra-Simple API
-
-### Update Service Status
-
-```bash
-curl -X POST http://localhost:5050/api/v1/status \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY",
-    "service": "my_service",
-    "status": "operational"
-  }'
-```
 
 ### Send Metric Value
 
 ```bash
-# Update unnamed monitor or first monitor
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY",
-    "value": 87.5
-  }'
-
-# Update specific named monitor (if you have multiple metric monitors)
+# Update specific named monitor (required)
 curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{
@@ -150,14 +153,7 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
 ### Send Heartbeat (Deadman Monitor)
 
 ```bash
-# Ping unnamed monitor or first monitor
-curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY"
-  }'
-
-# Ping specific named monitor (if you have multiple deadman monitors)
+# Ping specific named monitor (required)
 curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{
@@ -167,33 +163,36 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
 
 Get your API key from Settings page after logging in.
 
-**Note:** Monitor names are optional. Use them when you have multiple metric or deadman monitors per service (e.g., `cpu`, `memory`, and `disk` monitors for one server).
+**Note:** Service name and monitor name are both required. Monitor names are specified when creating the monitor.
 
 ## Project Structure
 
 ```
 simplewatch/
 ├── backend/
-│   ├── app.py              # Main FastAPI application
-│   ├── database.py         # Database models and initialization
-│   ├── models.py           # Pydantic models for validation
-│   ├── scheduler.py        # APScheduler background monitor scheduler
-│   ├── api/                # API endpoints
-│   │   ├── auth.py         # Authentication endpoints
-│   │   ├── status.py       # Status update endpoints
-│   │   ├── services.py     # Service CRUD endpoints
-│   │   ├── monitors.py     # Monitor CRUD endpoints
-│   │   ├── users.py        # User management endpoints
-│   │   ├── webhooks.py     # Webhook endpoints
-│   │   └── heartbeat.py    # Heartbeat API for deadman monitors
-│   ├── monitors/           # Monitor implementations
-│   │   ├── website.py      # Website monitor
-│   │   ├── api.py          # API monitor
-│   │   ├── metric.py       # Metric threshold monitor
-│   │   ├── port.py         # Port monitor
-│   │   └── deadman.py      # Deadman/heartbeat monitor
-│   ├── utils/              # Utility functions
-│   └── examples/           # Example scripts
+│   ├── app.py                    # Main FastAPI application
+│   ├── database.py               # Database models and initialization
+│   ├── models.py                 # Pydantic models for validation
+│   ├── scheduler.py              # APScheduler background monitor scheduler
+│   ├── api/                      # API endpoints
+│   │   ├── auth.py               # Authentication endpoints
+│   │   ├── dashboard.py          # Dashboard status queries (read-only)
+│   │   ├── services.py           # Service CRUD endpoints
+│   │   ├── monitors.py           # Monitor CRUD endpoints
+│   │   ├── users.py              # User management endpoints
+│   │   ├── notifications.py      # Notification configuration endpoints
+│   │   └── monitor_ingestion.py # Metric and heartbeat data ingestion
+│   ├── monitors/                 # Monitor implementations
+│   │   ├── website.py            # Website monitor
+│   │   ├── api.py                # API monitor
+│   │   ├── metric.py             # Metric threshold monitor
+│   │   ├── port.py               # Port monitor
+│   │   └── deadman.py            # Deadman/heartbeat monitor
+│   ├── services/                 # Business logic layer
+│   │   └── notification_service.py # Notification orchestration
+│   ├── utils/                    # Utility functions
+│   │   └── notifications.py      # SMTP and webhook helpers
+│   └── examples/                 # Example scripts
 ├── frontend/
 │   ├── dashboard.html      # Main dashboard (shows last heartbeat)
 │   ├── services.html       # Service management + Quick Monitor + Edit
@@ -294,15 +293,19 @@ For issues and questions:
 
 ## Roadmap
 
+Completed features:
+- ✅ Notifications (Email, Slack, Discord, custom webhooks)
+- ✅ Service-level notification settings
+- ✅ Per-service notification configuration with cooldown
+
 Future enhancements (not yet implemented):
 - Advanced charting and custom dashboards
+- Incident tracking and MTTR calculations
 - Alert rules engine
 - Integration marketplace
 - Mobile app
 - Multi-tenancy support
 - SSO/LDAP authentication
-- Incident management system
-- ChatOps integrations
 
 ---
 

@@ -8,10 +8,11 @@ Complete guide to using SimpleWatch for monitoring your services.
 2. [Understanding the Dashboard](#understanding-the-dashboard)
 3. [Creating Monitors](#creating-monitors)
 4. [Managing Services](#managing-services)
-5. [Using the API](#using-the-api)
-6. [User Management](#user-management)
-7. [Best Practices](#best-practices)
-8. [FAQ](#faq)
+5. [Setting Up Notifications](#setting-up-notifications)
+6. [Using the API](#using-the-api)
+7. [User Management](#user-management)
+8. [Best Practices](#best-practices)
+9. [FAQ](#faq)
 
 ---
 
@@ -171,13 +172,8 @@ The fastest way to create a monitor:
 You'll see the API endpoint to send values:
 
 ```bash
-# Without monitor name
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
-  -H "Content-Type: application/json" \
-  -d '{"api_key":"YOUR_KEY","value":87.5}'
-
-# With monitor name
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/disk_usage \
+# Both service name and monitor name are required
+curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{"api_key":"YOUR_KEY","value":87.5}'
 ```
@@ -245,13 +241,8 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/disk_usage \
 You'll see the API endpoint to send heartbeats:
 
 ```bash
-# Without monitor name
-curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
-  -H "Content-Type: application/json" \
-  -d '{"api_key":"YOUR_KEY"}'
-
-# With monitor name
-curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/database_backup \
+# Both service name and monitor name are required
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{"api_key":"YOUR_KEY"}'
 ```
@@ -372,6 +363,269 @@ The service remains with other monitors intact.
 
 ---
 
+## Setting Up Notifications
+
+SimpleWatch can automatically notify you when service status changes via email, Slack, Discord, or custom webhooks.
+
+### Overview
+
+Notifications are configured in two steps:
+1. **Global Settings** - Configure SMTP or add webhook channels
+2. **Per-Service Settings** - Choose which services send notifications and to which channels
+
+### Step 1: Configure Notification Channels
+
+#### Email Notifications (SMTP)
+
+1. Click **Settings** in navigation
+2. Go to **Email Notifications** section
+3. Enter SMTP configuration:
+   - **Host:** smtp.gmail.com (or your mail server)
+   - **Port:** 587 (or 465 for SSL, 25 for non-TLS)
+   - **Username:** your_email@gmail.com
+   - **Password:** Your email password or app-specific password
+   - **From Address:** alerts@yourdomain.com
+   - **Use TLS:** ✓ (recommended)
+4. Click **Save SMTP Configuration**
+5. Click **Test** to verify - check your inbox for test email
+
+**Gmail Setup:**
+- Enable 2-factor authentication
+- Create an App Password at https://myaccount.google.com/apppasswords
+- Use the app password (not your regular password)
+
+#### Slack Webhooks
+
+1. Go to https://api.slack.com/messaging/webhooks
+2. Create a new webhook for your workspace
+3. Copy the webhook URL
+4. In SimpleWatch, go to **Settings → Notification Channels**
+5. Click **Add Channel**
+6. Enter:
+   - **Label:** "Team Slack" (or any name)
+   - **Type:** Slack
+   - **Webhook URL:** Paste your Slack webhook URL
+7. Click **Save**
+8. Click **Test** to verify - check your Slack channel for test message
+
+#### Discord Webhooks
+
+1. In Discord, go to Server Settings → Integrations → Webhooks
+2. Click **New Webhook**
+3. Choose a channel and copy the webhook URL
+4. In SimpleWatch, go to **Settings → Notification Channels**
+5. Click **Add Channel**
+6. Enter:
+   - **Label:** "Ops Discord" (or any name)
+   - **Type:** Discord
+   - **Webhook URL:** Paste your Discord webhook URL
+7. Click **Save**
+8. Click **Test** to verify - check your Discord channel for test message
+
+#### Generic/Custom Webhooks
+
+For any other system (Microsoft Teams, PagerDuty, custom integrations):
+
+1. In SimpleWatch, go to **Settings → Notification Channels**
+2. Click **Add Channel**
+3. Enter:
+   - **Label:** "Custom System"
+   - **Type:** Generic
+   - **Webhook URL:** Your webhook endpoint
+   - **Secret Token:** Optional security token
+   - **Custom Payload:** JSON template (optional)
+4. Click **Save**
+5. Click **Test** to verify
+
+**Default Payload Format:**
+```json
+{
+  "service": "{{service_name}}",
+  "old_status": "{{old_status}}",
+  "new_status": "{{new_status}}",
+  "timestamp": "{{timestamp}}",
+  "affected_monitors": [/* monitor details */],
+  "all_monitors": [/* all monitor statuses */]
+}
+```
+
+### Step 2: Configure Per-Service Notifications
+
+Now that channels are set up, configure which services send notifications:
+
+1. Click **Services** in navigation
+2. Find the service you want to configure
+3. Click the **notification icon** (bell) next to the service
+4. Configure notification settings:
+
+**Enable Notifications:**
+- ✓ Check to enable notifications for this service
+- Uncheck to disable (no notifications will be sent)
+
+**Email Recipients:**
+- Enter comma-separated email addresses
+- Example: `admin@company.com, ops@company.com, john@company.com`
+- Only works if SMTP is configured in Settings
+
+**Notification Channels:**
+- Check the webhook channels to notify
+- You can select multiple channels (e.g., both Slack and Discord)
+
+**Cooldown Period:**
+- Default: 5 minutes
+- Prevents notification spam
+- If status changes multiple times within cooldown, only first change triggers notification
+- **Exception:** Recovery notifications always send (when service comes back up)
+
+**Notify on Recovery:**
+- ✓ Checked by default
+- Sends notification when service returns to operational status
+- Useful to know when issues are resolved
+- Bypasses cooldown period
+
+5. Click **Save**
+
+### What Triggers Notifications
+
+Notifications are sent when:
+- Service status **changes** (operational → degraded, degraded → down, etc.)
+- Status **actually differs** from last notified status
+- **Cooldown period** has elapsed (except for recovery)
+- Service has **notifications enabled**
+
+Notifications are **NOT** sent when:
+- Status remains the same
+- Cooldown period is active (unless recovering)
+- Notifications disabled for service
+- No channels configured
+
+### How Status is Determined
+
+Service status is **aggregated from all monitors**:
+- **Operational** - All monitors are operational
+- **Degraded** - Some monitors failing, but not all
+- **Down** - All monitors are down or critical failures
+
+When any monitor status changes, the overall service status is recalculated and notifications sent if the service status changed.
+
+### Notification Content
+
+#### Email Format
+```
+Service: Payment Gateway
+Current Status: 🔴 DOWN (was operational)
+Changed At: 2025-12-02T18:30:00Z
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AFFECTED MONITORS:
+
+❌ API Health Check (api)
+   Status: DOWN
+   Error: Connection timeout after 10 seconds
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ALL MONITORS FOR THIS SERVICE:
+
+✅ Website Check - operational (245ms)
+❌ API Health Check - down
+✅ Port Check - operational (12ms)
+
+Service is 2/3 monitors operational (DOWN)
+```
+
+#### Slack/Discord Format
+Rich formatted message with:
+- Color-coded status indicator
+- Service name and status change
+- Timestamp
+- List of affected monitors with errors
+- Summary of all monitor statuses
+- Overall service health fraction
+
+### Managing Notification Channels
+
+**View All Channels:**
+1. Go to **Settings → Notification Channels**
+2. See list of configured channels
+3. Test status indicator shows which were successfully tested
+
+**Edit a Channel:**
+1. Click **Edit** button
+2. Update configuration
+3. Click **Save**
+4. **Test again** to verify changes
+
+**Delete a Channel:**
+1. Click **Delete** button
+2. Confirm deletion
+3. Services using this channel will no longer send notifications to it
+
+**Disable a Channel Temporarily:**
+1. Click **Toggle** button
+2. Channel becomes inactive (notifications won't be sent)
+3. Click **Toggle** again to re-enable
+
+### Troubleshooting Notifications
+
+**Not receiving email notifications:**
+- Verify SMTP configuration is correct
+- Check spam folder
+- Test SMTP settings in Settings page
+- Ensure "Email Recipients" is filled in service settings
+- Check email server logs (if accessible)
+
+**Not receiving Slack/Discord notifications:**
+- Verify webhook URL is correct
+- Test the channel in Settings → Notification Channels
+- Check if channel is active (not toggled off)
+- Ensure channel is selected in service notification settings
+- Check Slack/Discord webhook logs
+
+**Notifications sending too frequently:**
+- Increase cooldown period (default: 5 minutes)
+- Check if multiple monitors are flapping (changing status repeatedly)
+- Consider adjusting monitor thresholds to be less sensitive
+
+**Not receiving recovery notifications:**
+- Verify "Notify on Recovery" is checked in service settings
+- Check that service actually returned to operational status
+- Look at monitor details to ensure all monitors recovered
+
+**Getting duplicate notifications:**
+- This shouldn't happen - notifications track last notified status
+- If it occurs, check logs for errors
+- Report as a bug
+
+### Best Practices
+
+**Email:**
+- Use distribution lists (ops@company.com) rather than individual emails
+- Set up email filtering rules to categorize alerts
+- Use different recipients for different service criticality
+
+**Slack/Discord:**
+- Create dedicated channels for alerts (#alerts, #monitoring)
+- Use different channels for different service types
+- Configure channel notifications based on criticality
+
+**Cooldown:**
+- **Critical services:** 5 minutes (default)
+- **Normal services:** 10-15 minutes
+- **Low priority:** 30+ minutes
+
+**Recovery Notifications:**
+- Keep enabled for critical services (know when issues resolved)
+- Consider disabling for services with frequent, brief outages
+
+**Channel Management:**
+- Test channels after creation and after changes
+- Document which services use which channels
+- Review and prune unused channels periodically
+
+---
+
 ## Using the API
 
 ### Getting Your API Key
@@ -381,47 +635,15 @@ The service remains with other monitors intact.
 3. Click **Show** to reveal your key
 4. Copy the key
 
-**Security:** Keep your API key secret. Anyone with your key can update service statuses.
-
-### Sending Status Updates
-
-Use this when you want to report status from your own scripts or automation:
-
-```bash
-curl -X POST http://localhost:5050/api/v1/status \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY",
-    "service": "my_service",
-    "status": "operational",
-    "metadata": {
-      "response_time_ms": 120,
-      "message": "All systems normal"
-    }
-  }'
-```
-
-**Status Values:**
-- `operational` - Working normally
-- `degraded` - Issues but functional
-- `down` - Not available
-- `maintenance` - Planned downtime
+**Security:** Keep your API key secret. Anyone with your key can send metrics and heartbeats.
 
 ### Sending Metrics
 
 For metric threshold monitors:
 
 ```bash
-# Update unnamed monitor or first monitor
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY",
-    "value": 87.5
-  }'
-
-# Update specific named monitor (if you have multiple)
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/disk_usage \
+# Both service name and monitor name are required
+curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY",
@@ -429,19 +651,25 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/disk_usage \
   }'
 ```
 
-SimpleWatch automatically determines if the value is OK, warning, or critical.
+SimpleWatch automatically determines if the value is OK, warning, or critical based on the thresholds you configured.
 
 **Multiple Metrics Example:**
 If monitoring a server with multiple metrics:
 ```bash
 # CPU usage
-curl -X POST http://localhost:5050/api/v1/metric/webserver/cpu -d '{"api_key":"KEY","value":45.2}'
+curl -X POST http://localhost:5050/api/v1/metric/webserver/cpu \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"KEY","value":45.2}'
 
 # Memory usage
-curl -X POST http://localhost:5050/api/v1/metric/webserver/memory -d '{"api_key":"KEY","value":68.5}'
+curl -X POST http://localhost:5050/api/v1/metric/webserver/memory \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"KEY","value":68.5}'
 
 # Disk usage
-curl -X POST http://localhost:5050/api/v1/metric/webserver/disk -d '{"api_key":"KEY","value":82.3}'
+curl -X POST http://localhost:5050/api/v1/metric/webserver/disk \
+  -H "Content-Type: application/json" \
+  -d '{"api_key":"KEY","value":82.3}'
 ```
 
 ### Sending Heartbeats
@@ -449,15 +677,8 @@ curl -X POST http://localhost:5050/api/v1/metric/webserver/disk -d '{"api_key":"
 For deadman monitors (cron jobs, backups, scheduled tasks):
 
 ```bash
-# Ping unnamed monitor or first monitor
-curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY"
-  }'
-
-# Ping specific named monitor (if you have multiple)
-curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/database_backup \
+# Both service name and monitor name are required
+curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY"
@@ -467,7 +688,7 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/database_backup
 **Cron Example:**
 ```bash
 # Add to crontab - runs daily at 2am and reports success
-0 2 * * * /usr/local/bin/backup.sh && curl -X POST http://localhost:5050/api/v1/heartbeat/nightly_backup -H "Content-Type: application/json" -d '{"api_key":"YOUR_KEY"}'
+0 2 * * * /usr/local/bin/backup.sh && curl -X POST http://localhost:5050/api/v1/heartbeat/nightly_backup/database_backup -H "Content-Type: application/json" -d '{"api_key":"YOUR_KEY"}'
 ```
 
 **Windows Task Scheduler:**
@@ -479,7 +700,7 @@ C:\Scripts\backup.bat
 
 REM If successful, send heartbeat
 IF %ERRORLEVEL% EQU 0 (
-    curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job ^
+    curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job/windows_backup ^
     -H "Content-Type: application/json" ^
     -d "{\"api_key\":\"YOUR_KEY\"}"
 )
@@ -487,45 +708,31 @@ IF %ERRORLEVEL% EQU 0 (
 
 ### Integration with Automation Tools
 
-#### n8n Workflow
-
-1. Add HTTP Request node
-2. Set method to POST
-3. Set URL to `http://simplewatch:5050/api/v1/status`
-4. Add JSON body with api_key, service, and status
-5. Run workflow
-
-#### Home Assistant
-
-```yaml
-automation:
-  - alias: "Report to SimpleWatch"
-    trigger:
-      platform: state
-      entity_id: binary_sensor.front_door
-    action:
-      service: rest_command.simplewatch_update
-      data:
-        service: "front_door"
-        status: "{{ 'operational' if trigger.to_state.state == 'on' else 'down' }}"
-```
-
 #### Python Script
 
 ```python
 import requests
 
-def report_to_simplewatch(service, status):
+def send_metric(service, monitor, value):
     requests.post(
-        "http://localhost:5050/api/v1/status",
+        f"http://localhost:5050/api/v1/metric/{service}/{monitor}",
         json={
             "api_key": "YOUR_API_KEY",
-            "service": service,
-            "status": status
+            "value": value
         }
     )
 
-report_to_simplewatch("my_app", "operational")
+def send_heartbeat(service, monitor):
+    requests.post(
+        f"http://localhost:5050/api/v1/heartbeat/{service}/{monitor}",
+        json={
+            "api_key": "YOUR_API_KEY"
+        }
+    )
+
+# Examples
+send_metric("webserver", "cpu_usage", 45.2)
+send_heartbeat("backup_job", "database_backup")
 ```
 
 ---
@@ -660,7 +867,7 @@ Default: 90 days. Configure with `DATA_RETENTION_DAYS` environment variable.
 
 ### Can I get email alerts?
 
-Configure SMTP settings in `.env` file or docker-compose.yml. Email notifications are sent for status changes.
+Yes! Configure SMTP in Settings → Email Notifications. Then enable notifications for each service. See the "Setting Up Notifications" section above.
 
 ### Is there a mobile app?
 

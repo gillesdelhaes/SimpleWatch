@@ -72,75 +72,7 @@ Authenticate and receive JWT token.
 
 ---
 
-### Status Updates
-
-#### POST /api/v1/status
-
-Update status for a service.
-
-**Request:**
-```json
-{
-  "api_key": "your_api_key",
-  "service": "payment_gateway",
-  "status": "operational",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "metadata": {
-    "response_time_ms": 145,
-    "message": "All systems running"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Status updated successfully",
-  "service": "payment_gateway"
-}
-```
-
-**curl Example:**
-```bash
-curl -X POST http://localhost:5050/api/v1/status \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "your_key",
-    "service": "my_service",
-    "status": "operational"
-  }'
-```
-
-#### POST /api/v1/status/bulk
-
-Update multiple services in one request.
-
-**Request:**
-```json
-{
-  "api_key": "your_api_key",
-  "updates": [
-    {
-      "service": "service1",
-      "status": "operational"
-    },
-    {
-      "service": "service2",
-      "status": "degraded",
-      "metadata": {"error_rate": 2.3}
-    }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Bulk updated 2 services"
-}
-```
+### Dashboard / Status Queries
 
 #### GET /api/v1/status/{service_name}
 
@@ -209,14 +141,11 @@ Get current status for all services with aggregated monitor status.
 - `down` - All monitors are down
 - `unknown` - No status data available
 
-#### POST /api/v1/metric/{service_name}
 #### POST /api/v1/metric/{service_name}/{monitor_name}
 
 Ultra-simple metric update API. Automatically determines status based on thresholds.
 
-**Routes:**
-- `/api/v1/metric/{service_name}` - Updates first metric monitor (backward compatible)
-- `/api/v1/metric/{service_name}/{monitor_name}` - Updates specific named monitor
+**Note:** Both service_name and monitor_name are required.
 
 **Request:**
 ```json
@@ -237,21 +166,15 @@ Ultra-simple metric update API. Automatically determines status based on thresho
 }
 ```
 
-**curl Examples:**
+**curl Example:**
 ```bash
-# Update unnamed monitor or first monitor
-curl -X POST http://localhost:5050/api/v1/metric/server_metrics \
-  -H "Content-Type: application/json" \
-  -d '{"api_key":"your_key","value":87.5}'
-
-# Update specific named monitor
 curl -X POST http://localhost:5050/api/v1/metric/server_metrics/disk_usage \
   -H "Content-Type: application/json" \
   -d '{"api_key":"your_key","value":87.5}'
 ```
 
 **Monitor Names:**
-When creating a metric monitor, you can optionally specify a `name` in the config. This allows multiple metric monitors per service. If no name is specified, use the route without the monitor name parameter.
+When creating a metric monitor, you must specify a `name` in the config. This allows multiple metric monitors per service (e.g., cpu, memory, disk for one server).
 
 **Use Cases:**
 - Daily sales numbers (alert if below target)
@@ -261,14 +184,11 @@ When creating a metric monitor, you can optionally specify a `name` in the confi
 - Any numeric business metric
 - Multiple metrics per service (CPU, memory, disk on one server)
 
-#### POST /api/v1/heartbeat/{service_name}
 #### POST /api/v1/heartbeat/{service_name}/{monitor_name}
 
 Send a heartbeat ping for a deadman monitor.
 
-**Routes:**
-- `/api/v1/heartbeat/{service_name}` - Pings first deadman monitor (backward compatible)
-- `/api/v1/heartbeat/{service_name}/{monitor_name}` - Pings specific named monitor
+**Note:** Both service_name and monitor_name are required.
 
 **Request:**
 ```json
@@ -286,21 +206,15 @@ Send a heartbeat ping for a deadman monitor.
 }
 ```
 
-**curl Examples:**
+**curl Example:**
 ```bash
-# Ping unnamed monitor or first monitor
-curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job \
-  -H "Content-Type: application/json" \
-  -d '{"api_key":"your_key"}'
-
-# Ping specific named monitor
 curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job/database_backup \
   -H "Content-Type: application/json" \
   -d '{"api_key":"your_key"}'
 ```
 
 **Monitor Names:**
-When creating a deadman monitor, you can optionally specify a `name` in the config. This allows multiple deadman monitors per service (e.g., separate monitors for database backup, file backup, and log rotation). If no name is specified, use the route without the monitor name parameter.
+When creating a deadman monitor, you must specify a `name` in the config. This allows multiple deadman monitors per service (e.g., separate monitors for database backup, file backup, and log rotation).
 
 **Use Cases:**
 - Cron job monitoring (ping after each successful run)
@@ -575,6 +489,211 @@ Test a monitor immediately without waiting for scheduled check.
 
 ---
 
+### Notifications
+
+#### GET /api/v1/notifications/smtp
+
+Get SMTP configuration.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "username": "alerts@company.com",
+  "from_address": "alerts@company.com",
+  "use_tls": true,
+  "is_tested": true,
+  "tested_at": "2025-12-02T10:00:00Z"
+}
+```
+
+#### POST /api/v1/notifications/smtp
+
+Configure SMTP settings.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "username": "alerts@company.com",
+  "password": "app_password_here",
+  "from_address": "alerts@company.com",
+  "use_tls": true
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "SMTP configuration saved"
+}
+```
+
+#### POST /api/v1/notifications/smtp/test
+
+Test SMTP configuration by sending a test email.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "recipient": "admin@company.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test email sent successfully"
+}
+```
+
+#### GET /api/v1/notifications/channels
+
+List all notification channels for current user.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "label": "Team Slack",
+    "channel_type": "slack",
+    "webhook_url": "https://hooks.slack.com/...",
+    "is_active": true,
+    "is_tested": true,
+    "tested_at": "2025-12-02T10:00:00Z",
+    "created_at": "2025-12-01T12:00:00Z"
+  }
+]
+```
+
+#### POST /api/v1/notifications/channels
+
+Create a notification channel.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "label": "Ops Discord",
+  "channel_type": "discord",
+  "webhook_url": "https://discord.com/api/webhooks/...",
+  "secret_token": "optional_secret",
+  "custom_payload_template": "{\"text\": \"{{service_name}} is {{new_status}}\"}"
+}
+```
+
+**Channel Types:**
+- `slack` - Slack webhook
+- `discord` - Discord webhook
+- `generic` - Custom JSON webhook
+
+**Response:**
+```json
+{
+  "id": 2,
+  "label": "Ops Discord",
+  "channel_type": "discord",
+  "is_active": true,
+  "is_tested": false
+}
+```
+
+#### POST /api/v1/notifications/channels/{channel_id}/test
+
+Test a notification channel.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test notification sent successfully"
+}
+```
+
+#### PUT /api/v1/notifications/channels/{channel_id}/toggle
+
+Toggle channel active status.
+
+**Requires:** JWT authentication
+
+#### DELETE /api/v1/notifications/channels/{channel_id}
+
+Delete a notification channel.
+
+**Requires:** JWT authentication
+
+#### GET /api/v1/notifications/services/{service_id}
+
+Get notification settings for a service.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "email_enabled": true,
+  "email_recipients": "admin@company.com,ops@company.com",
+  "channel_ids": [1, 2],
+  "cooldown_minutes": 5,
+  "notify_on_recovery": true,
+  "last_notification_sent_at": "2025-12-02T10:30:00Z",
+  "last_notified_status": "down"
+}
+```
+
+#### POST /api/v1/notifications/services/{service_id}
+
+Configure notification settings for a service.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "enabled": true,
+  "email_enabled": true,
+  "email_recipients": "admin@company.com,ops@company.com",
+  "channel_ids": [1, 2],
+  "cooldown_minutes": 5,
+  "notify_on_recovery": true
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Notification settings updated"
+}
+```
+
+**Notification Behavior:**
+- Notifications sent when service status changes
+- Cooldown prevents spam (default: 5 minutes)
+- Recovery notifications always sent (bypass cooldown)
+- Service status aggregated from all monitors
+- Email requires SMTP configuration
+- Webhooks require active, tested channels
+
+---
+
 ### Users
 
 #### GET /api/v1/users
@@ -628,60 +747,6 @@ Regenerate API key for current user.
 Delete a user (admin only).
 
 **Requires:** JWT authentication + admin privileges
-
----
-
-### Webhooks
-
-#### GET /api/v1/webhooks
-
-List webhooks for current user.
-
-**Requires:** JWT authentication
-
-#### POST /api/v1/webhooks
-
-Create a webhook.
-
-**Requires:** JWT authentication
-
-**Request:**
-```json
-{
-  "url": "https://example.com/webhook",
-  "event_types": ["status_change", "service_down"],
-  "secret_token": "optional_secret"
-}
-```
-
-**Event Types:**
-- `status_change` - Any status change
-- `service_down` - Service goes down
-- `service_up` - Service recovers
-
-**Webhook Payload:**
-```json
-{
-  "event": "status_change",
-  "service": "payment_gateway",
-  "old_status": "operational",
-  "new_status": "down",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "metadata": {}
-}
-```
-
-#### DELETE /api/v1/webhooks/{webhook_id}
-
-Delete a webhook.
-
-**Requires:** JWT authentication
-
-#### PUT /api/v1/webhooks/{webhook_id}/toggle
-
-Toggle webhook active status.
-
-**Requires:** JWT authentication
 
 ---
 
@@ -740,28 +805,18 @@ import requests
 api_url = "http://localhost:5050/api/v1"
 api_key = "your_api_key"
 
-# Update status
-response = requests.post(
-    f"{api_url}/status",
-    json={
-        "api_key": api_key,
-        "service": "my_app",
-        "status": "operational"
-    }
-)
-
 # Send metric
 response = requests.post(
-    f"{api_url}/metric/error_rate",
+    f"{api_url}/metric/webserver/cpu_usage",
     json={
         "api_key": api_key,
-        "value": 0.5
+        "value": 45.2
     }
 )
 
 # Send heartbeat (for deadman monitor)
 response = requests.post(
-    f"{api_url}/heartbeat/backup_job",
+    f"{api_url}/heartbeat/backup_job/database_backup",
     json={
         "api_key": api_key
     }
@@ -775,20 +830,15 @@ response = requests.post(
 API_KEY="your_api_key"
 API_URL="http://localhost:5050/api/v1"
 
-# Check service and report
-if systemctl is-active --quiet myservice; then
-    STATUS="operational"
-else
-    STATUS="down"
-fi
-
-curl -X POST "$API_URL/status" \
+# Send metric value (e.g., disk usage)
+DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+curl -X POST "$API_URL/metric/server/disk_usage" \
   -H "Content-Type: application/json" \
-  -d "{\"api_key\":\"$API_KEY\",\"service\":\"myservice\",\"status\":\"$STATUS\"}"
+  -d "{\"api_key\":\"$API_KEY\",\"value\":$DISK_USAGE}"
 
 # Send heartbeat after successful backup
 /usr/local/bin/backup.sh && \
-curl -X POST "$API_URL/heartbeat/backup_job" \
+curl -X POST "$API_URL/heartbeat/backup_job/database_backup" \
   -H "Content-Type: application/json" \
   -d "{\"api_key\":\"$API_KEY\"}"
 ```
@@ -801,24 +851,24 @@ const axios = require('axios');
 const apiUrl = 'http://localhost:5050/api/v1';
 const apiKey = 'your_api_key';
 
-async function updateStatus(service, status) {
-  const response = await axios.post(`${apiUrl}/status`, {
+async function sendMetric(service, monitor, value) {
+  const response = await axios.post(`${apiUrl}/metric/${service}/${monitor}`, {
     api_key: apiKey,
-    service: service,
-    status: status
+    value: value
   });
   return response.data;
 }
 
-async function sendHeartbeat(serviceName) {
-  const response = await axios.post(`${apiUrl}/heartbeat/${serviceName}`, {
+async function sendHeartbeat(service, monitor) {
+  const response = await axios.post(`${apiUrl}/heartbeat/${service}/${monitor}`, {
     api_key: apiKey
   });
   return response.data;
 }
 
-updateStatus('my_app', 'operational');
-sendHeartbeat('backup_job');
+// Examples
+sendMetric('webserver', 'cpu_usage', 45.2);
+sendHeartbeat('backup_job', 'database_backup');
 ```
 
 ---
