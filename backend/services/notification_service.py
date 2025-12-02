@@ -18,14 +18,12 @@ logger = logging.getLogger(__name__)
 def determine_service_status(db: Session, service_id: int) -> str:
     """
     Determine overall service status by aggregating monitor statuses.
+    Uses the same logic as api/dashboard.py for consistency.
 
-    Rules:
-    - All monitors operational → operational
-    - All monitors down → down
-    - Mixed → degraded
-
-    Returns: 'operational', 'degraded', or 'down'
+    Returns: 'operational', 'degraded', 'down', or 'unknown'
     """
+    from api.dashboard import calculate_service_status_from_counts
+
     monitors = db.query(Monitor).filter(
         Monitor.service_id == service_id,
         Monitor.is_active == True
@@ -34,25 +32,28 @@ def determine_service_status(db: Session, service_id: int) -> str:
     if not monitors:
         return "unknown"
 
-    statuses = []
+    # Count monitor statuses
+    operational_count = 0
+    degraded_count = 0
+    down_count = 0
+
     for monitor in monitors:
-        # Get latest status update for this monitor
         latest = db.query(StatusUpdate).filter(
             StatusUpdate.monitor_id == monitor.id
         ).order_by(StatusUpdate.timestamp.desc()).first()
 
         if latest:
-            statuses.append(latest.status)
-        else:
-            statuses.append("unknown")
+            if latest.status == "operational":
+                operational_count += 1
+            elif latest.status == "degraded":
+                degraded_count += 1
+            elif latest.status == "down":
+                down_count += 1
 
-    # Aggregate
-    if all(s == "operational" for s in statuses):
-        return "operational"
-    elif all(s == "down" for s in statuses):
-        return "down"
-    else:
-        return "degraded"
+    # Use shared calculation logic from dashboard API
+    return calculate_service_status_from_counts(
+        operational_count, degraded_count, down_count
+    )
 
 
 def should_send_notification(db: Session, service_id: int, new_status: str) -> bool:

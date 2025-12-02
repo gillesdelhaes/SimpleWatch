@@ -1,81 +1,59 @@
 """
-Status update API endpoints.
+Dashboard API endpoints.
+Provides read-only status endpoints and metric monitor updates.
+All status is derived from monitors - no arbitrary status updates allowed.
 """
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 from database import get_db, StatusUpdate, Service, Incident
 from models import (
-    StatusUpdateRequest,
-    StatusUpdateResponse,
-    BulkStatusUpdateRequest,
     MetricUpdateRequest,
     MetricUpdateResponse,
     StatusResponse
 )
 from api.auth import get_user_from_api_key
-from utils.db import create_service_if_not_exists, get_service_by_name
+from utils.db import get_service_by_name
 from datetime import datetime
 import json
 from typing import List, Optional
 
-router = APIRouter(prefix="/api/v1", tags=["status"])
+router = APIRouter(prefix="/api/v1", tags=["dashboard"])
 
 
-@router.post("/status", response_model=StatusUpdateResponse)
-def update_status(request: StatusUpdateRequest, db: Session = Depends(get_db)):
-    """Update status for a service."""
-    user = get_user_from_api_key(request.api_key, db)
+def calculate_service_status_from_counts(operational: int, degraded: int, down: int) -> str:
+    """
+    Calculate overall service status from monitor status counts.
 
-    service = create_service_if_not_exists(db, request.service, created_by=user.id)
+    Rules:
+    - All operational → operational
+    - All down → down
+    - Mixed → degraded
+    - No valid statuses → unknown
 
-    timestamp = request.timestamp or datetime.utcnow()
+    Args:
+        operational: Count of operational monitors
+        degraded: Count of degraded monitors
+        down: Count of down monitors
 
-    status_update = StatusUpdate(
-        service_id=service.id,
-        status=request.status,
-        timestamp=timestamp,
-        response_time_ms=request.metadata.get("response_time_ms") if request.metadata else None,
-        metadata_json=json.dumps(request.metadata) if request.metadata else None
-    )
-    db.add(status_update)
+    Returns:
+        Overall status: 'operational', 'degraded', 'down', or 'unknown'
+    """
+    total_monitors = operational + degraded + down
 
-    handle_incident_tracking(db, service, request.status)
-
-    db.commit()
-
-    return StatusUpdateResponse(
-        success=True,
-        message="Status updated successfully",
-        service=request.service
-    )
+    if total_monitors == 0:
+        return "unknown"
+    elif operational == total_monitors:
+        return "operational"
+    elif down == total_monitors:
+        return "down"
+    else:
+        # Some monitors failing = degraded
+        return "degraded"
 
 
-@router.post("/status/bulk")
-def bulk_update_status(request: BulkStatusUpdateRequest, db: Session = Depends(get_db)):
-    """Bulk update status for multiple services."""
-    user = get_user_from_api_key(request.api_key, db)
-
-    for update in request.updates:
-        service = create_service_if_not_exists(db, update.service, created_by=user.id)
-
-        status_update = StatusUpdate(
-            service_id=service.id,
-            status=update.status,
-            timestamp=datetime.utcnow(),
-            response_time_ms=update.metadata.get("response_time_ms") if update.metadata else None,
-            metadata_json=json.dumps(update.metadata) if update.metadata else None
-        )
-        db.add(status_update)
-
-        handle_incident_tracking(db, service, update.status)
-
-    db.commit()
-
-    return {
-        "success": True,
-        "message": f"Bulk updated {len(request.updates)} services"
-    }
-
+# ============================================
+# Metric Monitor Endpoints
+# ============================================
 
 @router.post("/metric/{service_name}", response_model=MetricUpdateResponse)
 @router.post("/metric/{service_name}/{monitor_name}", response_model=MetricUpdateResponse)
@@ -179,6 +157,10 @@ def update_metric(
     )
 
 
+# ============================================
+# Dashboard Status Query Endpoints (Read-Only)
+# ============================================
+
 @router.get("/status/all")
 def get_all_status(api_key: str, db: Session = Depends(get_db)):
     """Get current status for all services with aggregated monitor status."""
@@ -265,15 +247,9 @@ def get_all_status(api_key: str, db: Session = Depends(get_db)):
                     })
 
             # Determine overall service status based on monitor statuses
-            total_monitors = operational_count + degraded_count + down_count
-            if total_monitors > 0:
-                if operational_count == total_monitors:
-                    overall_status = "operational"
-                elif down_count == total_monitors:
-                    overall_status = "down"
-                else:
-                    # Some monitors failing = degraded
-                    overall_status = "degraded"
+            overall_status = calculate_service_status_from_counts(
+                operational_count, degraded_count, down_count
+            )
 
             # Calculate average response time
             if response_time_count > 0:

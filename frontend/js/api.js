@@ -103,13 +103,6 @@ class APIClient {
         return this.request(`${API_BASE}/status/${serviceName}?api_key=${this.apiKey}`);
     }
 
-    async updateStatus(statusData) {
-        return this.request(`${API_BASE}/status`, {
-            method: 'POST',
-            body: JSON.stringify({ ...statusData, api_key: this.apiKey })
-        });
-    }
-
     async listMonitors() {
         return this.request(`${API_BASE}/monitors`);
     }

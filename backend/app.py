@@ -14,7 +14,7 @@ from database import init_db, SessionLocal
 from utils.db import create_default_admin, initialize_encryption_key
 from scheduler import start_scheduler, stop_scheduler
 
-from api import auth, status, services, users, monitors, heartbeat, notifications
+from api import auth, dashboard, services, users, monitors, heartbeat, notifications
 
 load_dotenv()
 
@@ -74,7 +74,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(status.router)
+app.include_router(dashboard.router)
 app.include_router(services.router)
 app.include_router(users.router)
 app.include_router(monitors.router)
