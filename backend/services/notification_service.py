@@ -2,7 +2,7 @@
 Notification service - orchestrates sending notifications when service status changes.
 """
 from sqlalchemy.orm import Session
-from database import Service, Monitor, StatusUpdate, SMTPConfig, NotificationChannel, ServiceNotificationSettings
+from database import Service, Monitor, StatusUpdate, SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
     format_slack_payload, format_discord_payload, format_generic_payload
@@ -270,6 +270,20 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
                 body
             )
 
+            # Log email notification
+            log_entry = NotificationLog(
+                service_id=service_id,
+                notification_type='email',
+                channel_id=None,
+                channel_label=", ".join(recipients),
+                status_change=f"{old_status} -> {new_status}",
+                delivery_status='sent' if success else 'failed',
+                error_message=error if not success else None,
+                sent_at=datetime.utcnow()
+            )
+            db.add(log_entry)
+            db.commit()
+
             if success:
                 logger.info(f"Email notification sent for service {service.name}")
             else:
@@ -314,12 +328,39 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
                     channel.secret_token
                 )
 
+                # Log webhook notification
+                log_entry = NotificationLog(
+                    service_id=service_id,
+                    notification_type='webhook',
+                    channel_id=channel.id,
+                    channel_label=channel.label,
+                    status_change=f"{old_status} -> {new_status}",
+                    delivery_status='sent' if success else 'failed',
+                    error_message=error if not success else None,
+                    sent_at=datetime.utcnow()
+                )
+                db.add(log_entry)
+                db.commit()
+
                 if success:
                     logger.info(f"Webhook notification sent to {channel.label}")
                 else:
                     logger.error(f"Failed to send webhook to {channel.label}: {error}")
 
             except Exception as e:
+                # Log failed webhook attempt
+                log_entry = NotificationLog(
+                    service_id=service_id,
+                    notification_type='webhook',
+                    channel_id=channel.id,
+                    channel_label=channel.label,
+                    status_change=f"{old_status} -> {new_status}",
+                    delivery_status='failed',
+                    error_message=str(e),
+                    sent_at=datetime.utcnow()
+                )
+                db.add(log_entry)
+                db.commit()
                 logger.error(f"Error sending webhook to {channel.label}: {e}")
 
     # Update notification tracking

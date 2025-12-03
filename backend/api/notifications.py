@@ -2,8 +2,9 @@
 Notification configuration API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from database import get_db, SMTPConfig, NotificationChannel, ServiceNotificationSettings
+from database import get_db, SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog, Service
 from models import (
     SMTPConfigCreate, SMTPConfigUpdate, SMTPConfigResponse,
     NotificationChannelCreate, NotificationChannelUpdate, NotificationChannelResponse,
@@ -17,6 +18,8 @@ from utils.notifications import (
 from typing import List
 from datetime import datetime
 import json
+import csv
+from io import StringIO
 
 router = APIRouter(prefix="/api/v1/notifications", tags=["notifications"])
 
@@ -380,3 +383,95 @@ def update_service_notification_settings(
     db.commit()
     db.refresh(settings)
     return settings
+
+
+# ============================================
+# Notification Log Endpoints
+# ============================================
+
+@router.get("/logs")
+def get_notification_logs(
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get notification logs with service names (last 50 by default)."""
+    # Query logs with service join
+    logs = db.query(
+        NotificationLog.id,
+        NotificationLog.sent_at,
+        Service.name.label('service_name'),
+        NotificationLog.channel_label,
+        NotificationLog.status_change,
+        NotificationLog.delivery_status,
+        NotificationLog.error_message
+    ).join(
+        Service, NotificationLog.service_id == Service.id
+    ).order_by(
+        NotificationLog.sent_at.desc()
+    ).limit(limit).offset(offset).all()
+
+    # Convert to list of dicts
+    result = []
+    for log in logs:
+        result.append({
+            'id': log.id,
+            'timestamp': log.sent_at.isoformat() if log.sent_at else None,
+            'service_name': log.service_name,
+            'channel': log.channel_label,
+            'status_change': log.status_change,
+            'delivery_status': log.delivery_status,
+            'error_message': log.error_message
+        })
+
+    return {'logs': result}
+
+
+@router.get("/logs/export")
+def export_notification_logs(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Export all notification logs as CSV."""
+    # Query all logs with service join
+    logs = db.query(
+        NotificationLog.sent_at,
+        Service.name.label('service_name'),
+        NotificationLog.channel_label,
+        NotificationLog.status_change,
+        NotificationLog.delivery_status,
+        NotificationLog.error_message
+    ).join(
+        Service, NotificationLog.service_id == Service.id
+    ).order_by(
+        NotificationLog.sent_at.desc()
+    ).all()
+
+    # Create CSV in memory
+    output = StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow(['Timestamp', 'Service', 'Channel', 'Status Change', 'Delivery Status', 'Error Message'])
+
+    # Write data
+    for log in logs:
+        writer.writerow([
+            log.sent_at.isoformat() if log.sent_at else '',
+            log.service_name,
+            log.channel_label,
+            log.status_change,
+            log.delivery_status,
+            log.error_message or ''
+        ])
+
+    # Prepare response
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=notification-log-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.csv"
+        }
+    )

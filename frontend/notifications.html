@@ -74,6 +74,178 @@
         .modal-body { }
 
         .hidden { display: none !important; }
+
+        /* Notification Log Styles */
+        #logSection {
+            overflow: hidden;
+        }
+        .log-header {
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background var(--transition-fast);
+            user-select: none;
+        }
+        .log-header:hover {
+            background: var(--bg-tertiary);
+        }
+        .log-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .log-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            letter-spacing: 0.02em;
+        }
+        .log-chevron {
+            width: 20px;
+            height: 20px;
+            color: var(--text-tertiary);
+            transition: transform var(--transition-normal), color var(--transition-fast);
+        }
+        #logSection.expanded .log-chevron {
+            transform: rotate(90deg);
+            color: var(--accent-primary);
+        }
+        .log-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-slow);
+        }
+        #logSection.expanded .log-content {
+            max-height: 2000px;
+        }
+        .log-content-inner {
+            padding: 0 2rem 2rem 2rem;
+        }
+        .log-table-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .log-table thead {
+            background: var(--bg-tertiary);
+        }
+        .log-table th {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            border-bottom: 2px solid var(--border-color);
+        }
+        .log-table td {
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .log-table tbody tr {
+            transition: background var(--transition-fast);
+        }
+        .log-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+        .log-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .log-timestamp {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+        .log-service {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .log-channel {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+        }
+        .log-status-change {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        .log-delivery-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-weight: 600;
+            font-size: 0.8125rem;
+        }
+        .log-delivery-status.sent {
+            color: var(--status-operational);
+        }
+        .log-delivery-status.failed {
+            color: var(--status-down);
+        }
+        .log-delivery-icon {
+            width: 16px;
+            height: 16px;
+        }
+        .log-empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-tertiary);
+        }
+        .log-empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
+            color: var(--text-tertiary);
+        }
+        .log-empty-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        .log-export-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            box-shadow: var(--shadow-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .log-export-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md), var(--shadow-glow);
+        }
+        .log-export-btn:active {
+            transform: translateY(0);
+        }
+        .log-loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body>
@@ -151,6 +323,52 @@
                 <div class="empty-state-icon" id="emptyIcon"></div>
                 <p>No webhook channels configured yet.</p>
                 <p style="font-size: 0.875rem; margin-top: 0.5rem;">Click "Add Webhook Channel" to get started.</p>
+            </div>
+        </div>
+
+        <!-- Notification Log Section -->
+        <div class="notification-section" id="logSection">
+            <div class="log-header" onclick="toggleLogSection()">
+                <div class="log-header-left">
+                    <svg class="log-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <h2 class="log-title">Notification Log</h2>
+                </div>
+            </div>
+            <div class="log-content">
+                <div class="log-content-inner">
+                    <div class="log-table-container">
+                        <div id="logLoading" class="log-loading hidden">
+                            Loading notification history...
+                        </div>
+                        <div id="logEmptyState" class="log-empty-state hidden">
+                            <div class="log-empty-icon" id="logEmptyIcon"></div>
+                            <p style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">No notifications sent yet</p>
+                            <p style="font-size: 0.8125rem;">Notifications will appear here when services change status</p>
+                        </div>
+                        <table class="log-table" id="logTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Service</th>
+                                    <th>Channel</th>
+                                    <th>Status Change</th>
+                                    <th>Delivery</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="log-export-btn" onclick="exportNotificationLog()" id="exportBtn" style="display: none;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download Full Log (CSV)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -485,12 +703,158 @@
         }
 
         // ============================================
+        // Notification Log Functions
+        // ============================================
+
+        let logExpanded = false;
+        let logRefreshInterval = null;
+
+        function toggleLogSection() {
+            const section = document.getElementById('logSection');
+            logExpanded = !logExpanded;
+
+            if (logExpanded) {
+                section.classList.add('expanded');
+                loadNotificationLogs();
+                // Auto-refresh every 10 seconds when expanded
+                logRefreshInterval = setInterval(loadNotificationLogs, 10000);
+            } else {
+                section.classList.remove('expanded');
+                // Stop auto-refresh when collapsed
+                if (logRefreshInterval) {
+                    clearInterval(logRefreshInterval);
+                    logRefreshInterval = null;
+                }
+            }
+        }
+
+        async function loadNotificationLogs() {
+            const loadingEl = document.getElementById('logLoading');
+            const emptyEl = document.getElementById('logEmptyState');
+            const tableEl = document.getElementById('logTable');
+            const exportBtn = document.getElementById('exportBtn');
+            const tbody = document.getElementById('logTableBody');
+
+            // Show loading only on first load
+            if (!tbody.children.length) {
+                loadingEl.classList.remove('hidden');
+                emptyEl.classList.add('hidden');
+                tableEl.style.display = 'none';
+            }
+
+            try {
+                const data = await authenticatedFetch('/api/v1/notifications/logs?limit=50');
+                console.log('Notification logs data:', data);
+
+                loadingEl.classList.add('hidden');
+
+                if (!data.logs || data.logs.length === 0) {
+                    // Show empty state
+                    emptyEl.classList.remove('hidden');
+                    tableEl.style.display = 'none';
+                    exportBtn.style.display = 'none';
+                } else {
+                    // Populate table
+                    emptyEl.classList.add('hidden');
+                    tableEl.style.display = 'table';
+                    exportBtn.style.display = 'inline-flex';
+
+                    tbody.innerHTML = data.logs.map(log => {
+                        const timestamp = new Date(log.timestamp);
+                        const formattedTime = timestamp.toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+
+                        const deliveryIcon = log.delivery_status === 'sent'
+                            ? '<svg class="log-delivery-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>'
+                            : '<svg class="log-delivery-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+
+                        const errorTooltip = log.error_message
+                            ? `title="${log.error_message.replace(/"/g, '&quot;')}"`
+                            : '';
+
+                        return `
+                            <tr>
+                                <td><span class="log-timestamp">${formattedTime}</span></td>
+                                <td><span class="log-service">${log.service_name}</span></td>
+                                <td><span class="log-channel">${log.channel}</span></td>
+                                <td><span class="log-status-change">${log.status_change}</span></td>
+                                <td>
+                                    <span class="log-delivery-status ${log.delivery_status}" ${errorTooltip}>
+                                        ${deliveryIcon}
+                                        ${log.delivery_status}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                console.error('Failed to load notification logs:', error);
+                showError('Failed to load notification logs');
+            }
+        }
+
+        async function exportNotificationLog() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/v1/notifications/logs/export', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to export logs');
+                }
+
+                // Get the blob from the response
+                const blob = await response.blob();
+
+                // Create a download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Extract filename from Content-Disposition header or use default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `notification-log-${new Date().toISOString().split('T')[0]}.csv`;
+
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showSuccess('Notification log downloaded successfully');
+            } catch (error) {
+                showError('Failed to export notification log: ' + error.message);
+            }
+        }
+
+        // ============================================
         // Initialize
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSMTPConfig();
             await loadChannels();
+
+            // Inject empty state icon for log
+            const logEmptyIcon = document.getElementById('logEmptyIcon');
+            if (logEmptyIcon) {
+                logEmptyIcon.innerHTML = icons.clipboardList;
+            }
         });
 
         // Insert theme toggle
