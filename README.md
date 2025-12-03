@@ -134,6 +134,11 @@ Notifications are sent automatically when:
 - Respects cooldown period (default: 5 minutes)
 - Always sends recovery notifications (when service comes back up)
 
+**Notification Log:**
+- View sent notification history on Notifications page
+- Download full audit log as CSV
+- Track delivery status and troubleshoot failed notifications
+
 ## Ultra-Simple API
 
 ### Send Metric Value
