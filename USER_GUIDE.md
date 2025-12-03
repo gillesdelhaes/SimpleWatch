@@ -856,7 +856,7 @@ In SQLite database at `/data/simplewatch.db`. All status updates, services, and 
 
 ### How long is data retained?
 
-Default: 90 days. Configure with `DATA_RETENTION_DAYS` environment variable.
+Default: 90 days. This is currently hardcoded but will be configurable in the Settings page in a future update.
 
 ### Can I monitor services that require authentication?
 
@@ -888,12 +888,12 @@ Restore by replacing `./data` directory.
 ### Can I use SimpleWatch in production?
 
 Yes! Recommendations:
-- Change default credentials
-- Use HTTPS (via reverse proxy)
-- Set secure SECRET_KEY
-- Enable firewall rules
-- Regular backups
+- Change default credentials immediately
+- Use HTTPS (via reverse proxy like nginx or Caddy)
+- Enable firewall rules to restrict access
+- Regular backups of the `./data` directory
 - Monitor the monitor (use external service to watch SimpleWatch)
+- SECRET_KEY is auto-generated securely on first startup
 
 ### How many services can I monitor?
 

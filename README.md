@@ -80,20 +80,18 @@ Open http://localhost:5050
 Create a `.env` file or configure in `docker-compose.yml`:
 
 ```bash
-# Security
-SECRET_KEY=your_random_secret_key
-
-# Default Admin
+# Default Admin Account
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=changeme
 
-# Database
+# Database Location
 DATABASE_PATH=/data/simplewatch.db
 
-# Features
+# Create Example Monitors on First Startup
 CREATE_EXAMPLES=true
-DATA_RETENTION_DAYS=90
 ```
+
+**Note:** `SECRET_KEY` is automatically generated on first startup if not provided. SMTP and other settings are configured through the web UI (Settings → Notifications).
 
 ## Built-in Examples
 
@@ -269,10 +267,10 @@ Your data persists in the `./data` directory.
 
 - Change default admin password immediately
 - Use HTTPS in production (configure reverse proxy)
-- Regenerate SECRET_KEY for production
-- Keep API keys secure
+- Keep API keys secure (regenerate in Settings if exposed)
 - Enable firewall rules to restrict access
 - Regular backups of `./data` directory
+- SECRET_KEY is auto-generated securely on first startup
 
 ## Documentation
 
