@@ -117,6 +117,7 @@
         </div>
     </div>
 
+    <script src="/static/js/components.js"></script>
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
@@ -210,9 +211,9 @@
                 });
                 hideAddUserModal();
                 loadUsers();
-                alert('User created successfully!');
+                showSuccess('User created successfully!');
             } catch (error) {
-                alert('Failed to create user: ' + error.message);
+                showError('Failed to create user: ' + error.message);
             }
         });
 
@@ -224,28 +225,37 @@
             const currentPassword = document.getElementById('currentPassword').value;  
 
             if (newPassword !== confirmPassword) {
-                alert('Passwords do not match!');
+                showError('Passwords do not match!');
                 return;
             }
 
             try {
                 await api.changePassword(changingUserId, currentPassword, newPassword);
                 hideChangePasswordModal();
-                alert('Password changed successfully!');
+                showSuccess('Password changed successfully!');
             } catch (error) {
-                alert('Failed to change password: ' + error.message);
+                showError('Failed to change password: ' + error.message);
             }
         });
 
         async function deleteUser(userId, username) {
-            if (!confirm(`Are you sure you want to delete user "${username}"?`)) return;
+            const confirmed = await showConfirm(
+                `Are you sure you want to delete user "${username}"?`,
+                {
+                    title: 'Delete User',
+                    confirmText: 'Delete',
+                    cancelText: 'Cancel',
+                    confirmClass: 'btn-danger'
+                }
+            );
+            if (!confirmed) return;
 
             try {
                 await api.deleteUser(userId);
                 loadUsers();
-                alert('User deleted successfully!');
+                showSuccess('User deleted successfully!');
             } catch (error) {
-                alert('Failed to delete user: ' + error.message);
+                showError('Failed to delete user: ' + error.message);
             }
         }
 

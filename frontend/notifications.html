@@ -30,8 +30,39 @@
         .channel-url { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); word-break: break-all; margin-top: 0.5rem; }
         .channel-actions { display: flex; gap: 0.5rem; }
 
-        .empty-state { text-align: center; padding: 3rem; color: var(--text-tertiary); }
-        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-tertiary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+            color: var(--text-tertiary);
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .empty-state-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        .empty-state p {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .empty-state p:first-of-type {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
 
         /* Modal styles - copied from services.html */
         .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn var(--transition-normal); }
@@ -104,7 +135,7 @@
         <!-- Webhook Channels Section -->
         <div class="notification-section">
             <h2 class="section-title">
-                🔔 Webhook Channels
+                Webhook Channels
             </h2>
             <p class="section-desc">Add Slack, Discord, or custom webhook endpoints to receive notifications.</p>
 
@@ -117,7 +148,7 @@
             </div>
 
             <div id="emptyChannelsState" class="empty-state hidden">
-                <div class="empty-state-icon">🔕</div>
+                <div class="empty-state-icon" id="emptyIcon"></div>
                 <p>No webhook channels configured yet.</p>
                 <p style="font-size: 0.875rem; margin-top: 0.5rem;">Click "Add Webhook Channel" to get started.</p>
             </div>
@@ -177,6 +208,7 @@
         </div>
     </div>
 
+    <script src="/static/js/components.js"></script>
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
@@ -184,6 +216,14 @@
     <script>
         let channels = [];
         let editingChannelId = null;
+
+        // Inject empty state icon
+        document.addEventListener('DOMContentLoaded', () => {
+            const emptyIcon = document.getElementById('emptyIcon');
+            if (emptyIcon) {
+                emptyIcon.innerHTML = icons.bellSlash;
+            }
+        });
 
         // ============================================
         // SMTP Configuration
@@ -232,11 +272,11 @@
                     method: 'PUT',
                     body: JSON.stringify(config)
                 });
-                alert('SMTP settings saved successfully!');
+                showSuccess('SMTP settings saved successfully!');
                 document.getElementById('smtpPassword').value = ''; // Clear password field
                 await loadSMTPConfig();
             } catch (error) {
-                alert('Failed to save SMTP settings: ' + error.message);
+                showError('Failed to save SMTP settings: ' + error.message);
             }
         });
 
@@ -249,10 +289,10 @@
                 const response = await authenticatedFetch('/api/v1/notifications/smtp/test', {
                     method: 'POST'
                 });
-                alert('Test email sent successfully! Check your inbox.');
+                showSuccess('Test email sent successfully! Check your inbox.');
                 await loadSMTPConfig(); // Refresh to show "Tested" badge
             } catch (error) {
-                alert('Failed to send test email: ' + error.message);
+                showError('Failed to send test email: ' + error.message);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Test Email';
@@ -375,8 +415,9 @@
                 }
                 hideChannelModal();
                 await loadChannels();
+                showSuccess('Channel saved successfully');
             } catch (error) {
-                alert('Failed to save channel: ' + error.message);
+                showError('Failed to save channel: ' + error.message);
             }
         });
 
@@ -398,15 +439,25 @@
         }
 
         async function deleteChannel(id) {
-            if (!confirm('Are you sure you want to delete this webhook channel?')) return;
+            const confirmed = await showConfirm(
+                'Are you sure you want to delete this webhook channel?',
+                {
+                    title: 'Delete Channel',
+                    confirmText: 'Delete',
+                    cancelText: 'Cancel',
+                    confirmClass: 'btn-danger'
+                }
+            );
+            if (!confirmed) return;
 
             try {
                 await authenticatedFetch(`/api/v1/notifications/channels/${id}`, {
                     method: 'DELETE'
                 });
                 await loadChannels();
+                showSuccess('Channel deleted successfully');
             } catch (error) {
-                alert('Failed to delete channel: ' + error.message);
+                showError('Failed to delete channel: ' + error.message);
             }
         }
 
@@ -417,7 +468,7 @@
                 });
                 await loadChannels();
             } catch (error) {
-                alert('Failed to toggle channel: ' + error.message);
+                showError('Failed to toggle channel: ' + error.message);
             }
         }
 
@@ -426,10 +477,10 @@
                 await authenticatedFetch(`/api/v1/notifications/channels/${id}/test`, {
                     method: 'POST'
                 });
-                alert('Test notification sent successfully! Check your channel.');
+                showSuccess('Test notification sent successfully! Check your channel.');
                 await loadChannels(); // Refresh to show "Tested" badge
             } catch (error) {
-                alert('Failed to send test notification: ' + error.message);
+                showError('Failed to send test notification: ' + error.message);
             }
         }
 

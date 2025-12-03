@@ -450,10 +450,10 @@
             const unknown = monitors.filter(m => m.status === 'unknown').length;
 
             const parts = [];
-            if (operational > 0) parts.push(`${operational} ✓`);
-            if (degraded > 0) parts.push(`${degraded} ~`);
-            if (down > 0) parts.push(`${down} ✗`);
-            if (unknown > 0) parts.push(`${unknown} ?`);
+            if (operational > 0) parts.push(`<span style="color: var(--status-operational); font-weight: 600;">${operational} ✓</span>`);
+            if (degraded > 0) parts.push(`<span style="color: var(--status-degraded); font-weight: 600;">${degraded} ~</span>`);
+            if (down > 0) parts.push(`<span style="color: var(--status-down); font-weight: 600;">${down} ✗</span>`);
+            if (unknown > 0) parts.push(`<span style="color: var(--text-tertiary); font-weight: 600;">${unknown} ?</span>`);
 
             return parts.join(', ');
         }
@@ -544,7 +544,7 @@
             const monitorSummary = service.monitors && service.monitors.length > 0
                 ? getMonitorSummary(service.monitors)
                 : 'No monitors';
-            document.getElementById('modalMonitorSummary').textContent =
+            document.getElementById('modalMonitorSummary').innerHTML =
                 `${service.monitor_count} monitor${service.monitor_count !== 1 ? 's' : ''}: ${monitorSummary}`;
 
             const monitorDetailsList = document.getElementById('monitorDetailsList');

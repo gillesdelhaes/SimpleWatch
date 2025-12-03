@@ -50,8 +50,11 @@
         .type-grid { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
         .type-card { padding: 1.25rem; background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: 0.75rem; cursor: pointer; transition: all var(--transition-normal); }
         .type-card:hover { border-color: var(--accent-primary); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
-        .type-card-title { font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .type-card-title { font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
         .type-card-desc { font-size: 0.875rem; color: var(--text-secondary); }
+
+        .monitor-type-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.5rem; background: var(--bg-tertiary); border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); }
+        .monitor-type-badge .icon { opacity: 0.7; }
 
         .hidden { display: none !important; }
     </style>
@@ -124,7 +127,10 @@
 
                 <!-- Notification Settings Section -->
                 <div style="border-top: 1px solid var(--border-color); margin-top: 2rem; padding-top: 2rem;">
-                    <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">🔔 Notification Settings</h4>
+                    <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="icon icon-lg" style="color: var(--accent-primary);" innerHTML="${icons.bell}"></span>
+                        Notification Settings
+                    </h4>
 
                     <div class="form-group">
                         <label class="checkbox-label">
@@ -191,24 +197,24 @@
             <div id="monitorTypeSelection">
                 <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
                 <div class="type-grid">
-                    <div class="type-card" onclick="selectMonitorType('website')">
-                        <div class="type-card-title">🌐 Website Monitor</div>
+                    <div class="type-card" onclick="selectMonitorType('website')" data-type="website">
+                        <div class="type-card-title">Website Monitor</div>
                         <div class="type-card-desc">Check if a URL responds</div>
                     </div>
-                    <div class="type-card" onclick="selectMonitorType('api')">
-                        <div class="type-card-title">🔌 API Monitor</div>
+                    <div class="type-card" onclick="selectMonitorType('api')" data-type="api">
+                        <div class="type-card-title">API Monitor</div>
                         <div class="type-card-desc">Call API endpoint with validation</div>
                     </div>
-                    <div class="type-card" onclick="selectMonitorType('metric_threshold')">
-                        <div class="type-card-title">📊 Metric Threshold</div>
+                    <div class="type-card" onclick="selectMonitorType('metric_threshold')" data-type="metric">
+                        <div class="type-card-title">Metric Threshold</div>
                         <div class="type-card-desc">Receive numbers, alert on thresholds</div>
                     </div>
-                    <div class="type-card" onclick="selectMonitorType('port')">
-                        <div class="type-card-title">🔌 Port Monitor</div>
+                    <div class="type-card" onclick="selectMonitorType('port')" data-type="port">
+                        <div class="type-card-title">Port Monitor</div>
                         <div class="type-card-desc">Test if TCP port is open</div>
                     </div>
-                    <div class="type-card" onclick="selectMonitorType('deadman')">
-                        <div class="type-card-title">💀 Deadman Monitor</div>
+                    <div class="type-card" onclick="selectMonitorType('deadman')" data-type="deadman">
+                        <div class="type-card-title">Deadman Monitor</div>
                         <div class="type-card-desc">Alert if no heartbeat received</div>
                     </div>
                 </div>
@@ -308,10 +314,19 @@
                         <option value="less">Less than (<)</option>
                     </select>
                 </div>
-                <div class="code-example">
-                    <div class="code-example-title">📡 How to send metric values</div>
-                    <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="quickMetricServicePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-                    <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-trigger" aria-expanded="false">
+                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M7 4l6 6-6 6"/>
+                        </svg>
+                        <span>API Example: How to send metric values</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="code-example" style="margin-top: 0.75rem;">
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="quickMetricServicePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                        </div>
+                    </div>
                 </div>
                 <button onclick="createMetricMonitor()" class="btn btn-primary" style="width: 100%;">Create Metric Monitor</button>
             </div>
@@ -366,10 +381,19 @@
                     <label class="form-label">Grace Period (hours)</label>
                     <input type="number" step="0.5" id="deadmanGracePeriod" value="1" class="form-input" required>
                 </div>
-                <div class="code-example">
-                    <div class="code-example-title">📡 How to send heartbeats</div>
-                    <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="quickDeadmanServicePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-                    <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-trigger" aria-expanded="false">
+                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M7 4l6 6-6 6"/>
+                        </svg>
+                        <span>API Example: How to send heartbeats</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="code-example" style="margin-top: 0.75rem;">
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="quickDeadmanServicePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                        </div>
+                    </div>
                 </div>
                 <button onclick="createDeadmanMonitor()" class="btn btn-primary" style="width: 100%;">Create Deadman Monitor</button>
             </div>
@@ -390,24 +414,24 @@
             <div id="addMonitorTypeSelection">
                 <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
                 <div class="type-grid">
-                    <div class="type-card" onclick="selectAddMonitorType('website')">
-                        <div class="type-card-title">🌐 Website Monitor</div>
+                    <div class="type-card" onclick="selectAddMonitorType('website')" data-type="website">
+                        <div class="type-card-title">Website Monitor</div>
                         <div class="type-card-desc">Check if a URL responds</div>
                     </div>
-                    <div class="type-card" onclick="selectAddMonitorType('api')">
-                        <div class="type-card-title">🔌 API Monitor</div>
+                    <div class="type-card" onclick="selectAddMonitorType('api')" data-type="api">
+                        <div class="type-card-title">API Monitor</div>
                         <div class="type-card-desc">Call API endpoint with validation</div>
                     </div>
-                    <div class="type-card" onclick="selectAddMonitorType('metric_threshold')">
-                        <div class="type-card-title">📊 Metric Threshold</div>
+                    <div class="type-card" onclick="selectAddMonitorType('metric_threshold')" data-type="metric">
+                        <div class="type-card-title">Metric Threshold</div>
                         <div class="type-card-desc">Receive numbers, alert on thresholds</div>
                     </div>
-                    <div class="type-card" onclick="selectAddMonitorType('port')">
-                        <div class="type-card-title">🔌 Port Monitor</div>
+                    <div class="type-card" onclick="selectAddMonitorType('port')" data-type="port">
+                        <div class="type-card-title">Port Monitor</div>
                         <div class="type-card-desc">Test if TCP port is open</div>
                     </div>
-                    <div class="type-card" onclick="selectAddMonitorType('deadman')">
-                        <div class="type-card-title">💀 Deadman Monitor</div>
+                    <div class="type-card" onclick="selectAddMonitorType('deadman')" data-type="deadman">
+                        <div class="type-card-title">Deadman Monitor</div>
                         <div class="type-card-desc">Alert if no heartbeat received</div>
                     </div>
                 </div>
@@ -495,10 +519,19 @@
                         <option value="less">Less than (<)</option>
                     </select>
                 </div>
-                <div class="code-example">
-                    <div class="code-example-title">📡 How to send metric values</div>
-                    <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="addMetricServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-                    <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-trigger" aria-expanded="false">
+                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M7 4l6 6-6 6"/>
+                        </svg>
+                        <span>API Example: How to send metric values</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="code-example" style="margin-top: 0.75rem;">
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="addMetricServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                        </div>
+                    </div>
                 </div>
                 <button onclick="addMetricMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
             </div>
@@ -544,10 +577,19 @@
                     <label class="form-label">Grace Period (hours)</label>
                     <input type="number" step="0.5" id="addDeadmanGracePeriod" value="1" class="form-input" required>
                 </div>
-                <div class="code-example">
-                    <div class="code-example-title">📡 How to send heartbeats</div>
-                    <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="addDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-                    <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-trigger" aria-expanded="false">
+                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M7 4l6 6-6 6"/>
+                        </svg>
+                        <span>API Example: How to send heartbeats</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="code-example" style="margin-top: 0.75rem;">
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="addDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                        </div>
+                    </div>
                 </div>
                 <button onclick="addDeadmanMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
             </div>
@@ -657,10 +699,19 @@
                         <option value="less">Less than (<)</option>
                     </select>
                 </div>
-                <div class="code-example">
-                    <div class="code-example-title">📡 How to send metric values</div>
-                    <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-                    <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-trigger" aria-expanded="false">
+                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M7 4l6 6-6 6"/>
+                        </svg>
+                        <span>API Example: How to send metric values</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="code-example" style="margin-top: 0.75rem;">
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                        </div>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
@@ -724,10 +775,19 @@
                     <label class="form-label">Grace Period (hours)</label>
                     <input type="number" step="0.5" id="editDeadmanGracePeriod" class="form-input" required>
                 </div>
-                <div class="code-example">
-                    <div class="code-example-title">📡 How to send heartbeats</div>
-                    <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="editDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-                    <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-trigger" aria-expanded="false">
+                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M7 4l6 6-6 6"/>
+                        </svg>
+                        <span>API Example: How to send heartbeats</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="code-example" style="margin-top: 0.75rem;">
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="editDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                        </div>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
@@ -737,6 +797,7 @@
         </div>
     </div>
 
+    <script src="/static/js/components.js"></script>
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
@@ -745,6 +806,30 @@
         requireAuth();
 
         const userInfo = getUserInfo();
+
+        // Inject icons into type cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const iconMapping = {
+                'website': icons.globe,
+                'api': icons.api,
+                'metric': icons.chart,
+                'port': icons.port,
+                'deadman': icons.skull
+            };
+
+            document.querySelectorAll('.type-card[data-type]').forEach(card => {
+                const type = card.dataset.type;
+                const icon = iconMapping[type];
+                if (icon) {
+                    const title = card.querySelector('.type-card-title');
+                    const iconSpan = document.createElement('span');
+                    iconSpan.className = 'icon';
+                    iconSpan.style.color = 'var(--accent-primary)';
+                    iconSpan.innerHTML = icon;
+                    title.prepend(iconSpan);
+                }
+            });
+        });
 
         // Load services
         async function loadServices() {
@@ -829,14 +914,23 @@
         }
 
         function getMonitorTypeName(type) {
-            const names = {
-                'website': '🌐 Website',
-                'api': '🔌 API',
-                'metric_threshold': '📊 Metric',
-                'port': '🔌 Port',
-                'deadman': '💀 Deadman'
+            const iconMap = {
+                'website': icons.globe,
+                'api': icons.api,
+                'metric_threshold': icons.chart,
+                'port': icons.port,
+                'deadman': icons.skull
             };
-            return names[type] || type;
+            const nameMap = {
+                'website': 'Website',
+                'api': 'API',
+                'metric_threshold': 'Metric',
+                'port': 'Port',
+                'deadman': 'Deadman'
+            };
+            const icon = iconMap[type] || '';
+            const name = nameMap[type] || type;
+            return `<span class="monitor-type-badge"><span class="icon" style="width: 14px; height: 14px;">${icon}</span>${name}</span>`;
         }
 
         function getMonitorDescription(monitor) {
@@ -905,8 +999,9 @@
                 hideAddServiceModal();
                 e.target.reset();
                 loadServices();
+                showSuccess('Service created successfully');
             } catch (error) {
-                alert('Failed to create service: ' + error.message);
+                showError('Failed to create service: ' + error.message);
             }
         });
 
@@ -940,8 +1035,9 @@
 
                 hideEditServiceModal();
                 loadServices();
+                showSuccess('Service updated successfully');
             } catch (error) {
-                alert('Failed to update service: ' + error.message);
+                showError('Failed to update service: ' + error.message);
             }
         });
 
@@ -964,8 +1060,9 @@
 
                 hideQuickMonitorModal();
                 loadServices();
+                showSuccess('Monitor created successfully');
             } catch (error) {
-                alert('Failed to create monitor: ' + error.message);
+                showError('Failed to create monitor: ' + error.message);
             }
         }
 
@@ -988,8 +1085,9 @@
 
                 hideQuickMonitorModal();
                 loadServices();
+                showSuccess('Monitor created successfully');
             } catch (error) {
-                alert('Failed to create monitor: ' + error.message);
+                showError('Failed to create monitor: ' + error.message);
             }
         }
 
@@ -1017,8 +1115,9 @@
 
                 hideQuickMonitorModal();
                 loadServices();
+                showSuccess('Monitor created successfully');
             } catch (error) {
-                alert('Failed to create monitor: ' + error.message);
+                showError('Failed to create monitor: ' + error.message);
             }
         }
 
@@ -1040,8 +1139,9 @@
 
                 hideQuickMonitorModal();
                 loadServices();
+                showSuccess('Monitor created successfully');
             } catch (error) {
-                alert('Failed to create monitor: ' + error.message);
+                showError('Failed to create monitor: ' + error.message);
             }
         }
 
@@ -1068,28 +1168,49 @@
 
                 hideQuickMonitorModal();
                 loadServices();
+                showSuccess('Monitor created successfully');
             } catch (error) {
-                alert('Failed to create monitor: ' + error.message);
+                showError('Failed to create monitor: ' + error.message);
             }
         }
 
         async function deleteService(id) {
-            if (!confirm('Are you sure you want to delete this service and all its monitors?')) return;
+            const confirmed = await showConfirm(
+                'Are you sure you want to delete this service and all its monitors?',
+                {
+                    title: 'Delete Service',
+                    confirmText: 'Delete',
+                    cancelText: 'Cancel',
+                    confirmClass: 'btn-danger'
+                }
+            );
+            if (!confirmed) return;
             try {
                 await api.deleteService(id);
                 loadServices();
+                showSuccess('Service deleted successfully');
             } catch (error) {
-                alert('Failed to delete service: ' + error.message);
+                showError('Failed to delete service: ' + error.message);
             }
         }
 
         async function deleteMonitor(id) {
-            if (!confirm('Are you sure you want to delete this monitor?')) return;
+            const confirmed = await showConfirm(
+                'Are you sure you want to delete this monitor?',
+                {
+                    title: 'Delete Monitor',
+                    confirmText: 'Delete',
+                    cancelText: 'Cancel',
+                    confirmClass: 'btn-danger'
+                }
+            );
+            if (!confirmed) return;
             try {
                 await api.deleteMonitor(id);
                 loadServices();
+                showSuccess('Monitor deleted successfully');
             } catch (error) {
-                alert('Failed to delete monitor: ' + error.message);
+                showError('Failed to delete monitor: ' + error.message);
             }
         }
 
@@ -1157,7 +1278,7 @@
                 hideAddMonitorToServiceModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to add monitor: ' + error.message);
+                showError('Failed to add monitor: ' + error.message);
             }
         }
 
@@ -1180,7 +1301,7 @@
                 hideAddMonitorToServiceModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to add monitor: ' + error.message);
+                showError('Failed to add monitor: ' + error.message);
             }
         }
 
@@ -1209,9 +1330,9 @@
                 hideAddMonitorToServiceModal();
                 loadServices();
                 const endpoint = monitorName ? `/api/v1/metric/${serviceName}/${monitorName}` : `/api/v1/metric/${serviceName}`;
-                alert(`Metric monitor added successfully! Send values to: POST ${endpoint}`);
+                showSuccess(`Metric monitor added successfully! Send values to: POST ${endpoint}`);
             } catch (error) {
-                alert('Failed to add monitor: ' + error.message);
+                showError('Failed to add monitor: ' + error.message);
             }
         }
 
@@ -1233,7 +1354,7 @@
                 hideAddMonitorToServiceModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to add monitor: ' + error.message);
+                showError('Failed to add monitor: ' + error.message);
             }
         }
 
@@ -1261,9 +1382,9 @@
                 hideAddMonitorToServiceModal();
                 loadServices();
                 const endpoint = monitorName ? `/api/v1/heartbeat/${serviceName}/${monitorName}` : `/api/v1/heartbeat/${serviceName}`;
-                alert(`Deadman monitor added successfully! Send heartbeats to: POST ${endpoint}`);
+                showSuccess(`Deadman monitor added successfully! Send heartbeats to: POST ${endpoint}`);
             } catch (error) {
-                alert('Failed to add monitor: ' + error.message);
+                showError('Failed to add monitor: ' + error.message);
             }
         }
 
@@ -1318,7 +1439,7 @@
                     document.getElementById('editDeadmanMonitorModal').classList.remove('hidden');
                 }
             } catch (error) {
-                alert('Failed to load monitor: ' + error.message);
+                showError('Failed to load monitor: ' + error.message);
             }
         }
 
@@ -1349,7 +1470,7 @@
                 hideEditMonitorModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to update monitor: ' + error.message);
+                showError('Failed to update monitor: ' + error.message);
             }
         });
 
@@ -1371,7 +1492,7 @@
                 hideEditMonitorModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to update monitor: ' + error.message);
+                showError('Failed to update monitor: ' + error.message);
             }
         });
 
@@ -1397,7 +1518,7 @@
                 hideEditMonitorModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to update monitor: ' + error.message);
+                showError('Failed to update monitor: ' + error.message);
             }
         });
 
@@ -1418,7 +1539,7 @@
                 hideEditMonitorModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to update monitor: ' + error.message);
+                showError('Failed to update monitor: ' + error.message);
             }
         });
 
@@ -1443,7 +1564,7 @@
                 hideEditMonitorModal();
                 loadServices();
             } catch (error) {
-                alert('Failed to update monitor: ' + error.message);
+                showError('Failed to update monitor: ' + error.message);
             }
         });
 
@@ -1525,7 +1646,7 @@
                     webhookList.innerHTML = activeChannels.map(channel => `
                         <label class="checkbox-label" style="margin-bottom: 0.5rem;">
                             <input type="checkbox" name="webhook_channel" value="${channel.id}" class="form-checkbox">
-                            <span>${channel.label} (${channel.channel_type})${channel.is_tested ? ' ✓' : ' (not tested)'}</span>
+                            <span>${channel.label} (${channel.channel_type})${channel.is_tested ? ' ' : ' (not tested)'}</span>
                         </label>
                     `).join('');
                 }

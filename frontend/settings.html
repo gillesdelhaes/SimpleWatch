@@ -29,7 +29,10 @@
 
         <!-- Appearance Settings -->
         <div class="settings-section">
-            <h2 class="section-title">⚡ Appearance</h2>
+            <h2 class="section-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="icon" style="color: var(--accent-primary);" id="zapIcon"></span>
+                Appearance
+            </h2>
             <div class="setting-row">
                 <div class="setting-info">
                     <div class="setting-label">Theme</div>
@@ -41,7 +44,10 @@
 
         <!-- API Key -->
         <div class="settings-section">
-            <h2 class="section-title">🔑 API Key</h2>
+            <h2 class="section-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="icon" style="color: var(--accent-primary);" id="keyIcon"></span>
+                API Key
+            </h2>
             <p style="color: var(--text-secondary); margin-bottom: 1rem;">Use this key to authenticate API requests from your scripts and applications.</p>
 
             <div class="api-key-display" id="apiKeyDisplay">
@@ -70,11 +76,15 @@
                     Regenerate
                 </button>
             </div>
-            <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">⚠️ Warning: Regenerating will invalidate your current key</p>
+            <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem; display: flex; align-items: center; gap: 0.375rem;">
+                <span class="icon" style="width: 14px; height: 14px; color: var(--status-degraded);" id="warningIcon"></span>
+                <span>Warning: Regenerating will invalidate your current key</span>
+            </p>
         </div>
 
     </div>
 
+    <script src="/static/js/components.js"></script>
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
@@ -86,6 +96,24 @@
         const userInfo = getUserInfo();
         let currentApiKey = '';
         let keyVisible = false;
+
+        // Inject icons
+        document.addEventListener('DOMContentLoaded', () => {
+            const warningIcon = document.getElementById('warningIcon');
+            if (warningIcon) {
+                warningIcon.innerHTML = icons.alertTriangle;
+            }
+
+            const zapIcon = document.getElementById('zapIcon');
+            if (zapIcon) {
+                zapIcon.innerHTML = icons.zap;
+            }
+
+            const keyIcon = document.getElementById('keyIcon');
+            if (keyIcon) {
+                keyIcon.innerHTML = icons.key;
+            }
+        });
 
         async function loadUserInfo() {
             try {
@@ -113,12 +141,21 @@
 
         function copyApiKey() {
             navigator.clipboard.writeText(currentApiKey).then(() => {
-                alert('API key copied to clipboard!');
+                showSuccess('API key copied to clipboard!');
             });
         }
 
         async function regenerateApiKey() {
-            if (!confirm('Are you sure? This will invalidate your current API key and may break existing integrations.')) return;
+            const confirmed = await showConfirm(
+                'Are you sure? This will invalidate your current API key and may break existing integrations.',
+                {
+                    title: 'Regenerate API Key',
+                    confirmText: 'Regenerate',
+                    cancelText: 'Cancel',
+                    confirmClass: 'btn-danger'
+                }
+            );
+            if (!confirmed) return;
 
             try {
                 const user = await api.regenerateApiKey();
@@ -127,9 +164,9 @@
                 if (keyVisible) {
                     document.getElementById('apiKeyValue').textContent = currentApiKey;
                 }
-                alert('API key regenerated successfully!');
+                showSuccess('API key regenerated successfully!');
             } catch (error) {
-                alert('Failed to regenerate API key: ' + error.message);
+                showError('Failed to regenerate API key: ' + error.message);
             }
         }
 

@@ -513,3 +513,321 @@ label {
   width: 20px;
   height: 20px;
 }
+
+/* ============================================ */
+/* SVG Icon System */
+/* ============================================ */
+
+/* Inline SVG icons that match the Mission Control aesthetic */
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.icon-sm { width: 0.875em; height: 0.875em; }
+.icon-lg { width: 1.5em; height: 1.5em; }
+
+/* Status indicator dots - enhanced from existing design */
+.status-dot-inline {
+  display: inline-block;
+  width: 0.625em;
+  height: 0.625em;
+  border-radius: 50%;
+  margin-right: 0.375em;
+  vertical-align: middle;
+}
+
+.status-dot-operational {
+  background: var(--status-operational);
+  box-shadow: 0 0 8px var(--status-operational-glow);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.status-dot-degraded {
+  background: var(--status-degraded);
+  box-shadow: 0 0 8px var(--status-degraded-glow);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.status-dot-down {
+  background: var(--status-down);
+  box-shadow: 0 0 8px var(--status-down-glow);
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.status-dot-unknown {
+  background: var(--status-unknown);
+  box-shadow: 0 0 6px var(--status-unknown-bg);
+}
+
+/* ============================================ */
+/* Toast Notification System */
+/* ============================================ */
+
+.toast-container {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+  max-width: 90vw;
+  width: 500px;
+}
+
+.toast {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-lg);
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  animation: toastSlideIn var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-body);
+  font-weight: 500;
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+.toast::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: currentColor;
+}
+
+.toast.toast-success {
+  color: var(--status-operational);
+  border-color: var(--status-operational);
+  box-shadow: 0 8px 24px var(--status-operational-glow), var(--shadow-md);
+}
+
+.toast.toast-error {
+  color: var(--status-down);
+  border-color: var(--status-down);
+  box-shadow: 0 8px 24px var(--status-down-glow), var(--shadow-md);
+}
+
+.toast.toast-warning {
+  color: var(--status-degraded);
+  border-color: var(--status-degraded);
+  box-shadow: 0 8px 24px var(--status-degraded-glow), var(--shadow-md);
+}
+
+.toast.toast-info {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 8px 24px var(--accent-glow), var(--shadow-md);
+}
+
+.toast-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all var(--transition-fast);
+  opacity: 0.6;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-close:hover {
+  opacity: 1;
+  background: var(--bg-tertiary);
+}
+
+.toast.toast-exit {
+  animation: toastSlideOut var(--transition-normal) cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastSlideOut {
+  to {
+    opacity: 0;
+    transform: translateY(-100%) scale(0.9);
+  }
+}
+
+/* ============================================ */
+/* Custom Confirmation Modal */
+/* ============================================ */
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn var(--transition-normal);
+}
+
+.confirm-modal {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 480px;
+  width: 90vw;
+  box-shadow: var(--shadow-lg), 0 0 60px rgba(0, 0, 0, 0.5);
+  animation: confirmModalIn var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.confirm-modal-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1.5rem;
+  color: var(--status-degraded);
+  filter: drop-shadow(0 0 20px var(--status-degraded-glow));
+}
+
+.confirm-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.confirm-modal-message {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-modal-actions button {
+  min-width: 120px;
+}
+
+@keyframes confirmModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================ */
+/* Collapsible Component */
+/* ============================================ */
+
+.collapsible {
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.collapsible-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+  width: 100%;
+}
+
+.collapsible-trigger span {
+  flex: 1;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.collapsible-trigger:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.collapsible-trigger-icon,
+.collapsible-icon {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.collapsible.is-open .collapsible-trigger-icon,
+.collapsible.is-open .collapsible-icon {
+  transform: rotate(90deg);
+}
+
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapsible.is-open .collapsible-content {
+  max-height: 2000px; /* Large enough for most content */
+}
+
+.collapsible-content-inner {
+  padding: 1rem 0 0;
+}
