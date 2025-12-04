@@ -876,5 +876,4 @@ sendHeartbeat('backup_job', 'database_backup');
 ## Need Help?
 
 - Check the [User Guide](USER_GUIDE.md) for detailed usage instructions
-- See [example scripts](backend/examples/README.md) for more integration patterns
 - Review the main [README](README.md) for setup and troubleshooting

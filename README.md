@@ -193,9 +193,8 @@ simplewatch/
 │   │   └── deadman.py            # Deadman/heartbeat monitor
 │   ├── services/                 # Business logic layer
 │   │   └── notification_service.py # Notification orchestration
-│   ├── utils/                    # Utility functions
-│   │   └── notifications.py      # SMTP and webhook helpers
-│   └── examples/                 # Example scripts
+│   └── utils/                    # Utility functions
+│       └── notifications.py      # SMTP and webhook helpers
 ├── frontend/
 │   ├── dashboard.html      # Main dashboard (shows last heartbeat)
 │   ├── services.html       # Service management + Quick Monitor + Edit
@@ -281,7 +280,6 @@ Your data persists in the `./data` directory.
 
 - [API Documentation](API_DOCS.md) - Complete API reference
 - [User Guide](USER_GUIDE.md) - Detailed usage instructions
-- [Examples](backend/examples/README.md) - Integration examples
 
 ## License
 
