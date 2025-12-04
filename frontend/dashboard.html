@@ -93,9 +93,26 @@
         }
 
         .service-monitor-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .service-monitor-summary .monitors-info {
             font-size: 0.875rem;
             color: var(--text-tertiary);
             font-family: var(--font-mono);
+        }
+
+        .service-uptime {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
         }
 
         .service-status-dot {
@@ -466,14 +483,15 @@
             return `
                 <div class="service-card" onclick="openMonitorModal(${service.service_id})">
                     <div class="service-header">
-                        <div style="flex: 1;">
-                            <div class="service-name">${service.service}</div>
-                            ${service.monitor_count > 0 && monitorSummary ?
-                                `<div class="service-monitor-summary">${monitorSummary}</div>` : ''}
-                        </div>
+                        <div class="service-name">${service.service}</div>
                         <div class="service-status-dot ${getStatusClass(service.status)}"></div>
                     </div>
                     <div class="service-metrics">
+                        ${service.monitor_count > 0 && monitorSummary ?
+                            `<div class="service-monitor-summary">
+                                <span class="monitors-info">${monitorSummary}</span>
+                                ${service.uptime ? `<span class="service-uptime">${service.uptime.percentage}% (${service.uptime.period_label})</span>` : ''}
+                            </div>` : ''}
                         <div class="metric-row">
                             <span class="metric-label">Status</span>
                             <span class="metric-value status ${getStatusClass(service.status)}">${getStatusText(service.status)}</span>

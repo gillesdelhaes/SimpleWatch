@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from database import get_db, StatusUpdate, Service
 from models import StatusResponse
 from api.auth import get_user_from_api_key
+from utils.uptime import calculate_service_uptime
 from datetime import datetime
 import json
 from typing import List, Optional
@@ -155,6 +156,9 @@ def get_all_status(api_key: str, db: Session = Depends(get_db)):
                 latest_timestamp = latest_status.timestamp
                 aggregate_response_time = latest_status.response_time_ms
 
+        # Calculate uptime for this service
+        uptime_data = calculate_service_uptime(db, service.id)
+
         # Include service if it has monitors or has been checked
         if monitor_statuses or latest_timestamp:
             result.append({
@@ -164,7 +168,8 @@ def get_all_status(api_key: str, db: Session = Depends(get_db)):
                 "timestamp": latest_timestamp,
                 "response_time_ms": aggregate_response_time,
                 "monitor_count": len(monitors),
-                "monitors": monitor_statuses
+                "monitors": monitor_statuses,
+                "uptime": uptime_data
             })
 
     return {"services": result}
