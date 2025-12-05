@@ -1,0 +1,49 @@
+SimpleWatch Commercial License
+
+Copyright (c) 2025 Gilles Delhaes
+
+This license grants commercial entities the right to use, modify, and deploy
+SimpleWatch as a hosted service (SaaS) without the obligation to release their
+source code under the AGPL-3.0 license.
+
+GRANT OF LICENSE
+
+Subject to the terms and conditions of this Commercial License and payment of
+applicable fees, Gilles Delhaes ("Licensor") grants you a non-exclusive,
+non-transferable license to:
+
+1. Use SimpleWatch in a commercial SaaS environment
+2. Modify SimpleWatch for your commercial purposes
+3. Deploy SimpleWatch as part of a hosted service offering
+4. Keep your modifications proprietary (not required to open source)
+
+RESTRICTIONS
+
+You may NOT:
+- Redistribute SimpleWatch or derivative works to third parties
+- Sublicense SimpleWatch to other entities
+- Remove or modify copyright notices
+- Use SimpleWatch branding without permission
+
+COMMERCIAL USE DEFINITION
+
+"Commercial Use" means any use of SimpleWatch where:
+- The software is offered as a hosted service (SaaS) to external customers
+- Users pay directly or indirectly for access to the service
+- The service generates revenue through SimpleWatch functionality
+
+FEES
+
+Commercial license fees are negotiated on a case-by-case basis. Contact
+the Licensor for pricing information.
+
+WARRANTY DISCLAIMER
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+CONTACT
+
+For commercial licensing inquiries, please use GitHub Discussions:
+https://github.com/gdelhaes/simplewatch/discussions

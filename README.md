@@ -4,9 +4,11 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg)
 ![SQLite](https://img.shields.io/badge/sqlite-3-003B57.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
 
-A self-hosted monitoring dashboard designed for business users to track the status of internal and external services. Built with simplicity and ease of use in mind.
+**Monitor your services in under 60 seconds. No coding required.**
+
+A self-hosted monitoring dashboard designed for business users and non-technical teams. Track websites, APIs, servers, and scheduled tasks with simple point-and-click setup. If you can fill out a form, you can monitor your infrastructure.
 
 ## Features
 
@@ -23,10 +25,9 @@ A self-hosted monitoring dashboard designed for business users to track the stat
 - Aggregated status display (see which monitors are operational/degraded/down)
 - Clickable dashboard cards with detailed monitor modals
 - Full CRUD operations (create, read, update, delete) for services and monitors
-- Drag-and-drop dashboard customization
 - Real-time status updates (10-second polling)
 - Last heartbeat timestamp display for deadman monitors
-- **Notification system** - Email (SMTP), Slack, Discord, and custom webhooks
+- Notification system - Email (SMTP), Slack, Discord, and custom webhooks
 - Service-level notification settings with cooldown and recovery alerts
 - Simple REST API for automation
 - Built-in background scheduler (no Redis/Celery needed)
@@ -90,15 +91,7 @@ That's it! You'll be redirected to the login page.
 
 **SimpleWatch requires NO environment variables or .env file!**
 
-All configuration is handled through the web interface:
-
-- **Admin Account**: Created via first-run setup page
-- **Database**: Automatically stored in `/data/simplewatch.db`
-- **Example Monitors**: Option on first-run setup page
-- **SECRET_KEY**: Auto-generated securely on first startup
-- **SMTP/Notifications**: Configure in Settings → Notifications
-
-This makes deployment extremely simple - just run `docker-compose up -d` and you're ready!
+All configuration is handled through the web interface.
 
 ## Built-in Examples
 
@@ -175,102 +168,6 @@ Get your API key from Settings page after logging in.
 
 **Note:** Service name and monitor name are both required. Monitor names are specified when creating the monitor.
 
-## Project Structure
-
-```
-simplewatch/
-├── backend/
-│   ├── app.py                    # Main FastAPI application
-│   ├── database.py               # Database models and initialization
-│   ├── models.py                 # Pydantic models for validation
-│   ├── scheduler.py              # APScheduler background monitor scheduler
-│   ├── api/                      # API endpoints
-│   │   ├── auth.py               # Authentication endpoints
-│   │   ├── dashboard.py          # Dashboard status queries (read-only)
-│   │   ├── services.py           # Service CRUD endpoints
-│   │   ├── monitors.py           # Monitor CRUD endpoints
-│   │   ├── users.py              # User management endpoints
-│   │   ├── notifications.py      # Notification configuration endpoints
-│   │   └── monitor_ingestion.py # Metric and heartbeat data ingestion
-│   ├── monitors/                 # Monitor implementations
-│   │   ├── website.py            # Website monitor
-│   │   ├── api.py                # API monitor
-│   │   ├── metric.py             # Metric threshold monitor
-│   │   ├── port.py               # Port monitor
-│   │   └── deadman.py            # Deadman/heartbeat monitor
-│   ├── services/                 # Business logic layer
-│   │   └── notification_service.py # Notification orchestration
-│   └── utils/                    # Utility functions
-│       └── notifications.py      # SMTP and webhook helpers
-├── frontend/
-│   ├── dashboard.html      # Main dashboard (shows last heartbeat)
-│   ├── services.html       # Service management + Quick Monitor + Edit
-│   ├── settings.html       # User settings and API keys
-│   ├── users.html          # User management (admin only)
-│   └── js/                 # JavaScript utilities
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-
-## Development
-
-### Local Development (without Docker)
-
-```bash
-# Install Python dependencies
-cd backend
-pip install -r requirements.txt
-
-# Run the application (database path is hardcoded to /data/simplewatch.db)
-# First run will show setup page at http://localhost:5050
-python app.py
-```
-
-Access at http://localhost:5050 and complete the first-run setup
-
-### Running Tests
-
-```bash
-# Manual testing checklist in TESTING.md
-# Unit tests can be added in tests/ directory
-```
-
-## Upgrading
-
-```bash
-# Pull latest changes
-git pull
-
-# Rebuild and restart
-docker-compose down
-docker-compose build
-docker-compose up -d
-```
-
-Your data persists in the `./data` directory.
-
-## Troubleshooting
-
-### Container won't start
-- Check logs: `docker-compose logs simplewatch`
-- Verify port 5050 is available: `lsof -i :5050`
-
-### Dashboard not updating
-- Check browser console for errors
-- Verify API key in Settings
-- Check container health: `docker-compose ps`
-
-### Monitors not running
-- Check logs for scheduler errors
-- Verify monitors are active in Services page
-- Check monitor configuration
-
-### Database locked errors
-- Stop container: `docker-compose down`
-- Check if database file is accessible
-- Restart: `docker-compose up -d`
-
 ## Security Considerations
 
 - Choose a strong admin password during first-run setup (minimum 8 characters)
@@ -287,31 +184,52 @@ Your data persists in the `./data` directory.
 
 ## License
 
-MIT License
+SimpleWatch is **dual-licensed**.
+
+### AGPL-3.0 (Open Source License)
+
+SimpleWatch is available under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+This means you may:
+- ✅ Use SimpleWatch free of charge
+- ✅ Self-host it for personal or internal organizational use
+- ✅ Modify the source code
+- ✅ Use it for commercial purposes
+
+**Conditions:**
+- 📝 If you modify SimpleWatch and make it available to others over a network
+  (for example as a web service or hosted platform), you must provide the
+  complete corresponding source code under the same AGPL-3.0 license.
+
+This ensures improvements remain open and prevents proprietary SaaS forks.
+
+See the [LICENSE](LICENSE) file for full AGPL-3.0 terms.
+
+---
+
+### Commercial License
+
+If you want to:
+- Offer SimpleWatch as a **hosted SaaS** to external customers **without**
+  releasing your source code
+- Embed SimpleWatch in a proprietary product
+- Create closed-source extensions
+
+you must obtain a **commercial license**.
+
+📧 Contact: Gilles Delhaes using github discussions  
+📄 See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for details.
+
+---
+
+**Why dual licensing?**  
+This approach keeps SimpleWatch open for the community while allowing the
+author to sustainably maintain and commercially support the project.
 
 ## Support
 
 For issues and questions:
 - Check documentation
-- Review example scripts
 - Check GitHub issues
-
-## Roadmap
-
-Completed features:
-- ✅ Notifications (Email, Slack, Discord, custom webhooks)
-- ✅ Service-level notification settings
-- ✅ Per-service notification configuration with cooldown
-
-Future enhancements (not yet implemented):
-- Advanced charting and custom dashboards
-- Incident tracking and MTTR calculations
-- Alert rules engine
-- Integration marketplace
-- Mobile app
-- Multi-tenancy support
-- SSO/LDAP authentication
-
----
 
 **SimpleWatch** - Making monitoring simple for everyone.
