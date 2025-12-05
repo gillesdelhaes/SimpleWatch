@@ -63,12 +63,13 @@
             <form id="addUserForm">
                 <div class="form-group">
                     <label class="form-label">Username</label>
-                    <input type="text" id="newUsername" class="form-input" required>
+                    <input type="text" id="newUsername" class="form-input" required minlength="3">
+                    <p class="form-hint" id="addUserUsernameHint">Minimum 3 characters</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
                     <input type="password" id="newPassword" class="form-input" required minlength="8">
-                    <p class="form-hint">Minimum 8 characters</p>
+                    <p class="form-hint" id="addUserPasswordHint">Minimum 8 characters</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email (Optional)</label>
@@ -103,7 +104,7 @@
                 <div class="form-group">
                     <label class="form-label">New Password</label>
                     <input type="password" id="changeNewPassword" class="form-input" required minlength="8">
-                    <p class="form-hint">Minimum 8 characters</p>
+                    <p class="form-hint" id="changePasswordHint">Minimum 8 characters</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Confirm New Password</label>
@@ -122,6 +123,7 @@
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/nav.js"></script>
+    <script src="/static/js/validation.js"></script>
     <script>
         requireAuth();
 
@@ -132,6 +134,11 @@
         }
 
         let changingUserId = null;
+
+        // Set validation hints from centralized rules
+        document.getElementById('addUserUsernameHint').textContent = getUsernameRequirements();
+        document.getElementById('addUserPasswordHint').textContent = getPasswordRequirements();
+        document.getElementById('changePasswordHint').textContent = getPasswordRequirements();
 
         async function loadUsers() {
             try {
@@ -202,10 +209,27 @@
 
         document.getElementById('addUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value;
+
+            // Client-side validation using centralized rules
+            const usernameValidation = validateUsername(username);
+            if (!usernameValidation.valid) {
+                showError(usernameValidation.error);
+                return;
+            }
+
+            const passwordValidation = validatePassword(password);
+            if (!passwordValidation.valid) {
+                showError(passwordValidation.error);
+                return;
+            }
+
             try {
                 await api.createUser({
-                    username: document.getElementById('newUsername').value,
-                    password: document.getElementById('newPassword').value,
+                    username: username,
+                    password: password,
                     email: document.getElementById('newEmail').value || null,
                     is_admin: document.getElementById('newIsAdmin').checked
                 });
@@ -222,10 +246,18 @@
 
             const newPassword = document.getElementById('changeNewPassword').value;
             const confirmPassword = document.getElementById('confirmNewPassword').value;
-            const currentPassword = document.getElementById('currentPassword').value;  
+            const currentPassword = document.getElementById('currentPassword').value;
 
-            if (newPassword !== confirmPassword) {
-                showError('Passwords do not match!');
+            // Client-side validation using centralized rules
+            const passwordValidation = validatePassword(newPassword);
+            if (!passwordValidation.valid) {
+                showError(passwordValidation.error);
+                return;
+            }
+
+            const passwordMatchValidation = validatePasswordMatch(newPassword, confirmPassword);
+            if (!passwordMatchValidation.valid) {
+                showError(passwordMatchValidation.error);
                 return;
             }
 
@@ -258,6 +290,18 @@
                 showError('Failed to delete user: ' + error.message);
             }
         }
+
+        // Real-time password match validation for change password form
+        document.getElementById('confirmNewPassword').addEventListener('input', (e) => {
+            const password = document.getElementById('changeNewPassword').value;
+            const confirmPassword = e.target.value;
+
+            if (confirmPassword && password !== confirmPassword) {
+                e.target.style.borderColor = 'var(--status-down)';
+            } else {
+                e.target.style.borderColor = 'var(--border-color)';
+            }
+        });
 
         // Close modals on background click
         document.querySelectorAll('.modal').forEach(modal => {

@@ -384,7 +384,7 @@
                     placeholder="Choose admin username"
                     autocomplete="off"
                 >
-                <div class="form-help">Minimum 3 characters</div>
+                <div class="form-help" id="usernameHint">Minimum 3 characters</div>
             </div>
 
             <div class="form-group">
@@ -398,7 +398,7 @@
                     placeholder="Create secure password"
                     autocomplete="new-password"
                 >
-                <div class="password-requirements">
+                <div class="password-requirements" id="passwordRequirements">
                     <strong>Password Requirements:</strong>
                     <ul>
                         <li>Minimum 8 characters</li>
@@ -438,6 +438,7 @@
     </div>
 
     <script src="/static/js/theme.js"></script>
+    <script src="/static/js/validation.js"></script>
     <script>
         // Insert theme toggle
         insertThemeToggle('themeToggleContainer');
@@ -463,6 +464,15 @@
 
         checkSetupStatus();
 
+        // Set validation hints from centralized rules
+        document.getElementById('usernameHint').textContent = getUsernameRequirements();
+        document.getElementById('passwordRequirements').innerHTML = `
+            <strong>Password Requirements:</strong>
+            <ul>
+                <li>${getPasswordRequirements()}</li>
+            </ul>
+        `;
+
         function showMessage(text, type = 'error') {
             messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
         }
@@ -480,19 +490,22 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             const createExamples = document.getElementById('createExamples').checked;
 
-            // Client-side validation
-            if (username.length < 3) {
-                showMessage('Username must be at least 3 characters long');
+            // Client-side validation using centralized rules
+            const usernameValidation = validateUsername(username);
+            if (!usernameValidation.valid) {
+                showMessage(usernameValidation.error);
                 return;
             }
 
-            if (password.length < 8) {
-                showMessage('Password must be at least 8 characters long');
+            const passwordValidation = validatePassword(password);
+            if (!passwordValidation.valid) {
+                showMessage(passwordValidation.error);
                 return;
             }
 
-            if (password !== confirmPassword) {
-                showMessage('Passwords do not match');
+            const passwordMatchValidation = validatePasswordMatch(password, confirmPassword);
+            if (!passwordMatchValidation.valid) {
+                showMessage(passwordMatchValidation.error);
                 return;
             }
 
