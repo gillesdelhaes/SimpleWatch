@@ -186,27 +186,22 @@ Get your API key from Settings page after logging in.
 
 SimpleWatch is **dual-licensed**.
 
-### AGPL-3.0 with Commons Clause (Open Source License)
+### Open Source License (AGPL-3.0)
 
-SimpleWatch is available under the **GNU Affero General Public License v3.0 (AGPL-3.0)** with the **Commons Clause License Condition v1.0**.
+SimpleWatch is available under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
-This means you may:
+You are free to:
 - ✅ Use SimpleWatch free of charge
 - ✅ Self-host it for personal or internal organizational use
 - ✅ Modify the source code
-- ✅ Fork and contribute improvements
+- ✅ Use it in commercial environments
 
-**Conditions:**
-- 📝 If you modify SimpleWatch and make it available to others over a network,
-  you must provide the complete corresponding source code under the same license.
-- ⛔ **You may NOT sell SimpleWatch as a product or service.** This means you cannot:
-  - Offer SimpleWatch as a hosted SaaS to external customers (for a fee)
-  - Charge for consulting/support services substantially derived from SimpleWatch
-  - Sell access to SimpleWatch functionality
+**Condition:**
+If you modify SimpleWatch and make it available to users over a network
+(for example, as a hosted web service), you must make the complete
+corresponding source code available under the same AGPL-3.0 license.
 
-**Why Commons Clause?** It prevents companies from taking SimpleWatch, hosting it, and charging customers without contributing back or obtaining a commercial license.
-
-See the [LICENSE](LICENSE) file for full terms.
+See the [LICENSE](LICENSE) file for full AGPL-3.0 terms.
 
 ---
 
@@ -214,15 +209,15 @@ See the [LICENSE](LICENSE) file for full terms.
 
 If you want to:
 - Offer SimpleWatch as a **hosted SaaS** to external customers **without**
-  releasing your source code
-- Embed SimpleWatch in a proprietary product
+  open-sourcing your modifications
+- Embed SimpleWatch in a proprietary or closed-source product
 - Create closed-source extensions
 
-you must obtain a **commercial license**.
+you must obtain a **commercial license**, which replaces the AGPL-3.0
+requirements for your deployment.
 
-📧 Contact: Gilles Delhaes using github discussions  
-📄 See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for details.
-
+See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for details, or contact the
+author for licensing inquiries.
 ---
 
 **Why dual licensing?**  
