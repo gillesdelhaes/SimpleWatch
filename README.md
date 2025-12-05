@@ -186,24 +186,27 @@ Get your API key from Settings page after logging in.
 
 SimpleWatch is **dual-licensed**.
 
-### AGPL-3.0 (Open Source License)
+### AGPL-3.0 with Commons Clause (Open Source License)
 
-SimpleWatch is available under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+SimpleWatch is available under the **GNU Affero General Public License v3.0 (AGPL-3.0)** with the **Commons Clause License Condition v1.0**.
 
 This means you may:
 - ✅ Use SimpleWatch free of charge
 - ✅ Self-host it for personal or internal organizational use
 - ✅ Modify the source code
-- ✅ Use it for commercial purposes
+- ✅ Fork and contribute improvements
 
 **Conditions:**
-- 📝 If you modify SimpleWatch and make it available to others over a network
-  (for example as a web service or hosted platform), you must provide the
-  complete corresponding source code under the same AGPL-3.0 license.
+- 📝 If you modify SimpleWatch and make it available to others over a network,
+  you must provide the complete corresponding source code under the same license.
+- ⛔ **You may NOT sell SimpleWatch as a product or service.** This means you cannot:
+  - Offer SimpleWatch as a hosted SaaS to external customers (for a fee)
+  - Charge for consulting/support services substantially derived from SimpleWatch
+  - Sell access to SimpleWatch functionality
 
-This ensures improvements remain open and prevents proprietary SaaS forks.
+**Why Commons Clause?** It prevents companies from taking SimpleWatch, hosting it, and charging customers without contributing back or obtaining a commercial license.
 
-See the [LICENSE](LICENSE) file for full AGPL-3.0 terms.
+See the [LICENSE](LICENSE) file for full terms.
 
 ---
 
