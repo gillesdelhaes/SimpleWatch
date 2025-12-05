@@ -201,6 +201,11 @@ curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
   -d '{"api_key":"YOUR_KEY","value":87.5}'
 ```
 
+**Important:** If your service or monitor names contain spaces or special characters, they must be URL-encoded:
+- "cpu usage" → "cpu%20usage"
+- "disk /var" → "disk%20%2Fvar"
+- Most tools (curl, Python requests, etc.) handle this automatically
+
 **How It Works:**
 - You send numeric values via API
 - SimpleWatch compares against thresholds
@@ -269,6 +274,11 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
   -H "Content-Type: application/json" \
   -d '{"api_key":"YOUR_KEY"}'
 ```
+
+**Important:** If your service or monitor names contain spaces or special characters, they must be URL-encoded:
+- "backup job" → "backup%20job"
+- "database backup" → "database%20backup"
+- Most tools (curl, Python requests, etc.) handle this automatically
 
 **How It Works:**
 - Your cron job/script sends a heartbeat ping after each run
