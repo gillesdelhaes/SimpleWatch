@@ -46,6 +46,7 @@ def create_example_monitors(db: Session):
             "description": "Metric threshold monitor - Demonstrates threshold-based monitoring",
             "monitor_type": "metric_threshold",
             "config": {
+                "name": "disk",
                 "warning_threshold": 75.0,
                 "critical_threshold": 90.0,
                 "comparison": "greater"

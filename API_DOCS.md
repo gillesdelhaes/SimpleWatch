@@ -176,6 +176,16 @@ curl -X POST http://localhost:5050/api/v1/metric/server_metrics/disk_usage \
 **Monitor Names:**
 When creating a metric monitor, you must specify a `name` in the config. This allows multiple metric monitors per service (e.g., cpu, memory, disk for one server).
 
+**URL Encoding:**
+If service or monitor names contain spaces or special characters, they must be URL-encoded:
+- `"cpu usage"` → `cpu%20usage`
+- `"disk /var"` → `disk%20%2Fvar`
+
+Most HTTP clients (curl, Python requests, JavaScript fetch) handle encoding automatically. For manual encoding, use an online URL encoder or:
+- Python: `urllib.parse.quote(name)`
+- JavaScript: `encodeURIComponent(name)`
+- Bash: `echo "name with spaces" | jq -sRr @uri`
+
 **Use Cases:**
 - Daily sales numbers (alert if below target)
 - Error rates (alert if above threshold)
@@ -215,6 +225,13 @@ curl -X POST http://localhost:5050/api/v1/heartbeat/backup_job/database_backup \
 
 **Monitor Names:**
 When creating a deadman monitor, you must specify a `name` in the config. This allows multiple deadman monitors per service (e.g., separate monitors for database backup, file backup, and log rotation).
+
+**URL Encoding:**
+If service or monitor names contain spaces or special characters, they must be URL-encoded:
+- `"backup job"` → `backup%20job`
+- `"nightly backup"` → `nightly%20backup`
+
+Most HTTP clients handle encoding automatically. See the metric endpoint documentation above for encoding examples in different languages.
 
 **Use Cases:**
 - Cron job monitoring (ping after each successful run)
