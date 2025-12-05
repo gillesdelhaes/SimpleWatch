@@ -12,8 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 
+RUN mkdir -p /data
+VOLUME ["/data"]
+
 ENV PYTHONPATH=/app/backend
-ENV DATABASE_PATH=/data/simplewatch.db
 
 EXPOSE 5050
 

@@ -35,7 +35,16 @@ A self-hosted monitoring dashboard designed for business users to track the stat
 
 ## Quick Start
 
-### 1. Deploy with Docker
+### Option 1: Deploy from Docker Hub (Fastest)
+
+```bash
+# Pull and run SimpleWatch in one command
+docker run -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
+```
+
+This creates a volume named `simplewatch-data` to persist your database.
+
+### Option 2: Deploy with docker-compose
 
 ```bash
 # Clone or download SimpleWatch
@@ -45,7 +54,7 @@ cd simplewatch
 docker-compose up -d
 ```
 
-### 2. First-Time Setup
+### First-Time Setup
 
 Open http://localhost:5050
 
@@ -59,7 +68,7 @@ You'll see the **Setup Page** on first launch:
 
 That's it! You'll be redirected to the login page.
 
-### 3. Create Your First Monitor
+### Create Your First Monitor
 
 1. Click "Services" in the navigation
 2. Click "Quick Monitor" button

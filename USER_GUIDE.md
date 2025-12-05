@@ -18,13 +18,36 @@ Complete guide to using SimpleWatch for monitoring your services.
 
 ## Getting Started
 
-### First Login
+### Installation
+
+**Option 1: Docker Hub (Fastest)**
+
+```bash
+# Pull and run SimpleWatch from Docker Hub
+docker run -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
+```
+
+This creates a volume named `simplewatch-data` to persist your database.
+
+**Option 2: docker-compose**
+
+```bash
+# Clone the repository
+cd simplewatch
+docker-compose up -d
+```
+
+### First-Time Setup
 
 1. Navigate to http://localhost:5050
-2. Enter default credentials:
-   - Username: `admin`
-   - Password: `changeme`
-3. **Important:** Change your password in Settings after first login
+2. You'll see the **Setup Page** on first launch:
+   - Choose your admin username
+   - Create a secure password (minimum 8 characters)
+   - Confirm your password
+   - Optionally create example monitors (recommended)
+   - Click "Initialize System"
+3. You'll be redirected to the login page
+4. Log in with the credentials you just created
 
 ### Exploring Example Monitors
 

@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 
 DATABASE_PATH = "/data/simplewatch.db"
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+SQLALCHEMY_DATABASE_URL = f"sqlite:////{DATABASE_PATH}"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
