@@ -7,6 +7,7 @@ from database import get_db, User
 from models import UserCreate, UserResponse, PasswordChangeRequest
 from api.auth import get_current_user
 from utils.auth import hash_password, generate_api_key, verify_password
+from utils.password_validation import validate_password
 from typing import List
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
@@ -38,6 +39,11 @@ def create_user(
     existing = db.query(User).filter(User.username == user.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
+
+    # Validate password
+    is_valid, error_msg = validate_password(user.password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
 
     new_user = User(
         username=user.username,
@@ -118,6 +124,11 @@ def change_password(
                 status_code=403,
                 detail="Cannot change password of another admin user"
             )
+
+    # Validate new password
+    is_valid, error_msg = validate_password(password_change.new_password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
 
     # Update password
     target_user.password_hash = hash_password(password_change.new_password)

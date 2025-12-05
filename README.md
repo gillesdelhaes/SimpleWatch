@@ -41,21 +41,23 @@ A self-hosted monitoring dashboard designed for business users to track the stat
 # Clone or download SimpleWatch
 cd simplewatch
 
-# Copy environment template
-cp .env.example .env
-
-# Start SimpleWatch
+# Start SimpleWatch (no .env file needed!)
 docker-compose up -d
 ```
 
-### 2. Login
+### 2. First-Time Setup
 
 Open http://localhost:5050
 
-- **Username:** `admin`
-- **Password:** `changeme`
+You'll see the **Setup Page** on first launch:
 
-**Important:** Change the default password after first login!
+1. Choose your admin username
+2. Create a secure password (minimum 8 characters)
+3. Confirm your password
+4. Optionally create example monitors (recommended for first-time users)
+5. Click "Initialize System"
+
+That's it! You'll be redirected to the login page.
 
 ### 3. Create Your First Monitor
 
@@ -75,27 +77,23 @@ Open http://localhost:5050
 - **Charts:** Chart.js 4.x
 - **Deployment:** Docker + docker-compose
 
-## Environment Variables
+## Configuration
 
-Create a `.env` file or configure in `docker-compose.yml`:
+**SimpleWatch requires NO environment variables or .env file!**
 
-```bash
-# Default Admin Account
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=changeme
+All configuration is handled through the web interface:
 
-# Database Location
-DATABASE_PATH=/data/simplewatch.db
+- **Admin Account**: Created via first-run setup page
+- **Database**: Automatically stored in `/data/simplewatch.db`
+- **Example Monitors**: Option on first-run setup page
+- **SECRET_KEY**: Auto-generated securely on first startup
+- **SMTP/Notifications**: Configure in Settings → Notifications
 
-# Create Example Monitors on First Startup
-CREATE_EXAMPLES=true
-```
-
-**Note:** `SECRET_KEY` is automatically generated on first startup if not provided. SMTP and other settings are configured through the web UI (Settings → Notifications).
+This makes deployment extremely simple - just run `docker-compose up -d` and you're ready!
 
 ## Built-in Examples
 
-When `CREATE_EXAMPLES=true` (default), SimpleWatch creates 4 example monitors:
+If you enable "Create Example Monitors" during setup (recommended), SimpleWatch creates 4 example monitors:
 
 1. **Google Search** - Website monitor (always operational)
 2. **Slow Response API** - API monitor (intentionally times out)
@@ -215,15 +213,12 @@ simplewatch/
 cd backend
 pip install -r requirements.txt
 
-# Set environment variables
-export DATABASE_PATH=./simplewatch.db
-export ADMIN_PASSWORD=changeme
-
-# Run the application
+# Run the application (database path is hardcoded to /data/simplewatch.db)
+# First run will show setup page at http://localhost:5050
 python app.py
 ```
 
-Access at http://localhost:5050
+Access at http://localhost:5050 and complete the first-run setup
 
 ### Running Tests
 
@@ -269,7 +264,7 @@ Your data persists in the `./data` directory.
 
 ## Security Considerations
 
-- Change default admin password immediately
+- Choose a strong admin password during first-run setup (minimum 8 characters)
 - Use HTTPS in production (configure reverse proxy)
 - Keep API keys secure (regenerate in Settings if exposed)
 - Enable firewall rules to restrict access

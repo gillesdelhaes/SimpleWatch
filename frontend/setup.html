@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Setup - SimpleWatch</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        .background-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .background-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                circle at 50% 50%,
+                var(--accent-glow) 0%,
+                transparent 70%
+            );
+            opacity: 0.4;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Setup container */
+        .setup-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 520px;
+            padding: 3rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header with initialization theme */
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        .setup-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--accent-glow);
+            border: 1px solid var(--accent-primary);
+            border-radius: 2rem;
+            color: var(--accent-primary);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% {
+                box-shadow: 0 0 10px var(--accent-glow);
+            }
+            50% {
+                box-shadow: 0 0 20px var(--accent-glow);
+            }
+        }
+
+        .setup-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+        }
+
+        .setup-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Form styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: var(--font-body);
+            transition: all var(--transition-normal);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-help {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+        }
+
+        /* Checkbox styling */
+        .checkbox-group {
+            margin-bottom: 2rem;
+            padding: 1.25rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            transition: all var(--transition-normal);
+        }
+
+        .checkbox-group:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.125rem;
+            cursor: pointer;
+            accent-color: var(--accent-primary);
+        }
+
+        .checkbox-content {
+            flex: 1;
+        }
+
+        .checkbox-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .checkbox-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Password requirements */
+        .password-requirements {
+            margin-top: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        .password-requirements ul {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.5rem;
+            list-style: none;
+        }
+
+        .password-requirements li {
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+
+        .password-requirements li::before {
+            content: '•';
+            position: absolute;
+            left: -1rem;
+            color: var(--accent-primary);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+            opacity: 0;
+            transition: opacity var(--transition-normal);
+        }
+
+        .submit-btn:hover::before {
+            opacity: 1;
+        }
+
+        .submit-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Error/Success messages */
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .message.error {
+            background: var(--status-down-bg);
+            border: 1px solid var(--status-down);
+            color: var(--status-down);
+        }
+
+        .message.success {
+            background: var(--status-operational-bg);
+            border: 1px solid var(--status-operational);
+            color: var(--status-operational);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Theme toggle */
+        .corner-theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 20;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Loading state */
+        .submit-btn.loading span::after {
+            content: '';
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            margin-left: 0.75rem;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background effects -->
+    <div class="background-grid"></div>
+    <div class="background-glow"></div>
+
+    <!-- Theme toggle -->
+    <div class="corner-theme-toggle">
+        <div id="themeToggleContainer"></div>
+    </div>
+
+    <!-- Setup container -->
+    <div class="setup-container">
+        <div class="setup-header">
+            <div class="setup-badge">System Initialization</div>
+            <h1 class="setup-title">SimpleWatch</h1>
+            <p class="setup-subtitle">
+                Welcome to SimpleWatch. Complete this one-time setup to configure your monitoring system.
+            </p>
+        </div>
+
+        <form id="setupForm">
+            <div id="messageContainer"></div>
+
+            <div class="form-group">
+                <label for="username">Admin Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    minlength="3"
+                    placeholder="Choose admin username"
+                    autocomplete="off"
+                >
+                <div class="form-help">Minimum 3 characters</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Admin Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    minlength="8"
+                    placeholder="Create secure password"
+                    autocomplete="new-password"
+                >
+                <div class="password-requirements">
+                    <strong>Password Requirements:</strong>
+                    <ul>
+                        <li>Minimum 8 characters</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    required
+                    minlength="8"
+                    placeholder="Re-enter password"
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <div class="checkbox-group">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="createExamples" name="createExamples" checked>
+                    <div class="checkbox-content">
+                        <div class="checkbox-label">Create Example Monitors</div>
+                        <div class="checkbox-description">
+                            Add sample monitors (Google Search, API, DNS, Disk Usage) to help you get started and explore SimpleWatch features.
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span>Initialize System</span>
+            </button>
+        </form>
+    </div>
+
+    <script src="/static/js/theme.js"></script>
+    <script>
+        // Insert theme toggle
+        insertThemeToggle('themeToggleContainer');
+
+        const form = document.getElementById('setupForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageContainer = document.getElementById('messageContainer');
+
+        // Check if setup already completed
+        async function checkSetupStatus() {
+            try {
+                const response = await fetch('/api/v1/setup/status');
+                const data = await response.json();
+
+                if (data.setup_completed) {
+                    // Setup already done, redirect to login
+                    window.location.href = '/static/login.html';
+                }
+            } catch (error) {
+                console.error('Failed to check setup status:', error);
+            }
+        }
+
+        checkSetupStatus();
+
+        function showMessage(text, type = 'error') {
+            messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
+        }
+
+        function clearMessage() {
+            messageContainer.innerHTML = '';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessage();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const createExamples = document.getElementById('createExamples').checked;
+
+            // Client-side validation
+            if (username.length < 3) {
+                showMessage('Username must be at least 3 characters long');
+                return;
+            }
+
+            if (password.length < 8) {
+                showMessage('Password must be at least 8 characters long');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match');
+                return;
+            }
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+
+            try {
+                const response = await fetch('/api/v1/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        confirm_password: confirmPassword,
+                        create_examples: createExamples
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Setup failed');
+                }
+
+                // Success
+                showMessage('Setup completed successfully! Redirecting to login...', 'success');
+
+                // Redirect to login after short delay
+                setTimeout(() => {
+                    window.location.href = '/static/login.html';
+                }, 2000);
+
+            } catch (error) {
+                showMessage(error.message || 'Failed to complete setup. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            }
+        });
+
+        // Real-time password match validation
+        document.getElementById('confirmPassword').addEventListener('input', (e) => {
+            const password = document.getElementById('password').value;
+            const confirmPassword = e.target.value;
+
+            if (confirmPassword && password !== confirmPassword) {
+                e.target.style.borderColor = 'var(--status-down)';
+            } else {
+                e.target.style.borderColor = 'var(--border-color)';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -14,7 +14,7 @@ from database import init_db, SessionLocal
 from utils.db import create_default_admin, initialize_encryption_key
 from scheduler import start_scheduler, stop_scheduler
 
-from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications
+from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup
 
 load_dotenv()
 
@@ -35,17 +35,8 @@ async def lifespan(app: FastAPI):
 
     db = SessionLocal()
     try:
-        create_default_admin(db)
-        logger.info("Default admin user checked")
-
         initialize_encryption_key(db)
         logger.info("Encryption key initialized")
-
-        create_examples = os.getenv("CREATE_EXAMPLES", "true").lower() == "true"
-        if create_examples:
-            from utils.examples import create_example_monitors
-            create_example_monitors(db)
-            logger.info("Example monitors created")
     finally:
         db.close()
 
@@ -73,6 +64,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def setup_required_middleware(request: Request, call_next):
+    """
+    Middleware to check if setup is completed.
+    Redirects to setup page if setup not completed, except for setup-related routes.
+    """
+    # Public routes that don't require setup
+    public_paths = [
+        "/api/v1/setup",
+        "/api/v1/setup/status",
+        "/setup",
+        "/health",
+        "/static",
+    ]
+
+    # Check if path is public
+    is_public = any(request.url.path.startswith(path) for path in public_paths)
+
+    if not is_public:
+        # Check setup status
+        db = SessionLocal()
+        try:
+            from database import AppSettings
+            setting = db.query(AppSettings).filter(AppSettings.key == "setup_completed").first()
+            setup_completed = setting is not None and setting.value == "true"
+
+            if not setup_completed:
+                # Setup not completed - redirect to setup page
+                if request.url.path.startswith("/api"):
+                    # API requests get 403
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "success": False,
+                            "error": "Setup required",
+                            "redirect": "/setup"
+                        }
+                    )
+                else:
+                    # HTML requests redirect to setup page
+                    return FileResponse(os.path.join(frontend_path, "setup.html"))
+        finally:
+            db.close()
+
+    response = await call_next(request)
+    return response
+
+
+app.include_router(setup.router)
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(services.router)

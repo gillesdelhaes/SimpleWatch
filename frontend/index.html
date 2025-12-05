@@ -5,11 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimpleWatch</title>
     <script>
-        if (localStorage.getItem('token')) {
-            window.location.href = '/static/dashboard.html';
-        } else {
-            window.location.href = '/static/login.html';
+        // Check setup status first, then redirect appropriately
+        async function checkAndRedirect() {
+            try {
+                // Check if setup is completed
+                const response = await fetch('/api/v1/setup/status');
+                const data = await response.json();
+
+                if (!data.setup_completed) {
+                    // Setup not completed, redirect to setup
+                    window.location.href = '/static/setup.html';
+                    return;
+                }
+
+                // Setup completed, check if user is logged in
+                if (localStorage.getItem('token')) {
+                    window.location.href = '/static/dashboard.html';
+                } else {
+                    window.location.href = '/static/login.html';
+                }
+            } catch (error) {
+                // If setup check fails, try to redirect to login as fallback
+                console.error('Failed to check setup status:', error);
+                if (localStorage.getItem('token')) {
+                    window.location.href = '/static/dashboard.html';
+                } else {
+                    window.location.href = '/static/login.html';
+                }
+            }
         }
+
+        checkAndRedirect();
     </script>
 </head>
 <body>

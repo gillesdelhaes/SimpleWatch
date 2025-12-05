@@ -263,6 +263,23 @@
         // Insert theme toggle
         insertThemeToggle('themeToggleContainer');
 
+        // Check if setup is completed
+        async function checkSetupStatus() {
+            try {
+                const response = await fetch('/api/v1/setup/status');
+                const data = await response.json();
+
+                if (!data.setup_completed) {
+                    // Setup not completed, redirect to setup page
+                    window.location.href = '/static/setup.html';
+                }
+            } catch (error) {
+                console.error('Failed to check setup status:', error);
+            }
+        }
+
+        checkSetupStatus();
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 

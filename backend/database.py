@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 
-DATABASE_PATH = os.getenv("DATABASE_PATH", "/data/simplewatch.db")
+DATABASE_PATH = "/data/simplewatch.db"
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 engine = create_engine(
@@ -169,6 +169,14 @@ class EncryptionKey(Base):
     id = Column(Integer, primary_key=True, index=True)
     key_value = Column(String(255), nullable=False)  # Base64-encoded Fernet key
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+
+
+class AppSettings(Base):
+    __tablename__ = "app_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(255), unique=True, nullable=False, index=True)
+    value = Column(String(255), nullable=True)
 
 
 def init_db():
