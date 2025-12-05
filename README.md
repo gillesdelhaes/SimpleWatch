@@ -218,6 +218,7 @@ requirements for your deployment.
 
 See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for details, or contact the
 author for licensing inquiries.
+
 ---
 
 **Why dual licensing?**  
