@@ -457,6 +457,23 @@ Create a new monitor.
 
 **Note:** Deadman monitors expect regular heartbeat pings. Service goes DOWN if no heartbeat received within `expected_interval_hours + grace_period_hours`. Perfect for monitoring cron jobs, backups, and scheduled tasks. The `name` field is optional but recommended if you have multiple deadman monitors for one service. Use the name when sending heartbeats via `/api/v1/heartbeat/{service_name}/{monitor_name}`.
 
+**SSL Certificate Monitor Example:**
+```json
+{
+  "service_id": 6,
+  "monitor_type": "ssl_cert",
+  "config": {
+    "hostname": "example.com",
+    "port": 443,
+    "warning_days": 30,
+    "critical_days": 7
+  },
+  "check_interval_minutes": 1440
+}
+```
+
+**Note:** SSL Certificate monitors check the expiration date of SSL/TLS certificates. Service goes DEGRADED when certificate expires within `warning_days` and DOWN when within `critical_days` or already expired. Default check interval is 1440 minutes (24 hours/daily). The monitor displays days until expiry and the exact expiration date on the dashboard.
+
 #### GET /api/v1/monitors/{monitor_id}
 
 Get specific monitor details.

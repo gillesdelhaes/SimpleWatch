@@ -103,7 +103,7 @@ Click any service card to open a modal showing:
 
 ## Creating Monitors
 
-SimpleWatch offers 5 types of built-in monitors that require NO coding.
+SimpleWatch offers 6 types of built-in monitors that require NO coding.
 
 ### Quick Monitor Feature
 
@@ -317,6 +317,66 @@ fi
 - ✅ **Operational:** Heartbeat received within expected interval
 - ⚠️ **Degraded:** Heartbeat overdue but within grace period
 - ❌ **Down:** No heartbeat for more than interval + grace period
+
+### Monitor Type 6: SSL Certificate Monitor
+
+**Use Case:** Monitor SSL/TLS certificate expiration and get alerted before certificates expire
+
+**Setup Time:** 45 seconds
+
+**Steps:**
+1. Select "SSL Certificate Monitor"
+2. Enter service name (e.g., "Company Website SSL")
+3. Enter hostname (e.g., "example.com" or "www.example.com")
+4. Enter port (default: 443 for HTTPS)
+5. Set warning threshold in days (default: 30 days)
+6. Set critical threshold in days (default: 7 days)
+7. Choose check interval (default: 24 hours/daily)
+8. Create
+
+**How It Works:**
+- Connects to the specified hostname and port
+- Retrieves the SSL/TLS certificate
+- Calculates days until certificate expiration
+- Determines status:
+  - More than warning threshold: Operational
+  - Between warning and critical: Degraded
+  - Less than critical or expired: Down
+- Dashboard displays days until expiry and expiration date
+
+**Example Uses:**
+- Monitor website SSL certificates
+- Track API endpoint certificates
+- Watch multiple domain certificates
+- Alert before certificate renewal deadlines
+- Ensure certificates are renewed on time
+
+**Practical Example - Website Certificate:**
+
+Create an SSL certificate monitor with:
+- Hostname: www.example.com
+- Port: 443
+- Warning threshold: 30 days
+- Critical threshold: 7 days
+- Check interval: 24 hours (daily)
+
+The monitor will:
+- Check certificate once per day
+- Alert 30 days before expiration (degraded status)
+- Alert 7 days before expiration (down status)
+- Show exact expiration date and days remaining on dashboard
+
+**Status Logic:**
+- ✅ **Operational:** Certificate valid for > 30 days
+- ⚠️ **Degraded:** Certificate expires in 8-30 days (warning)
+- ❌ **Down:** Certificate expires in ≤ 7 days or already expired
+
+**Benefits:**
+- Never miss certificate renewals
+- Get early warnings before expiration
+- Monitor multiple certificates in one place
+- Automatic daily checks (no manual tracking)
+- See exact expiration dates at a glance
 
 ---
 

@@ -18,6 +18,7 @@ A self-hosted monitoring dashboard designed for business users and non-technical
 - **Metric Threshold Monitor** - Receive numbers, alert on thresholds (90-second setup)
 - **Port Monitor** - Test if TCP ports are open (45-second setup)
 - **Deadman Monitor** - Alert if no heartbeat received within expected interval (perfect for cron jobs and scheduled tasks)
+- **SSL Certificate Monitor** - Monitor certificate expiration with configurable warning thresholds (daily checks by default)
 
 ### Key Capabilities
 - Multiple monitors per service (track services in different ways)

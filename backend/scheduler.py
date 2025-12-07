@@ -11,6 +11,7 @@ from monitors.api import APIMonitor
 from monitors.metric import MetricThresholdMonitor
 from monitors.port import PortMonitor
 from monitors.deadman import DeadmanMonitor
+from monitors.ssl_cert import SSLCertMonitor
 from services.notification_service import determine_service_status, send_service_notification
 import json
 import time
@@ -47,6 +48,8 @@ def check_monitor(monitor_id: int):
         elif monitor.monitor_type == "deadman":
             # Deadman monitor needs last_check_at timestamp
             monitor_instance = DeadmanMonitor(config, monitor.last_check_at)
+        elif monitor.monitor_type == "ssl_cert":
+            monitor_instance = SSLCertMonitor(config)
         else:
             logger.error(f"Unknown monitor type: {monitor.monitor_type}")
             return

@@ -146,7 +146,7 @@ class DeadmanMonitorConfig(MonitorConfig):
 
 class MonitorCreate(BaseModel):
     service_id: int
-    monitor_type: str = Field(..., pattern="^(website|api|metric_threshold|port|deadman)$")
+    monitor_type: str = Field(..., pattern="^(website|api|metric_threshold|port|deadman|ssl_cert)$")
     config: Dict[str, Any]
     check_interval_minutes: int = 5
 

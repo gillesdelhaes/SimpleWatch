@@ -217,6 +217,10 @@
                         <div class="type-card-title">Deadman Monitor</div>
                         <div class="type-card-desc">Alert if no heartbeat received</div>
                     </div>
+                    <div class="type-card" onclick="selectMonitorType('ssl_cert')" data-type="ssl">
+                        <div class="type-card-title">SSL Certificate</div>
+                        <div class="type-card-desc">Monitor certificate expiration</div>
+                    </div>
                 </div>
                 <button onclick="hideQuickMonitorModal()" class="btn btn-secondary" style="width: 100%;">Cancel</button>
             </div>
@@ -407,6 +411,46 @@
                     <button type="submit" class="btn btn-primary" style="width: 100%;">Create Deadman Monitor</button>
                 </form>
             </div>
+
+            <!-- SSL Certificate Monitor Form -->
+            <div id="sslCertMonitorForm" class="hidden">
+                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
+                <h4 style="font-weight: 700; margin-bottom: 1rem;">SSL Certificate Configuration</h4>
+                <form onsubmit="createSSLCertMonitor(); return false;">
+                    <div class="form-group">
+                        <label class="form-label">Service Name</label>
+                        <input type="text" id="sslCertServiceName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hostname</label>
+                        <input type="text" id="sslCertHostname" class="form-input" placeholder="example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port</label>
+                        <input type="number" id="sslCertPort" value="443" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Warning Threshold (days)</label>
+                        <input type="number" id="sslCertWarningDays" value="30" class="form-input" required>
+                        <p class="form-hint">Alert when certificate expires in this many days</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Critical Threshold (days)</label>
+                        <input type="number" id="sslCertCriticalDays" value="7" class="form-input" required>
+                        <p class="form-hint">Critical alert when certificate expires in this many days</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Check Interval</label>
+                        <select id="sslCertInterval" class="form-input">
+                            <option value="60">Every 1 hour</option>
+                            <option value="360">Every 6 hours</option>
+                            <option value="720">Every 12 hours</option>
+                            <option value="1440" selected>Every 24 hours (Daily)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create SSL Certificate Monitor</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -443,6 +487,10 @@
                     <div class="type-card" onclick="selectAddMonitorType('deadman')" data-type="deadman">
                         <div class="type-card-title">Deadman Monitor</div>
                         <div class="type-card-desc">Alert if no heartbeat received</div>
+                    </div>
+                    <div class="type-card" onclick="selectAddMonitorType('ssl_cert')" data-type="ssl">
+                        <div class="type-card-title">SSL Certificate</div>
+                        <div class="type-card-desc">Monitor certificate expiration</div>
                     </div>
                 </div>
                 <button onclick="hideAddMonitorToServiceModal()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Cancel</button>
@@ -602,6 +650,38 @@
                     </div>
                 </div>
                 <button onclick="addDeadmanMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
+            </div>
+
+            <!-- Add SSL Certificate Monitor Form -->
+            <div id="addSSLCertMonitorForm" class="hidden">
+                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
+                <h4 style="font-weight: 700; margin-bottom: 1rem;">SSL Certificate Monitor Configuration</h4>
+                <div class="form-group">
+                    <label class="form-label">Hostname</label>
+                    <input type="text" id="addSSLCertHostname" class="form-input" placeholder="example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="number" id="addSSLCertPort" value="443" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Warning Threshold (days)</label>
+                    <input type="number" id="addSSLCertWarningDays" value="30" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Critical Threshold (days)</label>
+                    <input type="number" id="addSSLCertCriticalDays" value="7" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Check Interval</label>
+                    <select id="addSSLCertInterval" class="form-input">
+                        <option value="60">Every 1 hour</option>
+                        <option value="360">Every 6 hours</option>
+                        <option value="720">Every 12 hours</option>
+                        <option value="1440" selected>Every 24 hours (Daily)</option>
+                    </select>
+                </div>
+                <button onclick="addSSLCertMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
             </div>
         </div>
     </div>
@@ -807,6 +887,38 @@
         </div>
     </div>
 
+    <!-- Edit SSL Certificate Monitor Modal -->
+    <div id="editSSLCertMonitorModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit SSL Certificate Monitor</h3>
+            </div>
+            <form id="editSSLCertMonitorForm">
+                <input type="hidden" id="editSSLCertMonitorId">
+                <div class="form-group">
+                    <label class="form-label">Hostname</label>
+                    <input type="text" id="editSSLCertHostname" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="number" id="editSSLCertPort" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Warning Threshold (days)</label>
+                    <input type="number" id="editSSLCertWarningDays" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Critical Threshold (days)</label>
+                    <input type="number" id="editSSLCertCriticalDays" class="form-input" required>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
+                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/components.js"></script>
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
@@ -824,7 +936,8 @@
                 'api': icons.api,
                 'metric': icons.chart,
                 'port': icons.port,
-                'deadman': icons.skull
+                'deadman': icons.skull,
+                'ssl': icons.shield
             };
 
             document.querySelectorAll('.type-card[data-type]').forEach(card => {
@@ -984,7 +1097,8 @@
                 'api': 'apiMonitorForm',
                 'metric_threshold': 'metricMonitorForm',
                 'port': 'portMonitorForm',
-                'deadman': 'deadmanMonitorForm'
+                'deadman': 'deadmanMonitorForm',
+                'ssl_cert': 'sslCertMonitorForm'
             };
 
             document.getElementById(formIds[type]).classList.remove('hidden');
@@ -992,7 +1106,7 @@
 
         function backToMonitorSelection() {
             document.getElementById('monitorTypeSelection').classList.remove('hidden');
-            ['website', 'api', 'metric', 'port', 'deadman'].forEach(t => {
+            ['website', 'api', 'metric', 'port', 'deadman', 'sslCert'].forEach(t => {
                 document.getElementById(t + 'MonitorForm').classList.add('hidden');
             });
         }
@@ -1190,6 +1304,31 @@
             }
         }
 
+        async function createSSLCertMonitor() {
+            try {
+                const serviceName = document.getElementById('sslCertServiceName').value;
+                const service = await api.createService({ name: serviceName, description: 'SSL Certificate monitor', category: 'Monitor' });
+
+                await api.createMonitor({
+                    service_id: service.id,
+                    monitor_type: 'ssl_cert',
+                    config: {
+                        hostname: document.getElementById('sslCertHostname').value,
+                        port: parseInt(document.getElementById('sslCertPort').value),
+                        warning_days: parseInt(document.getElementById('sslCertWarningDays').value),
+                        critical_days: parseInt(document.getElementById('sslCertCriticalDays').value)
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('sslCertInterval').value)
+                });
+
+                hideQuickMonitorModal();
+                loadServices();
+                showSuccess('SSL Certificate monitor created successfully');
+            } catch (error) {
+                showError('Failed to create monitor: ' + error.message);
+            }
+        }
+
         async function deleteService(id) {
             const confirmed = await showConfirm(
                 'Are you sure you want to delete this service and all its monitors?',
@@ -1251,7 +1390,8 @@
                 'api': 'addApiMonitorForm',
                 'metric_threshold': 'addMetricMonitorForm',
                 'port': 'addPortMonitorForm',
-                'deadman': 'addDeadmanMonitorForm'
+                'deadman': 'addDeadmanMonitorForm',
+                'ssl_cert': 'addSSLCertMonitorForm'
             };
 
             document.getElementById(formIds[type]).classList.remove('hidden');
@@ -1273,6 +1413,7 @@
             document.getElementById('addMetricMonitorForm').classList.add('hidden');
             document.getElementById('addPortMonitorForm').classList.add('hidden');
             document.getElementById('addDeadmanMonitorForm').classList.add('hidden');
+            document.getElementById('addSSLCertMonitorForm').classList.add('hidden');
         }
 
         async function addWebsiteMonitorToService() {
@@ -1408,6 +1549,30 @@
             }
         }
 
+        async function addSSLCertMonitorToService() {
+            try {
+                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+
+                await api.createMonitor({
+                    service_id: serviceId,
+                    monitor_type: 'ssl_cert',
+                    config: {
+                        hostname: document.getElementById('addSSLCertHostname').value,
+                        port: parseInt(document.getElementById('addSSLCertPort').value),
+                        warning_days: parseInt(document.getElementById('addSSLCertWarningDays').value),
+                        critical_days: parseInt(document.getElementById('addSSLCertCriticalDays').value)
+                    },
+                    check_interval_minutes: parseInt(document.getElementById('addSSLCertInterval').value)
+                });
+
+                hideAddMonitorToServiceModal();
+                loadServices();
+                showSuccess('SSL Certificate monitor added successfully');
+            } catch (error) {
+                showError('Failed to add monitor: ' + error.message);
+            }
+        }
+
         async function editMonitor(monitorId) {
             try {
                 const monitor = await api.getMonitor(monitorId);
@@ -1461,6 +1626,13 @@
                     const deadmanEndpoint = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
                     document.getElementById('editDeadmanServiceNamePreview').textContent = deadmanEndpoint;
                     document.getElementById('editDeadmanMonitorModal').classList.remove('hidden');
+                } else if (monitor.monitor_type === 'ssl_cert') {
+                    document.getElementById('editSSLCertMonitorId').value = monitor.id;
+                    document.getElementById('editSSLCertHostname').value = monitor.config.hostname;
+                    document.getElementById('editSSLCertPort').value = monitor.config.port;
+                    document.getElementById('editSSLCertWarningDays').value = monitor.config.warning_days;
+                    document.getElementById('editSSLCertCriticalDays').value = monitor.config.critical_days;
+                    document.getElementById('editSSLCertMonitorModal').classList.remove('hidden');
                 }
             } catch (error) {
                 showError('Failed to load monitor: ' + error.message);
@@ -1473,6 +1645,7 @@
             document.getElementById('editMetricMonitorModal').classList.add('hidden');
             document.getElementById('editPortMonitorModal').classList.add('hidden');
             document.getElementById('editDeadmanMonitorModal').classList.add('hidden');
+            document.getElementById('editSSLCertMonitorModal').classList.add('hidden');
         }
 
         // Edit monitor form submit handlers
@@ -1583,6 +1756,27 @@
 
                 await api.updateMonitor(monitorId, {
                     config: config
+                });
+
+                hideEditMonitorModal();
+                loadServices();
+            } catch (error) {
+                showError('Failed to update monitor: ' + error.message);
+            }
+        });
+
+        document.getElementById('editSSLCertMonitorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const monitorId = document.getElementById('editSSLCertMonitorId').value;
+
+            try {
+                await api.updateMonitor(monitorId, {
+                    config: {
+                        hostname: document.getElementById('editSSLCertHostname').value,
+                        port: parseInt(document.getElementById('editSSLCertPort').value),
+                        warning_days: parseInt(document.getElementById('editSSLCertWarningDays').value),
+                        critical_days: parseInt(document.getElementById('editSSLCertCriticalDays').value)
+                    }
                 });
 
                 hideEditMonitorModal();

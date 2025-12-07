@@ -588,6 +588,17 @@
                                 <div class="monitor-metric-label">Last Heartbeat</div>
                                 <div class="monitor-metric-value">${monitor.timestamp ? formatTimestamp(monitor.timestamp) : 'Never'}</div>
                             </div>
+                            ` : monitor.monitor_type === 'ssl_cert' && monitor.metadata && monitor.metadata.days_until_expiry !== undefined ? `
+                            <div class="monitor-metric">
+                                <div class="monitor-metric-label">Days Until Expiry</div>
+                                <div class="monitor-metric-value">${monitor.metadata.days_until_expiry} days</div>
+                            </div>
+                            ${monitor.metadata.expiry_date ? `
+                            <div class="monitor-metric">
+                                <div class="monitor-metric-label">Expires On</div>
+                                <div class="monitor-metric-value">${new Date(monitor.metadata.expiry_date).toLocaleDateString()}</div>
+                            </div>
+                            ` : ''}
                             ` : monitor.response_time_ms ? `
                             <div class="monitor-metric">
                                 <div class="monitor-metric-label">Response Time</div>

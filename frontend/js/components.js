@@ -76,6 +76,11 @@ const icons = {
         <circle cx="12.5" cy="8" r="1"/>
     </svg>`,
 
+    shield: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 2L4 5v5c0 4 2.5 7 6 8 3.5-1 6-4 6-8V5l-6-3z"/>
+        <path d="M8 10l1.5 1.5L13 8"/>
+    </svg>`,
+
     // Utility icons
     alertTriangle: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 3L2 17h16L10 3z"/>
