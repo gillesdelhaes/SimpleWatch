@@ -117,6 +117,11 @@ const icons = {
     bellSlash: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 18a2 2 0 002-2H8a2 2 0 002 2zm5-8c0-2.21-1.79-4-4-4V4a1 1 0 10-2 0v2c-2.21 0-4 1.79-4 4v3l-2 2v1h16v-1l-2-2v-3z"/>
         <path d="M3 3l14 14" stroke-width="2.5"/>
+    </svg>`,
+
+    mail: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="16" height="12" rx="2"/>
+        <path d="M2 6l8 5 8-5"/>
     </svg>`
 };
 

@@ -6,11 +6,16 @@
 let channels = [];
 let editingChannelId = null;
 
-// Inject empty state icon
+// Inject icons
 document.addEventListener('DOMContentLoaded', () => {
     const emptyIcon = document.getElementById('emptyIcon');
     if (emptyIcon) {
         emptyIcon.innerHTML = icons.bellSlash;
+    }
+
+    const smtpIcon = document.getElementById('smtpIcon');
+    if (smtpIcon) {
+        smtpIcon.innerHTML = icons.mail;
     }
 });
 
