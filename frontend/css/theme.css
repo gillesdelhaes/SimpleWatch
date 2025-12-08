@@ -908,6 +908,12 @@ label {
   margin-top: 0.25rem;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
 /* ============================================
    Type Selection Cards (for plugin system)
    ============================================ */
