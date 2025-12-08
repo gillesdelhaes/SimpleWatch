@@ -173,9 +173,9 @@ class MonitorRegistry {
     }
 
     // Render custom collapsible content if monitor provides it
-    renderCollapsible(monitor, formPrefix, serviceName = 'SERVICE_NAME') {
+    renderCollapsible(monitor, formPrefix, serviceName = 'SERVICE_NAME', monitorName = null) {
         if (monitor.renderCollapsible) {
-            return monitor.renderCollapsible(formPrefix, serviceName);
+            return monitor.renderCollapsible(formPrefix, serviceName, monitorName);
         }
         return '';
     }

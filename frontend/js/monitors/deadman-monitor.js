@@ -22,7 +22,7 @@ export default {
         expected_interval_hours: {
             type: 'number',
             label: 'Expected Interval (hours)',
-            step: 0.5,
+            step: 0.1,
             default: 24,
             required: true,
             min: 0.1,
@@ -31,7 +31,7 @@ export default {
         grace_period_hours: {
             type: 'number',
             label: 'Grace Period (hours)',
-            step: 0.5,
+            step: 0.1,
             default: 1,
             required: true,
             min: 0,
@@ -85,8 +85,10 @@ export default {
     },
 
     // Custom collapsible content for API example
-    renderCollapsible(formPrefix, serviceName = 'SERVICE_NAME') {
+    renderCollapsible(formPrefix, serviceName = 'SERVICE_NAME', monitorName = null) {
         const encodedServiceName = encodeURIComponent(serviceName);
+        const encodedMonitorName = monitorName ? encodeURIComponent(monitorName) : 'MONITOR_NAME';
+
         return `
             <div class="collapsible">
                 <button type="button" class="collapsible-trigger" aria-expanded="false">
@@ -98,12 +100,12 @@ export default {
                 <div class="collapsible-content">
                     <div class="collapsible-content-inner">
                         <div class="code-example">
-                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/${encodedServiceName} \\
+                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/${encodedServiceName}/${encodedMonitorName} \\
   -H "Content-Type: application/json" \\
   -d '{
     "api_key": "YOUR_API_KEY"
   }'</div>
-                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
+                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page${monitorName ? '' : '. Enter a monitor name above to see the specific endpoint'}.</p>
                         </div>
                     </div>
                 </div>
