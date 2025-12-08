@@ -49,16 +49,16 @@ class Service(Base):
     is_active = Column(Boolean, default=True)
 
     owner = relationship("User", back_populates="services")
-    status_updates = relationship("StatusUpdate", back_populates="service")
-    monitors = relationship("Monitor", back_populates="service")
+    status_updates = relationship("StatusUpdate", back_populates="service", cascade="all, delete-orphan")
+    monitors = relationship("Monitor", back_populates="service", cascade="all, delete-orphan")
 
 
 class StatusUpdate(Base):
     __tablename__ = "status_updates"
 
     id = Column(Integer, primary_key=True, index=True)
-    service_id = Column(Integer, ForeignKey("services.id"), index=True)
-    monitor_id = Column(Integer, ForeignKey("monitors.id"), index=True, nullable=True)
+    service_id = Column(Integer, ForeignKey("services.id", ondelete="CASCADE"), index=True)
+    monitor_id = Column(Integer, ForeignKey("monitors.id", ondelete="CASCADE"), index=True, nullable=True)
     status = Column(String(50), nullable=False)
     timestamp = Column(TIMESTAMP, default=datetime.utcnow, index=True)
     response_time_ms = Column(Integer)
@@ -83,7 +83,7 @@ class Monitor(Base):
     __tablename__ = "monitors"
 
     id = Column(Integer, primary_key=True, index=True)
-    service_id = Column(Integer, ForeignKey("services.id"), index=True)
+    service_id = Column(Integer, ForeignKey("services.id", ondelete="CASCADE"), index=True)
     monitor_type = Column(String(50), nullable=False)
     config_json = Column(Text, nullable=False)
     check_interval_minutes = Column(Integer, default=5)

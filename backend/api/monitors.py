@@ -18,8 +18,8 @@ def list_monitors(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """List all monitors."""
-    monitors = db.query(Monitor).filter(Monitor.is_active == True).all()
+    """List all monitors (both active and paused)."""
+    monitors = db.query(Monitor).all()
 
     result = []
     for monitor in monitors:
@@ -140,15 +140,92 @@ def delete_monitor(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Delete a monitor."""
+    """Delete a monitor and all associated status updates."""
     monitor = db.query(Monitor).filter(Monitor.id == monitor_id).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
 
+    service_id = monitor.service_id
+
+    # CASCADE delete will remove all status_updates
     db.delete(monitor)
     db.commit()
 
+    # Check if service has any remaining active monitors
+    active_monitors = db.query(Monitor).filter(
+        Monitor.service_id == service_id,
+        Monitor.is_active == True
+    ).count()
+
+    # Auto-pause service if no active monitors remain
+    if active_monitors == 0:
+        service = db.query(Service).filter(Service.id == service_id).first()
+        if service and service.is_active:
+            service.is_active = False
+            db.commit()
+
     return {"success": True, "message": "Monitor deleted"}
+
+
+@router.post("/{monitor_id}/pause")
+def pause_monitor(
+    monitor_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Pause a monitor (sets is_active to False without deleting)."""
+    monitor = db.query(Monitor).filter(Monitor.id == monitor_id).first()
+    if not monitor:
+        raise HTTPException(status_code=404, detail="Monitor not found")
+
+    if not monitor.is_active:
+        raise HTTPException(status_code=400, detail="Monitor is already paused")
+
+    service_id = monitor.service_id
+    monitor.is_active = False
+    db.commit()
+
+    # Check if service has any remaining active monitors
+    active_monitors = db.query(Monitor).filter(
+        Monitor.service_id == service_id,
+        Monitor.is_active == True
+    ).count()
+
+    # Auto-pause service if no active monitors remain
+    if active_monitors == 0:
+        service = db.query(Service).filter(Service.id == service_id).first()
+        if service and service.is_active:
+            service.is_active = False
+            db.commit()
+
+    return {"success": True, "message": "Monitor paused"}
+
+
+@router.post("/{monitor_id}/resume")
+def resume_monitor(
+    monitor_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Resume a paused monitor (sets is_active to True)."""
+    monitor = db.query(Monitor).filter(Monitor.id == monitor_id).first()
+    if not monitor:
+        raise HTTPException(status_code=404, detail="Monitor not found")
+
+    if monitor.is_active:
+        raise HTTPException(status_code=400, detail="Monitor is already active")
+
+    service_id = monitor.service_id
+    monitor.is_active = True
+    db.commit()
+
+    # Auto-resume service if it was paused
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if service and not service.is_active:
+        service.is_active = True
+        db.commit()
+
+    return {"success": True, "message": "Monitor resumed"}
 
 
 @router.post("/{monitor_id}/test")

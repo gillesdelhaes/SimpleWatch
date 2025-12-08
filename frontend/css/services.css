@@ -18,6 +18,18 @@
     box-shadow: var(--shadow-md);
 }
 
+.service-card.paused {
+    opacity: 0.6;
+    border-style: dashed;
+}
+
+.service-card.paused .service-title::after {
+    content: " (Paused)";
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    font-weight: 400;
+}
+
 .service-header {
     display: flex;
     justify-content: space-between;
@@ -79,6 +91,18 @@
 .monitor-item:hover {
     border-color: var(--border-hover);
     box-shadow: var(--shadow-sm);
+}
+
+.monitor-item.paused {
+    opacity: 0.5;
+    border-style: dashed;
+}
+
+.monitor-item.paused .monitor-type::after {
+    content: " (Paused)";
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 400;
 }
 
 .monitor-info {

@@ -122,6 +122,14 @@ const icons = {
     mail: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="4" width="16" height="12" rx="2"/>
         <path d="M2 6l8 5 8-5"/>
+    </svg>`,
+
+    pause: `<svg viewBox="0 0 20 20" fill="currentColor">
+        <path d="M5 4h3v12H5V4zm7 0h3v12h-3V4z"/>
+    </svg>`,
+
+    play: `<svg viewBox="0 0 20 20" fill="currentColor">
+        <path d="M6 4l10 6-10 6V4z"/>
     </svg>`
 };
 

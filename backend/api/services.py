@@ -3,7 +3,7 @@ Services API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db, Service, StatusUpdate
+from database import get_db, Service, StatusUpdate, Monitor
 from models import ServiceCreate, ServiceResponse
 from api.auth import get_current_user
 from typing import List
@@ -17,8 +17,8 @@ def list_services(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """List all services."""
-    services = db.query(Service).filter(Service.is_active == True).all()
+    """List all services (both active and paused)."""
+    services = db.query(Service).all()
     return services
 
 
@@ -29,7 +29,10 @@ def create_service(
     current_user = Depends(get_current_user)
 ):
     """Create a new service."""
-    existing = db.query(Service).filter(Service.name == service.name).first()
+    existing = db.query(Service).filter(
+        Service.name == service.name,
+        Service.is_active == True
+    ).first()
     if existing:
         raise HTTPException(status_code=400, detail="Service already exists")
 
@@ -88,15 +91,70 @@ def delete_service(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Delete (archive) a service."""
+    """Delete a service and all associated monitors and status updates."""
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    service.is_active = False
+    # CASCADE delete will remove all monitors and status_updates
+    db.delete(service)
     db.commit()
 
-    return {"success": True, "message": "Service archived"}
+    return {"success": True, "message": "Service deleted"}
+
+
+@router.post("/{service_id}/pause")
+def pause_service(
+    service_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Pause a service and all its monitors (sets is_active to False without deleting)."""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    if not service.is_active:
+        raise HTTPException(status_code=400, detail="Service is already paused")
+
+    service.is_active = False
+
+    # Also pause all monitors attached to this service
+    db.query(Monitor).filter(
+        Monitor.service_id == service_id,
+        Monitor.is_active == True
+    ).update({"is_active": False})
+
+    db.commit()
+
+    return {"success": True, "message": "Service and all monitors paused"}
+
+
+@router.post("/{service_id}/resume")
+def resume_service(
+    service_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Resume a paused service and all its monitors (sets is_active to True)."""
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    if service.is_active:
+        raise HTTPException(status_code=400, detail="Service is already active")
+
+    service.is_active = True
+
+    # Also resume all monitors attached to this service
+    db.query(Monitor).filter(
+        Monitor.service_id == service_id,
+        Monitor.is_active == False
+    ).update({"is_active": True})
+
+    db.commit()
+
+    return {"success": True, "message": "Service and all monitors resumed"}
 
 
 @router.get("/{service_id}/history")

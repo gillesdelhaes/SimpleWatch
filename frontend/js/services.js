@@ -36,7 +36,7 @@ async function loadServices() {
         servicesList.innerHTML = services.map(service => {
             const serviceMonitors = monitorsByService[service.id] || [];
             return `
-            <div class="service-card">
+            <div class="service-card${!service.is_active ? ' paused' : ''}"${!service.is_active ? ' title="This service is paused"' : ''}>
                 <div class="service-header">
                     <div style="flex: 1;">
                         <h3 class="service-title">${service.name}</h3>
@@ -50,6 +50,15 @@ async function loadServices() {
                         <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}')">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                         </button>
+                        ${service.is_active ? `
+                            <button class="icon-btn" onclick="pauseService(${service.id})" title="Pause service">
+                                <span class="icon" style="width: 20px; height: 20px;">${icons.pause}</span>
+                            </button>
+                        ` : `
+                            <button class="icon-btn" onclick="resumeService(${service.id})" title="Resume service" style="color: var(--status-operational);">
+                                <span class="icon" style="width: 20px; height: 20px;">${icons.play}</span>
+                            </button>
+                        `}
                         <button class="icon-btn delete" onclick="deleteService(${service.id})">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                         </button>
@@ -62,7 +71,7 @@ async function loadServices() {
                             <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="showAddMonitorToServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')">+ Add Monitor</button>
                         </div>
                         ${serviceMonitors.map(monitor => `
-                            <div class="monitor-item">
+                            <div class="monitor-item${!monitor.is_active ? ' paused' : ''}"${!monitor.is_active ? ' title="This monitor is paused"' : ''}>
                                 <div class="monitor-info">
                                     <div class="monitor-type">${getMonitorTypeName(monitor.monitor_type)}${monitor.config && monitor.config.name ? ` [${monitor.config.name}]` : ''}</div>
                                     <div class="monitor-config">${getMonitorDescription(monitor)}</div>
@@ -72,6 +81,15 @@ async function loadServices() {
                                     <button class="icon-btn" onclick="editMonitor(${monitor.id})">
                                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                                     </button>
+                                    ${monitor.is_active ? `
+                                        <button class="icon-btn" onclick="pauseMonitor(${monitor.id})" title="Pause monitor">
+                                            <span class="icon" style="width: 20px; height: 20px;">${icons.pause}</span>
+                                        </button>
+                                    ` : `
+                                        <button class="icon-btn" onclick="resumeMonitor(${monitor.id})" title="Resume monitor" style="color: var(--status-operational);">
+                                            <span class="icon" style="width: 20px; height: 20px;">${icons.play}</span>
+                                        </button>
+                                    `}
                                     <button class="icon-btn delete" onclick="deleteMonitor(${monitor.id})">
                                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                                     </button>
@@ -164,6 +182,46 @@ async function deleteMonitor(id) {
         showSuccess('Monitor deleted successfully');
     } catch (error) {
         showError('Failed to delete monitor: ' + error.message);
+    }
+}
+
+async function pauseService(id) {
+    try {
+        await authenticatedFetch(`/api/v1/services/${id}/pause`, { method: 'POST' });
+        loadServices();
+        showSuccess('Service paused successfully');
+    } catch (error) {
+        showError('Failed to pause service: ' + error.message);
+    }
+}
+
+async function resumeService(id) {
+    try {
+        await authenticatedFetch(`/api/v1/services/${id}/resume`, { method: 'POST' });
+        loadServices();
+        showSuccess('Service resumed successfully');
+    } catch (error) {
+        showError('Failed to resume service: ' + error.message);
+    }
+}
+
+async function pauseMonitor(id) {
+    try {
+        await authenticatedFetch(`/api/v1/monitors/${id}/pause`, { method: 'POST' });
+        loadServices();
+        showSuccess('Monitor paused successfully');
+    } catch (error) {
+        showError('Failed to pause monitor: ' + error.message);
+    }
+}
+
+async function resumeMonitor(id) {
+    try {
+        await authenticatedFetch(`/api/v1/monitors/${id}/resume`, { method: 'POST' });
+        loadServices();
+        showSuccess('Monitor resumed successfully');
+    } catch (error) {
+        showError('Failed to resume monitor: ' + error.message);
     }
 }
 
