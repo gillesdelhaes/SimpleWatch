@@ -40,7 +40,7 @@
 
         /* Modal specific styles */
         .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn var(--transition-normal); }
-        .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 1.5rem; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: scaleIn var(--transition-normal); }
+        .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 1.5rem; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow: hidden auto; box-shadow: var(--shadow-lg); animation: scaleIn var(--transition-normal); position: relative; }
         .modal-content.large { max-width: 800px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); }
         .modal-title { font-size: 1.5rem; font-weight: 700; }
@@ -55,6 +55,92 @@
 
         .monitor-type-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.5rem; background: var(--bg-tertiary); border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); }
         .monitor-type-badge .icon { opacity: 0.7; }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Collapsible sections */
+        .collapsible {
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .collapsible-trigger {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .collapsible-trigger:hover {
+            background: var(--bg-secondary);
+        }
+
+        .collapsible-icon {
+            width: 1rem;
+            height: 1rem;
+            transition: transform var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .collapsible-trigger[aria-expanded="true"] .collapsible-icon {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: var(--bg-primary);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 1000px;
+        }
+
+        .collapsible-content-inner {
+            padding: 1rem;
+        }
+
+        .code-example {
+            margin-top: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .code-block {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            overflow-x: auto;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
         .hidden { display: none !important; }
     </style>
@@ -194,261 +280,24 @@
                 </div>
             </div>
 
+            <!-- Type Selection Screen -->
             <div id="monitorTypeSelection">
                 <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
-                <div class="type-grid">
-                    <div class="type-card" onclick="selectMonitorType('website')" data-type="website">
-                        <div class="type-card-title">Website Monitor</div>
-                        <div class="type-card-desc">Check if a URL responds</div>
-                    </div>
-                    <div class="type-card" onclick="selectMonitorType('api')" data-type="api">
-                        <div class="type-card-title">API Monitor</div>
-                        <div class="type-card-desc">Call API endpoint with validation</div>
-                    </div>
-                    <div class="type-card" onclick="selectMonitorType('metric_threshold')" data-type="metric">
-                        <div class="type-card-title">Metric Threshold</div>
-                        <div class="type-card-desc">Receive numbers, alert on thresholds</div>
-                    </div>
-                    <div class="type-card" onclick="selectMonitorType('port')" data-type="port">
-                        <div class="type-card-title">Port Monitor</div>
-                        <div class="type-card-desc">Test if TCP port is open</div>
-                    </div>
-                    <div class="type-card" onclick="selectMonitorType('deadman')" data-type="deadman">
-                        <div class="type-card-title">Deadman Monitor</div>
-                        <div class="type-card-desc">Alert if no heartbeat received</div>
-                    </div>
-                    <div class="type-card" onclick="selectMonitorType('ssl_cert')" data-type="ssl">
-                        <div class="type-card-title">SSL Certificate</div>
-                        <div class="type-card-desc">Monitor certificate expiration</div>
-                    </div>
+                <div id="quickMonitorTypeGrid" class="type-grid">
+                    <!-- Cards will be injected here by registry -->
                 </div>
                 <button onclick="hideQuickMonitorModal()" class="btn btn-secondary" style="width: 100%;">Cancel</button>
             </div>
 
-            <!-- Website Monitor Form -->
-            <div id="websiteMonitorForm" class="hidden">
+            <!-- Monitor Configuration Form (dynamically generated) -->
+            <div id="monitorConfigForm" class="hidden">
                 <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Website Monitor Configuration</h4>
-                <form onsubmit="createWebsiteMonitor(); return false;">
-                    <div class="form-group">
-                        <label class="form-label">Service Name</label>
-                        <input type="text" id="websiteServiceName" class="form-input" required>
+                <h4 id="monitorFormTitle" style="font-weight: 700; margin-bottom: 1rem;"></h4>
+                <form id="quickMonitorForm" onsubmit="handleQuickMonitorSubmit(event)">
+                    <div id="quickMonitorFormFields">
+                        <!-- Fields will be injected here -->
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Website URL</label>
-                        <input type="url" id="websiteUrl" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Check Interval</label>
-                        <select id="websiteInterval" class="form-input">
-                            <option value="1">Every 1 minute</option>
-                            <option value="5" selected>Every 5 minutes</option>
-                            <option value="15">Every 15 minutes</option>
-                            <option value="30">Every 30 minutes</option>
-                            <option value="60">Every 60 minutes</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Timeout (seconds)</label>
-                        <input type="number" id="websiteTimeout" value="10" class="form-input">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Website Monitor</button>
-                </form>
-            </div>
-
-            <!-- API Monitor Form -->
-            <div id="apiMonitorForm" class="hidden">
-                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">API Monitor Configuration</h4>
-                <form onsubmit="createApiMonitor(); return false;">
-                    <div class="form-group">
-                        <label class="form-label">Service Name</label>
-                        <input type="text" id="apiServiceName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">API URL</label>
-                        <input type="url" id="apiUrl" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">HTTP Method</label>
-                        <select id="apiMethod" class="form-input">
-                            <option value="GET">GET</option>
-                            <option value="POST">POST</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Expected Status Code</label>
-                        <input type="number" id="apiStatusCode" value="200" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Check Interval</label>
-                        <select id="apiInterval" class="form-input">
-                            <option value="1">Every 1 minute</option>
-                            <option value="5" selected>Every 5 minutes</option>
-                            <option value="15">Every 15 minutes</option>
-                            <option value="30">Every 30 minutes</option>
-                            <option value="60">Every 60 minutes</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create API Monitor</button>
-                </form>
-            </div>
-
-            <!-- Metric Monitor Form -->
-            <div id="metricMonitorForm" class="hidden">
-                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Metric Threshold Configuration</h4>
-                <form onsubmit="createMetricMonitor(); return false;">
-                    <div class="form-group">
-                        <label class="form-label">Service Name</label>
-                        <input type="text" id="metricServiceName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Monitor Name</label>
-                        <input type="text" id="metricMonitorName" class="form-input" placeholder="e.g., cpu, memory, disk" required>
-                        <p class="form-hint">Used in the API endpoint when posting metrics.</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Warning Threshold</label>
-                        <input type="number" step="0.1" id="metricWarning" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Critical Threshold</label>
-                        <input type="number" step="0.1" id="metricCritical" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Comparison Type</label>
-                        <select id="metricComparison" class="form-input">
-                            <option value="greater">Greater than (>)</option>
-                            <option value="less">Less than (<)</option>
-                        </select>
-                    </div>
-                    <div class="collapsible">
-                        <button type="button" class="collapsible-trigger" aria-expanded="false">
-                            <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M7 4l6 6-6 6"/>
-                            </svg>
-                            <span>API Example: How to send metric values</span>
-                        </button>
-                        <div class="collapsible-content">
-                            <div class="code-example" style="margin-top: 0.75rem;">
-                                <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="quickMetricServicePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-                                <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Metric Monitor</button>
-                </form>
-            </div>
-
-            <!-- Port Monitor Form -->
-            <div id="portMonitorForm" class="hidden">
-                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Port Monitor Configuration</h4>
-                <form onsubmit="createPortMonitor(); return false;">
-                    <div class="form-group">
-                        <label class="form-label">Service Name</label>
-                        <input type="text" id="portServiceName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Host</label>
-                        <input type="text" id="portHost" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Port</label>
-                        <input type="number" id="portPort" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Check Interval</label>
-                        <select id="portInterval" class="form-input">
-                            <option value="1">Every 1 minute</option>
-                            <option value="5" selected>Every 5 minutes</option>
-                            <option value="15">Every 15 minutes</option>
-                            <option value="30">Every 30 minutes</option>
-                            <option value="60">Every 60 minutes</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Port Monitor</button>
-                </form>
-            </div>
-
-            <!-- Deadman Monitor Form -->
-            <div id="deadmanMonitorForm" class="hidden">
-                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Deadman Monitor Configuration</h4>
-                <form onsubmit="createDeadmanMonitor(); return false;">
-                    <div class="form-group">
-                        <label class="form-label">Service Name</label>
-                        <input type="text" id="deadmanServiceName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Monitor Name</label>
-                        <input type="text" id="deadmanMonitorName" class="form-input" placeholder="e.g., backup, cron-job" required>
-                        <p class="form-hint">Used in the API endpoint when sending heartbeats.</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Expected Interval (hours)</label>
-                        <input type="number" step="0.5" id="deadmanExpectedInterval" value="24" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Grace Period (hours)</label>
-                        <input type="number" step="0.5" id="deadmanGracePeriod" value="1" class="form-input" required>
-                    </div>
-                    <div class="collapsible">
-                        <button type="button" class="collapsible-trigger" aria-expanded="false">
-                            <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M7 4l6 6-6 6"/>
-                            </svg>
-                            <span>API Example: How to send heartbeats</span>
-                        </button>
-                        <div class="collapsible-content">
-                            <div class="code-example" style="margin-top: 0.75rem;">
-                                <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="quickDeadmanServicePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-                                <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Deadman Monitor</button>
-                </form>
-            </div>
-
-            <!-- SSL Certificate Monitor Form -->
-            <div id="sslCertMonitorForm" class="hidden">
-                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">SSL Certificate Configuration</h4>
-                <form onsubmit="createSSLCertMonitor(); return false;">
-                    <div class="form-group">
-                        <label class="form-label">Service Name</label>
-                        <input type="text" id="sslCertServiceName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Hostname</label>
-                        <input type="text" id="sslCertHostname" class="form-input" placeholder="example.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Port</label>
-                        <input type="number" id="sslCertPort" value="443" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Warning Threshold (days)</label>
-                        <input type="number" id="sslCertWarningDays" value="30" class="form-input" required>
-                        <p class="form-hint">Alert when certificate expires in this many days</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Critical Threshold (days)</label>
-                        <input type="number" id="sslCertCriticalDays" value="7" class="form-input" required>
-                        <p class="form-hint">Critical alert when certificate expires in this many days</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Check Interval</label>
-                        <select id="sslCertInterval" class="form-input">
-                            <option value="60">Every 1 hour</option>
-                            <option value="360">Every 6 hours</option>
-                            <option value="720">Every 12 hours</option>
-                            <option value="1440" selected>Every 24 hours (Daily)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create SSL Certificate Monitor</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Monitor</button>
                 </form>
             </div>
         </div>
@@ -465,451 +314,42 @@
             </div>
             <input type="hidden" id="targetServiceId">
 
+            <!-- Type Selection Screen -->
             <div id="addMonitorTypeSelection">
                 <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
-                <div class="type-grid">
-                    <div class="type-card" onclick="selectAddMonitorType('website')" data-type="website">
-                        <div class="type-card-title">Website Monitor</div>
-                        <div class="type-card-desc">Check if a URL responds</div>
-                    </div>
-                    <div class="type-card" onclick="selectAddMonitorType('api')" data-type="api">
-                        <div class="type-card-title">API Monitor</div>
-                        <div class="type-card-desc">Call API endpoint with validation</div>
-                    </div>
-                    <div class="type-card" onclick="selectAddMonitorType('metric_threshold')" data-type="metric">
-                        <div class="type-card-title">Metric Threshold</div>
-                        <div class="type-card-desc">Receive numbers, alert on thresholds</div>
-                    </div>
-                    <div class="type-card" onclick="selectAddMonitorType('port')" data-type="port">
-                        <div class="type-card-title">Port Monitor</div>
-                        <div class="type-card-desc">Test if TCP port is open</div>
-                    </div>
-                    <div class="type-card" onclick="selectAddMonitorType('deadman')" data-type="deadman">
-                        <div class="type-card-title">Deadman Monitor</div>
-                        <div class="type-card-desc">Alert if no heartbeat received</div>
-                    </div>
-                    <div class="type-card" onclick="selectAddMonitorType('ssl_cert')" data-type="ssl">
-                        <div class="type-card-title">SSL Certificate</div>
-                        <div class="type-card-desc">Monitor certificate expiration</div>
-                    </div>
+                <div id="addMonitorTypeGrid" class="type-grid">
+                    <!-- Cards will be injected here by registry -->
                 </div>
                 <button onclick="hideAddMonitorToServiceModal()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Cancel</button>
             </div>
 
-            <!-- Add Website Monitor Form -->
-            <div id="addWebsiteMonitorForm" class="hidden">
+            <!-- Monitor Configuration Form (dynamically generated) -->
+            <div id="addMonitorConfigForm" class="hidden">
                 <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Website Monitor Configuration</h4>
-                <div class="form-group">
-                    <label class="form-label">Website URL</label>
-                    <input type="url" id="addWebsiteUrl" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="addWebsiteInterval" class="form-input">
-                        <option value="1">Every 1 minute</option>
-                        <option value="5" selected>Every 5 minutes</option>
-                        <option value="15">Every 15 minutes</option>
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60">Every 60 minutes</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Timeout (seconds)</label>
-                    <input type="number" id="addWebsiteTimeout" value="10" class="form-input">
-                </div>
-                <button onclick="addWebsiteMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
-            </div>
-
-            <!-- Add API Monitor Form -->
-            <div id="addApiMonitorForm" class="hidden">
-                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">API Monitor Configuration</h4>
-                <div class="form-group">
-                    <label class="form-label">API URL</label>
-                    <input type="url" id="addApiUrl" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">HTTP Method</label>
-                    <select id="addApiMethod" class="form-input">
-                        <option value="GET">GET</option>
-                        <option value="POST">POST</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Expected Status Code</label>
-                    <input type="number" id="addApiStatusCode" value="200" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="addApiInterval" class="form-input">
-                        <option value="1">Every 1 minute</option>
-                        <option value="5" selected>Every 5 minutes</option>
-                        <option value="15">Every 15 minutes</option>
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60">Every 60 minutes</option>
-                    </select>
-                </div>
-                <button onclick="addApiMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
-            </div>
-
-            <!-- Add Metric Monitor Form -->
-            <div id="addMetricMonitorForm" class="hidden">
-                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Metric Threshold Configuration</h4>
-                <div class="form-group">
-                    <label class="form-label">Monitor Name</label>
-                    <input type="text" id="addMetricMonitorName" class="form-input" placeholder="e.g., cpu, memory, disk" required>
-                    <p class="form-hint">Used in the API endpoint when posting metrics.</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Warning Threshold</label>
-                    <input type="number" step="0.1" id="addMetricWarning" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Critical Threshold</label>
-                    <input type="number" step="0.1" id="addMetricCritical" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Comparison Type</label>
-                    <select id="addMetricComparison" class="form-input">
-                        <option value="greater">Greater than (>)</option>
-                        <option value="less">Less than (<)</option>
-                    </select>
-                </div>
-                <div class="collapsible">
-                    <button type="button" class="collapsible-trigger" aria-expanded="false">
-                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M7 4l6 6-6 6"/>
-                        </svg>
-                        <span>API Example: How to send metric values</span>
-                    </button>
-                    <div class="collapsible-content">
-                        <div class="code-example" style="margin-top: 0.75rem;">
-                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="addMetricServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
-                        </div>
+                <h4 id="addMonitorFormTitle" style="font-weight: 700; margin-bottom: 1rem;"></h4>
+                <form id="addMonitorForm" onsubmit="handleAddMonitorSubmit(event)">
+                    <div id="addMonitorFormFields">
+                        <!-- Fields will be injected here -->
                     </div>
-                </div>
-                <button onclick="addMetricMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
-            </div>
-
-            <!-- Add Port Monitor Form -->
-            <div id="addPortMonitorForm" class="hidden">
-                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Port Monitor Configuration</h4>
-                <div class="form-group">
-                    <label class="form-label">Host</label>
-                    <input type="text" id="addPortHost" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Port</label>
-                    <input type="number" id="addPortNumber" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="addPortInterval" class="form-input">
-                        <option value="5">Every 5 minutes</option>
-                        <option value="15" selected>Every 15 minutes</option>
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60">Every 60 minutes</option>
-                    </select>
-                </div>
-                <button onclick="addPortMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
-            </div>
-
-            <!-- Add Deadman Monitor Form -->
-            <div id="addDeadmanMonitorForm" class="hidden">
-                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">Deadman Monitor Configuration</h4>
-                <div class="form-group">
-                    <label class="form-label">Monitor Name</label>
-                    <input type="text" id="addDeadmanMonitorName" class="form-input" placeholder="e.g., backup, cron-job" required>
-                    <p class="form-hint">Used in the API endpoint when sending heartbeats.</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Expected Interval (hours)</label>
-                    <input type="number" step="0.5" id="addDeadmanExpectedInterval" value="24" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Grace Period (hours)</label>
-                    <input type="number" step="0.5" id="addDeadmanGracePeriod" value="1" class="form-input" required>
-                </div>
-                <div class="collapsible">
-                    <button type="button" class="collapsible-trigger" aria-expanded="false">
-                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M7 4l6 6-6 6"/>
-                        </svg>
-                        <span>API Example: How to send heartbeats</span>
-                    </button>
-                    <div class="collapsible-content">
-                        <div class="code-example" style="margin-top: 0.75rem;">
-                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="addDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="addDeadmanMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
-            </div>
-
-            <!-- Add SSL Certificate Monitor Form -->
-            <div id="addSSLCertMonitorForm" class="hidden">
-                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 style="font-weight: 700; margin-bottom: 1rem;">SSL Certificate Monitor Configuration</h4>
-                <div class="form-group">
-                    <label class="form-label">Hostname</label>
-                    <input type="text" id="addSSLCertHostname" class="form-input" placeholder="example.com" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Port</label>
-                    <input type="number" id="addSSLCertPort" value="443" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Warning Threshold (days)</label>
-                    <input type="number" id="addSSLCertWarningDays" value="30" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Critical Threshold (days)</label>
-                    <input type="number" id="addSSLCertCriticalDays" value="7" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="addSSLCertInterval" class="form-input">
-                        <option value="60">Every 1 hour</option>
-                        <option value="360">Every 6 hours</option>
-                        <option value="720">Every 12 hours</option>
-                        <option value="1440" selected>Every 24 hours (Daily)</option>
-                    </select>
-                </div>
-                <button onclick="addSSLCertMonitorToService()" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Edit Website Monitor Modal -->
-    <div id="editWebsiteMonitorModal" class="modal hidden">
+    <!-- Edit Monitor Modal (Generic, plugin-based) -->
+    <div id="editMonitorModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Edit Website Monitor</h3>
+                <h3 class="modal-title" id="editMonitorTitle">Edit Monitor</h3>
             </div>
-            <form id="editWebsiteMonitorForm">
-                <input type="hidden" id="editWebsiteMonitorId">
-                <div class="form-group">
-                    <label class="form-label">Website URL</label>
-                    <input type="url" id="editWebsiteUrl" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="editWebsiteInterval" class="form-input">
-                        <option value="1">Every 1 minute</option>
-                        <option value="5">Every 5 minutes</option>
-                        <option value="15">Every 15 minutes</option>
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60">Every 60 minutes</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Timeout (seconds)</label>
-                    <input type="number" id="editWebsiteTimeout" class="form-input">
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
-                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit API Monitor Modal -->
-    <div id="editApiMonitorModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit API Monitor</h3>
-            </div>
-            <form id="editApiMonitorForm">
-                <input type="hidden" id="editApiMonitorId">
-                <div class="form-group">
-                    <label class="form-label">API URL</label>
-                    <input type="url" id="editApiUrl" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">HTTP Method</label>
-                    <select id="editApiMethod" class="form-input">
-                        <option value="GET">GET</option>
-                        <option value="POST">POST</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Expected Status Code</label>
-                    <input type="number" id="editApiStatusCode" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="editApiInterval" class="form-input">
-                        <option value="1">Every 1 minute</option>
-                        <option value="5">Every 5 minutes</option>
-                        <option value="15">Every 15 minutes</option>
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60">Every 60 minutes</option>
-                    </select>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
-                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Metric Monitor Modal -->
-    <div id="editMetricMonitorModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Metric Monitor</h3>
-            </div>
-            <form id="editMetricMonitorForm">
-                <input type="hidden" id="editMetricMonitorId">
-                <div class="form-group">
-                    <label class="form-label">Monitor Name</label>
-                    <input type="text" id="editMetricMonitorName" class="form-input" placeholder="e.g., cpu, memory, disk" required>
-                    <p class="form-hint">Used in the API endpoint when posting metrics.</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Warning Threshold</label>
-                    <input type="number" step="0.1" id="editMetricWarning" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Critical Threshold</label>
-                    <input type="number" step="0.1" id="editMetricCritical" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Comparison Type</label>
-                    <select id="editMetricComparison" class="form-input">
-                        <option value="greater">Greater than (>)</option>
-                        <option value="less">Less than (<)</option>
-                    </select>
-                </div>
-                <div class="collapsible">
-                    <button type="button" class="collapsible-trigger" aria-expanded="false">
-                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M7 4l6 6-6 6"/>
-                        </svg>
-                        <span>API Example: How to send metric values</span>
-                    </button>
-                    <div class="collapsible-content">
-                        <div class="code-example" style="margin-top: 0.75rem;">
-                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/metric/<span id="editMetricServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY",<br>    "value": 87.5<br>  }'</div>
-                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
-                        </div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
-                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Port Monitor Modal -->
-    <div id="editPortMonitorModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Port Monitor</h3>
-            </div>
-            <form id="editPortMonitorForm">
-                <input type="hidden" id="editPortMonitorId">
-                <div class="form-group">
-                    <label class="form-label">Host</label>
-                    <input type="text" id="editPortHost" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Port</label>
-                    <input type="number" id="editPortNumber" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Check Interval</label>
-                    <select id="editPortInterval" class="form-input">
-                        <option value="5">Every 5 minutes</option>
-                        <option value="15">Every 15 minutes</option>
-                        <option value="30">Every 30 minutes</option>
-                        <option value="60">Every 60 minutes</option>
-                    </select>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
-                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Deadman Monitor Modal -->
-    <div id="editDeadmanMonitorModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Deadman Monitor</h3>
-            </div>
-            <form id="editDeadmanMonitorForm">
-                <input type="hidden" id="editDeadmanMonitorId">
-                <div class="form-group">
-                    <label class="form-label">Monitor Name</label>
-                    <input type="text" id="editDeadmanMonitorName" class="form-input" placeholder="e.g., backup, cron-job" required>
-                    <p class="form-hint">Used in the API endpoint when sending heartbeats.</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Expected Interval (hours)</label>
-                    <input type="number" step="0.5" id="editDeadmanExpectedInterval" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Grace Period (hours)</label>
-                    <input type="number" step="0.5" id="editDeadmanGracePeriod" class="form-input" required>
-                </div>
-                <div class="collapsible">
-                    <button type="button" class="collapsible-trigger" aria-expanded="false">
-                        <svg class="collapsible-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M7 4l6 6-6 6"/>
-                        </svg>
-                        <span>API Example: How to send heartbeats</span>
-                    </button>
-                    <div class="collapsible-content">
-                        <div class="code-example" style="margin-top: 0.75rem;">
-                            <div class="code-block">curl -X POST http://localhost:5050/api/v1/heartbeat/<span id="editDeadmanServiceNamePreview">SERVICE_NAME</span> \<br>  -H "Content-Type: application/json" \<br>  -d '{<br>    "api_key": "YOUR_API_KEY"<br>  }'</div>
-                            <p class="form-hint" style="margin-top: 0.5rem;">Replace YOUR_API_KEY with your actual API key from Settings page</p>
-                        </div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
-                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit SSL Certificate Monitor Modal -->
-    <div id="editSSLCertMonitorModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit SSL Certificate Monitor</h3>
-            </div>
-            <form id="editSSLCertMonitorForm">
-                <input type="hidden" id="editSSLCertMonitorId">
-                <div class="form-group">
-                    <label class="form-label">Hostname</label>
-                    <input type="text" id="editSSLCertHostname" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Port</label>
-                    <input type="number" id="editSSLCertPort" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Warning Threshold (days)</label>
-                    <input type="number" id="editSSLCertWarningDays" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Critical Threshold (days)</label>
-                    <input type="number" id="editSSLCertCriticalDays" class="form-input" required>
+            <form id="editMonitorForm" onsubmit="handleEditMonitorSubmit(event)">
+                <input type="hidden" id="editMonitorId">
+                <input type="hidden" id="editMonitorType">
+                <input type="hidden" id="editMonitorServiceId">
+                <input type="hidden" id="editMonitorServiceName">
+                <div id="editMonitorFormFields">
+                    <!-- Fields will be injected here by registry -->
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
@@ -924,35 +364,45 @@
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/nav.js"></script>
+
+    <!-- Monitor Plugin System -->
+    <script type="module">
+        import monitorRegistry from '/static/js/monitors/registry.js';
+
+        // Store current Quick Monitor type globally
+        window.currentQuickMonitorType = null;
+
+        // Make registry available globally
+        window.monitorRegistry = monitorRegistry;
+
+        // Initialize plugin system on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Load all monitor plugins
+                await monitorRegistry.loadMonitors();
+                console.log('Monitor plugins loaded successfully');
+
+                // Render Quick Monitor type cards
+                const quickMonitorTypeGrid = document.getElementById('quickMonitorTypeGrid');
+                if (quickMonitorTypeGrid) {
+                    quickMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectMonitorType');
+                }
+
+                // Render Add Monitor type cards (if needed later)
+                const addMonitorTypeGrid = document.getElementById('addMonitorTypeGrid');
+                if (addMonitorTypeGrid) {
+                    addMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectAddMonitorType');
+                }
+            } catch (error) {
+                console.error('Failed to initialize monitor plugin system:', error);
+            }
+        });
+    </script>
+
     <script>
         requireAuth();
 
         const userInfo = getUserInfo();
-
-        // Inject icons into type cards
-        document.addEventListener('DOMContentLoaded', () => {
-            const iconMapping = {
-                'website': icons.globe,
-                'api': icons.api,
-                'metric': icons.chart,
-                'port': icons.port,
-                'deadman': icons.skull,
-                'ssl': icons.shield
-            };
-
-            document.querySelectorAll('.type-card[data-type]').forEach(card => {
-                const type = card.dataset.type;
-                const icon = iconMapping[type];
-                if (icon) {
-                    const title = card.querySelector('.type-card-title');
-                    const iconSpan = document.createElement('span');
-                    iconSpan.className = 'icon';
-                    iconSpan.style.color = 'var(--accent-primary)';
-                    iconSpan.innerHTML = icon;
-                    title.prepend(iconSpan);
-                }
-            });
-        });
 
         // Load services
         async function loadServices() {
@@ -1042,14 +492,16 @@
                 'api': icons.api,
                 'metric_threshold': icons.chart,
                 'port': icons.port,
-                'deadman': icons.skull
+                'deadman': icons.skull,
+                'ssl_cert': icons.shield
             };
             const nameMap = {
                 'website': 'Website',
                 'api': 'API',
                 'metric_threshold': 'Metric',
                 'port': 'Port',
-                'deadman': 'Deadman'
+                'deadman': 'Deadman',
+                'ssl_cert': 'SSL Certificate'
             };
             const icon = iconMap[type] || '';
             const name = nameMap[type] || type;
@@ -1064,10 +516,30 @@
             if (monitor.monitor_type === 'metric_threshold') return `Warning ${c.comparison === 'greater' ? '>' : '<'} ${c.warning_threshold}, Critical ${c.comparison === 'greater' ? '>' : '<'} ${c.critical_threshold}`;
             if (monitor.monitor_type === 'port') return `${c.host}:${c.port}`;
             if (monitor.monitor_type === 'deadman') return `Expect every ${c.expected_interval_hours}h (grace: ${c.grace_period_hours}h)`;
+            if (monitor.monitor_type === 'ssl_cert') return `${c.hostname}:${c.port} (Warn: ${c.warning_days}d, Critical: ${c.critical_days}d)`;
             return '';
         }
 
         // Modal functions
+        // Initialize collapsible triggers (for dynamically generated content)
+        function initializeCollapsibles() {
+            document.querySelectorAll('.collapsible-trigger').forEach(trigger => {
+                // Remove any existing listeners
+                const newTrigger = trigger.cloneNode(true);
+                trigger.parentNode.replaceChild(newTrigger, trigger);
+
+                newTrigger.addEventListener('click', function() {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    this.setAttribute('aria-expanded', !isExpanded);
+
+                    const content = this.parentElement.querySelector('.collapsible-content');
+                    if (content) {
+                        content.classList.toggle('expanded');
+                    }
+                });
+            });
+        }
+
         function showAddServiceModal() { document.getElementById('addServiceModal').classList.remove('hidden'); }
         function hideAddServiceModal() { document.getElementById('addServiceModal').classList.add('hidden'); }
         function showQuickMonitorModal() { document.getElementById('quickMonitorModal').classList.remove('hidden'); }
@@ -1088,27 +560,38 @@
         }
         function hideEditServiceModal() { document.getElementById('editServiceModal').classList.add('hidden'); }
 
+        // Plugin-based monitor type selection
         function selectMonitorType(type) {
+            currentQuickMonitorType = type;
+            const monitor = monitorRegistry.get(type);
+            if (!monitor) {
+                showError('Monitor type not found: ' + type);
+                return;
+            }
+
+            // Hide type selection, show form
             document.getElementById('monitorTypeSelection').classList.add('hidden');
+            document.getElementById('monitorConfigForm').classList.remove('hidden');
 
-            // Map monitor type to form ID
-            const formIds = {
-                'website': 'websiteMonitorForm',
-                'api': 'apiMonitorForm',
-                'metric_threshold': 'metricMonitorForm',
-                'port': 'portMonitorForm',
-                'deadman': 'deadmanMonitorForm',
-                'ssl_cert': 'sslCertMonitorForm'
-            };
+            // Update form title
+            document.getElementById('monitorFormTitle').textContent = monitor.name + ' Configuration';
 
-            document.getElementById(formIds[type]).classList.remove('hidden');
+            // Generate form fields using registry
+            const serviceName = ''; // Will be extracted from form on submit
+            const formHTML = monitorRegistry.renderForm(monitor, type, true) +
+                            monitorRegistry.renderIntervalDropdown(monitor, type) +
+                            monitorRegistry.renderCollapsible(monitor, type, serviceName || 'SERVICE_NAME');
+
+            document.getElementById('quickMonitorFormFields').innerHTML = formHTML;
+
+            // Initialize collapsible triggers
+            initializeCollapsibles();
         }
 
         function backToMonitorSelection() {
+            document.getElementById('monitorConfigForm').classList.add('hidden');
             document.getElementById('monitorTypeSelection').classList.remove('hidden');
-            ['website', 'api', 'metric', 'port', 'deadman', 'sslCert'].forEach(t => {
-                document.getElementById(t + 'MonitorForm').classList.add('hidden');
-            });
+            currentQuickMonitorType = null;
         }
 
         // Form submissions
@@ -1165,165 +648,68 @@
             }
         });
 
-        async function createWebsiteMonitor() {
-            try {
-                const serviceName = document.getElementById('websiteServiceName').value;
-                const service = await api.createService({ name: serviceName, description: 'Website monitor', category: 'Monitor' });
+        // Generic Quick Monitor submit handler (replaces all 6 createXXXMonitor functions)
+        async function handleQuickMonitorSubmit(event) {
+            event.preventDefault();
 
-                await api.createMonitor({
-                    service_id: service.id,
-                    monitor_type: 'website',
-                    config: {
-                        url: document.getElementById('websiteUrl').value,
-                        timeout_seconds: parseInt(document.getElementById('websiteTimeout').value),
-                        follow_redirects: true,
-                        verify_ssl: true
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('websiteInterval').value)
-                });
-
-                hideQuickMonitorModal();
-                loadServices();
-                showSuccess('Monitor created successfully');
-            } catch (error) {
-                showError('Failed to create monitor: ' + error.message);
+            if (!currentQuickMonitorType) {
+                showError('No monitor type selected');
+                return;
             }
-        }
 
-        async function createApiMonitor() {
-            try {
-                const serviceName = document.getElementById('apiServiceName').value;
-                const service = await api.createService({ name: serviceName, description: 'API monitor', category: 'Monitor' });
-
-                await api.createMonitor({
-                    service_id: service.id,
-                    monitor_type: 'api',
-                    config: {
-                        url: document.getElementById('apiUrl').value,
-                        method: document.getElementById('apiMethod').value,
-                        expected_status_code: parseInt(document.getElementById('apiStatusCode').value),
-                        timeout_seconds: 10
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('apiInterval').value)
-                });
-
-                hideQuickMonitorModal();
-                loadServices();
-                showSuccess('Monitor created successfully');
-            } catch (error) {
-                showError('Failed to create monitor: ' + error.message);
+            const monitor = monitorRegistry.get(currentQuickMonitorType);
+            if (!monitor) {
+                showError('Monitor not found: ' + currentQuickMonitorType);
+                return;
             }
-        }
 
-        async function createMetricMonitor() {
             try {
-                const serviceName = document.getElementById('metricServiceName').value;
-                const monitorName = document.getElementById('metricMonitorName').value;
-                const service = await api.createService({ name: serviceName, description: 'Metric threshold monitor', category: 'Monitor' });
+                // Extract configuration using plugin's extractConfig method
+                const config = monitor.extractConfig(currentQuickMonitorType);
 
-                const config = {
-                    warning_threshold: parseFloat(document.getElementById('metricWarning').value),
-                    critical_threshold: parseFloat(document.getElementById('metricCritical').value),
-                    comparison: document.getElementById('metricComparison').value
-                };
-                if (monitorName) {
-                    config.name = monitorName;
+                // Validate using plugin's validate method
+                const validationError = monitor.validate(config);
+                if (validationError) {
+                    showError('Validation error: ' + validationError);
+                    return;
                 }
 
+                // Get service name and interval
+                const serviceName = document.getElementById(`${currentQuickMonitorType}ServiceName`).value;
+                const interval = parseInt(document.getElementById(`${currentQuickMonitorType}Interval`).value);
+
+                // Create service
+                const service = await api.createService({
+                    name: serviceName,
+                    description: monitor.name,
+                    category: 'Monitor'
+                });
+
+                // Create monitor
                 await api.createMonitor({
                     service_id: service.id,
-                    monitor_type: 'metric_threshold',
+                    monitor_type: currentQuickMonitorType,
                     config: config,
-                    check_interval_minutes: 15
+                    check_interval_minutes: interval
                 });
 
                 hideQuickMonitorModal();
                 loadServices();
-                const encodedService = encodeURIComponent(serviceName);
-                const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-                const endpoint = encodedMonitor ? `/api/v1/metric/${encodedService}/${encodedMonitor}` : `/api/v1/metric/${encodedService}`;
-                showSuccess(`Monitor created successfully! Send values to: POST ${endpoint}`);
-            } catch (error) {
-                showError('Failed to create monitor: ' + error.message);
-            }
-        }
 
-        async function createPortMonitor() {
-            try {
-                const serviceName = document.getElementById('portServiceName').value;
-                const service = await api.createService({ name: serviceName, description: 'Port monitor', category: 'Monitor' });
-
-                await api.createMonitor({
-                    service_id: service.id,
-                    monitor_type: 'port',
-                    config: {
-                        host: document.getElementById('portHost').value,
-                        port: parseInt(document.getElementById('portPort').value),
-                        timeout_seconds: 5
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('portInterval').value)
-                });
-
-                hideQuickMonitorModal();
-                loadServices();
-                showSuccess('Monitor created successfully');
-            } catch (error) {
-                showError('Failed to create monitor: ' + error.message);
-            }
-        }
-
-        async function createDeadmanMonitor() {
-            try {
-                const serviceName = document.getElementById('deadmanServiceName').value;
-                const monitorName = document.getElementById('deadmanMonitorName').value;
-                const service = await api.createService({ name: serviceName, description: 'Deadman monitor', category: 'Monitor' });
-
-                const config = {
-                    expected_interval_hours: parseFloat(document.getElementById('deadmanExpectedInterval').value),
-                    grace_period_hours: parseFloat(document.getElementById('deadmanGracePeriod').value)
-                };
-                if (monitorName) {
-                    config.name = monitorName;
+                // Show success with endpoint info for metric_threshold and deadman monitors
+                if (currentQuickMonitorType === 'metric_threshold' && config.name) {
+                    const encodedService = encodeURIComponent(serviceName);
+                    const encodedMonitor = encodeURIComponent(config.name);
+                    const endpoint = `/api/v1/metric/${encodedService}/${encodedMonitor}`;
+                    showSuccess(`Monitor created successfully! Send values to: POST ${endpoint}`);
+                } else if (currentQuickMonitorType === 'deadman' && config.name) {
+                    const encodedService = encodeURIComponent(serviceName);
+                    const encodedMonitor = encodeURIComponent(config.name);
+                    const endpoint = `/api/v1/heartbeat/${encodedService}/${encodedMonitor}`;
+                    showSuccess(`Monitor created successfully! Send heartbeats to: POST ${endpoint}`);
+                } else {
+                    showSuccess('Monitor created successfully');
                 }
-
-                await api.createMonitor({
-                    service_id: service.id,
-                    monitor_type: 'deadman',
-                    config: config,
-                    check_interval_minutes: 5
-                });
-
-                hideQuickMonitorModal();
-                loadServices();
-                const encodedService = encodeURIComponent(serviceName);
-                const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-                const endpoint = encodedMonitor ? `/api/v1/heartbeat/${encodedService}/${encodedMonitor}` : `/api/v1/heartbeat/${encodedService}`;
-                showSuccess(`Monitor created successfully! Send heartbeats to: POST ${endpoint}`);
-            } catch (error) {
-                showError('Failed to create monitor: ' + error.message);
-            }
-        }
-
-        async function createSSLCertMonitor() {
-            try {
-                const serviceName = document.getElementById('sslCertServiceName').value;
-                const service = await api.createService({ name: serviceName, description: 'SSL Certificate monitor', category: 'Monitor' });
-
-                await api.createMonitor({
-                    service_id: service.id,
-                    monitor_type: 'ssl_cert',
-                    config: {
-                        hostname: document.getElementById('sslCertHostname').value,
-                        port: parseInt(document.getElementById('sslCertPort').value),
-                        warning_days: parseInt(document.getElementById('sslCertWarningDays').value),
-                        critical_days: parseInt(document.getElementById('sslCertCriticalDays').value)
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('sslCertInterval').value)
-                });
-
-                hideQuickMonitorModal();
-                loadServices();
-                showSuccess('SSL Certificate monitor created successfully');
             } catch (error) {
                 showError('Failed to create monitor: ' + error.message);
             }
@@ -1373,6 +759,10 @@
         function showAddMonitorToServiceModal(serviceId, serviceName) {
             document.getElementById('targetServiceId').value = serviceId;
             document.getElementById('targetServiceName').textContent = serviceName;
+
+            // Generate type selection cards using registry
+            document.getElementById('addMonitorTypeGrid').innerHTML = monitorRegistry.renderTypeCards('selectAddMonitorType');
+
             document.getElementById('addMonitorToServiceModal').classList.remove('hidden');
         }
 
@@ -1381,447 +771,196 @@
             backToAddMonitorSelection();
         }
 
+        let currentAddMonitorType = null;
+
         function selectAddMonitorType(type) {
-            document.getElementById('addMonitorTypeSelection').classList.add('hidden');
-
-            // Map monitor type to form ID
-            const formIds = {
-                'website': 'addWebsiteMonitorForm',
-                'api': 'addApiMonitorForm',
-                'metric_threshold': 'addMetricMonitorForm',
-                'port': 'addPortMonitorForm',
-                'deadman': 'addDeadmanMonitorForm',
-                'ssl_cert': 'addSSLCertMonitorForm'
-            };
-
-            document.getElementById(formIds[type]).classList.remove('hidden');
-
-            // Update service name preview for metric and deadman monitors (URL-encoded)
-            if (type === 'metric_threshold') {
-                const serviceName = document.getElementById('targetServiceName').textContent;
-                document.getElementById('addMetricServiceNamePreview').textContent = encodeURIComponent(serviceName);
-            } else if (type === 'deadman') {
-                const serviceName = document.getElementById('targetServiceName').textContent;
-                document.getElementById('addDeadmanServiceNamePreview').textContent = encodeURIComponent(serviceName);
+            currentAddMonitorType = type;
+            const monitor = monitorRegistry.get(type);
+            if (!monitor) {
+                showError('Monitor type not found: ' + type);
+                return;
             }
+
+            // Hide type selection, show form
+            document.getElementById('addMonitorTypeSelection').classList.add('hidden');
+            document.getElementById('addMonitorConfigForm').classList.remove('hidden');
+
+            // Update form title
+            document.getElementById('addMonitorFormTitle').textContent = monitor.name + ' Configuration';
+
+            // Generate form fields using registry
+            const serviceName = document.getElementById('targetServiceName').textContent;
+            const formPrefix = 'addMonitor';
+            const formHTML = monitorRegistry.renderForm(monitor, formPrefix, false) +
+                            monitorRegistry.renderIntervalDropdown(monitor, formPrefix) +
+                            monitorRegistry.renderCollapsible(monitor, formPrefix, serviceName);
+
+            document.getElementById('addMonitorFormFields').innerHTML = formHTML;
+
+            // Initialize collapsible triggers
+            initializeCollapsibles();
         }
 
         function backToAddMonitorSelection() {
+            document.getElementById('addMonitorConfigForm').classList.add('hidden');
             document.getElementById('addMonitorTypeSelection').classList.remove('hidden');
-            document.getElementById('addWebsiteMonitorForm').classList.add('hidden');
-            document.getElementById('addApiMonitorForm').classList.add('hidden');
-            document.getElementById('addMetricMonitorForm').classList.add('hidden');
-            document.getElementById('addPortMonitorForm').classList.add('hidden');
-            document.getElementById('addDeadmanMonitorForm').classList.add('hidden');
-            document.getElementById('addSSLCertMonitorForm').classList.add('hidden');
+            currentAddMonitorType = null;
         }
 
-        async function addWebsiteMonitorToService() {
-            try {
-                const serviceId = parseInt(document.getElementById('targetServiceId').value);
+        // Generic Add Monitor submit handler (replaces all 6 addXXXMonitorToService functions)
+        async function handleAddMonitorSubmit(event) {
+            event.preventDefault();
 
-                await api.createMonitor({
-                    service_id: serviceId,
-                    monitor_type: 'website',
-                    config: {
-                        url: document.getElementById('addWebsiteUrl').value,
-                        timeout_seconds: parseInt(document.getElementById('addWebsiteTimeout').value),
-                        follow_redirects: true,
-                        verify_ssl: true
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('addWebsiteInterval').value)
-                });
-
-                hideAddMonitorToServiceModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to add monitor: ' + error.message);
+            if (!currentAddMonitorType) {
+                showError('No monitor type selected');
+                return;
             }
-        }
 
-        async function addApiMonitorToService() {
-            try {
-                const serviceId = parseInt(document.getElementById('targetServiceId').value);
-
-                await api.createMonitor({
-                    service_id: serviceId,
-                    monitor_type: 'api',
-                    config: {
-                        url: document.getElementById('addApiUrl').value,
-                        method: document.getElementById('addApiMethod').value,
-                        expected_status_code: parseInt(document.getElementById('addApiStatusCode').value),
-                        timeout_seconds: 10
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('addApiInterval').value)
-                });
-
-                hideAddMonitorToServiceModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to add monitor: ' + error.message);
+            const monitor = monitorRegistry.get(currentAddMonitorType);
+            if (!monitor) {
+                showError('Monitor not found: ' + currentAddMonitorType);
+                return;
             }
-        }
 
-        async function addMetricMonitorToService() {
             try {
-                const serviceId = parseInt(document.getElementById('targetServiceId').value);
-                const serviceName = document.getElementById('targetServiceName').textContent;
-                const monitorName = document.getElementById('addMetricMonitorName').value;
+                // Extract configuration using plugin's extractConfig method
+                const config = monitor.extractConfig('addMonitor');
 
-                const config = {
-                    warning_threshold: parseFloat(document.getElementById('addMetricWarning').value),
-                    critical_threshold: parseFloat(document.getElementById('addMetricCritical').value),
-                    comparison: document.getElementById('addMetricComparison').value
-                };
-                if (monitorName) {
-                    config.name = monitorName;
+                // Validate using plugin's validate method
+                const validationError = monitor.validate(config);
+                if (validationError) {
+                    showError('Validation error: ' + validationError);
+                    return;
                 }
 
-                await api.createMonitor({
-                    service_id: serviceId,
-                    monitor_type: 'metric_threshold',
-                    config: config,
-                    check_interval_minutes: 15
-                });
-
-                hideAddMonitorToServiceModal();
-                loadServices();
-                const encodedService = encodeURIComponent(serviceName);
-                const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-                const endpoint = encodedMonitor ? `/api/v1/metric/${encodedService}/${encodedMonitor}` : `/api/v1/metric/${encodedService}`;
-                showSuccess(`Metric monitor added successfully! Send values to: POST ${endpoint}`);
-            } catch (error) {
-                showError('Failed to add monitor: ' + error.message);
-            }
-        }
-
-        async function addPortMonitorToService() {
-            try {
-                const serviceId = parseInt(document.getElementById('targetServiceId').value);
-
-                await api.createMonitor({
-                    service_id: serviceId,
-                    monitor_type: 'port',
-                    config: {
-                        host: document.getElementById('addPortHost').value,
-                        port: parseInt(document.getElementById('addPortNumber').value),
-                        timeout_seconds: 5
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('addPortInterval').value)
-                });
-
-                hideAddMonitorToServiceModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to add monitor: ' + error.message);
-            }
-        }
-
-        async function addDeadmanMonitorToService() {
-            try {
+                // Get service ID and interval
                 const serviceId = parseInt(document.getElementById('targetServiceId').value);
                 const serviceName = document.getElementById('targetServiceName').textContent;
-                const monitorName = document.getElementById('addDeadmanMonitorName').value;
+                const interval = parseInt(document.getElementById('addMonitorInterval').value);
 
-                const config = {
-                    expected_interval_hours: parseFloat(document.getElementById('addDeadmanExpectedInterval').value),
-                    grace_period_hours: parseFloat(document.getElementById('addDeadmanGracePeriod').value)
-                };
-                if (monitorName) {
-                    config.name = monitorName;
-                }
-
+                // Create monitor
                 await api.createMonitor({
                     service_id: serviceId,
-                    monitor_type: 'deadman',
+                    monitor_type: currentAddMonitorType,
                     config: config,
-                    check_interval_minutes: 5
+                    check_interval_minutes: interval
                 });
 
                 hideAddMonitorToServiceModal();
                 loadServices();
-                const encodedService = encodeURIComponent(serviceName);
-                const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-                const endpoint = encodedMonitor ? `/api/v1/heartbeat/${encodedService}/${encodedMonitor}` : `/api/v1/heartbeat/${encodedService}`;
-                showSuccess(`Deadman monitor added successfully! Send heartbeats to: POST ${endpoint}`);
+
+                // Show success with endpoint info for metric_threshold and deadman monitors
+                if (currentAddMonitorType === 'metric_threshold' && config.name) {
+                    const encodedService = encodeURIComponent(serviceName);
+                    const encodedMonitor = encodeURIComponent(config.name);
+                    const endpoint = `/api/v1/metric/${encodedService}/${encodedMonitor}`;
+                    showSuccess(`Monitor added successfully! Send values to: POST ${endpoint}`);
+                } else if (currentAddMonitorType === 'deadman' && config.name) {
+                    const encodedService = encodeURIComponent(serviceName);
+                    const encodedMonitor = encodeURIComponent(config.name);
+                    const endpoint = `/api/v1/heartbeat/${encodedService}/${encodedMonitor}`;
+                    showSuccess(`Monitor added successfully! Send heartbeats to: POST ${endpoint}`);
+                } else {
+                    showSuccess('Monitor added successfully');
+                }
             } catch (error) {
                 showError('Failed to add monitor: ' + error.message);
             }
         }
 
-        async function addSSLCertMonitorToService() {
-            try {
-                const serviceId = parseInt(document.getElementById('targetServiceId').value);
-
-                await api.createMonitor({
-                    service_id: serviceId,
-                    monitor_type: 'ssl_cert',
-                    config: {
-                        hostname: document.getElementById('addSSLCertHostname').value,
-                        port: parseInt(document.getElementById('addSSLCertPort').value),
-                        warning_days: parseInt(document.getElementById('addSSLCertWarningDays').value),
-                        critical_days: parseInt(document.getElementById('addSSLCertCriticalDays').value)
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('addSSLCertInterval').value)
-                });
-
-                hideAddMonitorToServiceModal();
-                loadServices();
-                showSuccess('SSL Certificate monitor added successfully');
-            } catch (error) {
-                showError('Failed to add monitor: ' + error.message);
-            }
-        }
-
+        // Generic Edit Monitor function (replaces all 6 type-specific functions)
         async function editMonitor(monitorId) {
             try {
                 const monitor = await api.getMonitor(monitorId);
+                const monitorPlugin = monitorRegistry.get(monitor.monitor_type);
 
-                // Fetch service name for metric and deadman monitors
+                if (!monitorPlugin) {
+                    showError('Monitor type not found: ' + monitor.monitor_type);
+                    return;
+                }
+
+                // Fetch service for metric and deadman monitors (needed for API endpoint preview)
                 let serviceName = '';
                 if (monitor.monitor_type === 'metric_threshold' || monitor.monitor_type === 'deadman') {
                     const service = await api.getService(monitor.service_id);
                     serviceName = service.name;
                 }
 
-                if (monitor.monitor_type === 'website') {
-                    document.getElementById('editWebsiteMonitorId').value = monitor.id;
-                    document.getElementById('editWebsiteUrl').value = monitor.config.url;
-                    document.getElementById('editWebsiteInterval').value = monitor.check_interval_minutes;
-                    document.getElementById('editWebsiteTimeout').value = monitor.config.timeout_seconds || 10;
-                    document.getElementById('editWebsiteMonitorModal').classList.remove('hidden');
-                } else if (monitor.monitor_type === 'api') {
-                    document.getElementById('editApiMonitorId').value = monitor.id;
-                    document.getElementById('editApiUrl').value = monitor.config.url;
-                    document.getElementById('editApiMethod').value = monitor.config.method || 'GET';
-                    document.getElementById('editApiStatusCode').value = monitor.config.expected_status_code || 200;
-                    document.getElementById('editApiInterval').value = monitor.check_interval_minutes;
-                    document.getElementById('editApiMonitorModal').classList.remove('hidden');
-                } else if (monitor.monitor_type === 'metric_threshold') {
-                    document.getElementById('editMetricMonitorId').value = monitor.id;
-                    document.getElementById('editMetricMonitorName').value = monitor.config.name || '';
-                    document.getElementById('editMetricWarning').value = monitor.config.warning_threshold;
-                    document.getElementById('editMetricCritical').value = monitor.config.critical_threshold;
-                    document.getElementById('editMetricComparison').value = monitor.config.comparison || 'greater';
-                    // Update endpoint preview to include monitor name if present (URL-encoded)
-                    const encodedService = encodeURIComponent(serviceName);
-                    const encodedMonitor = monitor.config.name ? encodeURIComponent(monitor.config.name) : '';
-                    const metricEndpoint = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
-                    document.getElementById('editMetricServiceNamePreview').textContent = metricEndpoint;
-                    document.getElementById('editMetricMonitorModal').classList.remove('hidden');
-                } else if (monitor.monitor_type === 'port') {
-                    document.getElementById('editPortMonitorId').value = monitor.id;
-                    document.getElementById('editPortHost').value = monitor.config.host;
-                    document.getElementById('editPortNumber').value = monitor.config.port;
-                    document.getElementById('editPortInterval').value = monitor.check_interval_minutes;
-                    document.getElementById('editPortMonitorModal').classList.remove('hidden');
-                } else if (monitor.monitor_type === 'deadman') {
-                    document.getElementById('editDeadmanMonitorId').value = monitor.id;
-                    document.getElementById('editDeadmanMonitorName').value = monitor.config.name || '';
-                    document.getElementById('editDeadmanExpectedInterval').value = monitor.config.expected_interval_hours;
-                    document.getElementById('editDeadmanGracePeriod').value = monitor.config.grace_period_hours;
-                    // Update endpoint preview to include monitor name if present (URL-encoded)
-                    const encodedService = encodeURIComponent(serviceName);
-                    const encodedMonitor = monitor.config.name ? encodeURIComponent(monitor.config.name) : '';
-                    const deadmanEndpoint = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
-                    document.getElementById('editDeadmanServiceNamePreview').textContent = deadmanEndpoint;
-                    document.getElementById('editDeadmanMonitorModal').classList.remove('hidden');
-                } else if (monitor.monitor_type === 'ssl_cert') {
-                    document.getElementById('editSSLCertMonitorId').value = monitor.id;
-                    document.getElementById('editSSLCertHostname').value = monitor.config.hostname;
-                    document.getElementById('editSSLCertPort').value = monitor.config.port;
-                    document.getElementById('editSSLCertWarningDays').value = monitor.config.warning_days;
-                    document.getElementById('editSSLCertCriticalDays').value = monitor.config.critical_days;
-                    document.getElementById('editSSLCertMonitorModal').classList.remove('hidden');
-                }
+                // Store monitor info in hidden fields
+                document.getElementById('editMonitorId').value = monitor.id;
+                document.getElementById('editMonitorType').value = monitor.monitor_type;
+                document.getElementById('editMonitorServiceId').value = monitor.service_id;
+                document.getElementById('editMonitorServiceName').value = serviceName;
+
+                // Update modal title
+                document.getElementById('editMonitorTitle').textContent = `Edit ${monitorPlugin.name}`;
+
+                // Generate form fields using registry and populate with existing values
+                const formPrefix = 'editMonitor';
+                const formHTML = monitorRegistry.renderForm(monitorPlugin, formPrefix, false) +
+                                monitorRegistry.renderIntervalDropdown(monitorPlugin, formPrefix) +
+                                monitorRegistry.renderCollapsible(monitorPlugin, formPrefix, serviceName);
+
+                document.getElementById('editMonitorFormFields').innerHTML = formHTML;
+
+                // Populate form with existing monitor values
+                monitorPlugin.populateForm(formPrefix, monitor.config);
+                document.getElementById('editMonitorInterval').value = monitor.check_interval_minutes;
+
+                // Initialize collapsible triggers
+                initializeCollapsibles();
+
+                // Show modal
+                document.getElementById('editMonitorModal').classList.remove('hidden');
             } catch (error) {
                 showError('Failed to load monitor: ' + error.message);
             }
         }
 
         function hideEditMonitorModal() {
-            document.getElementById('editWebsiteMonitorModal').classList.add('hidden');
-            document.getElementById('editApiMonitorModal').classList.add('hidden');
-            document.getElementById('editMetricMonitorModal').classList.add('hidden');
-            document.getElementById('editPortMonitorModal').classList.add('hidden');
-            document.getElementById('editDeadmanMonitorModal').classList.add('hidden');
-            document.getElementById('editSSLCertMonitorModal').classList.add('hidden');
+            document.getElementById('editMonitorModal').classList.add('hidden');
         }
 
-        // Edit monitor form submit handlers
-        document.getElementById('editWebsiteMonitorForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const monitorId = document.getElementById('editWebsiteMonitorId').value;
+        // Generic Edit Monitor submit handler
+        async function handleEditMonitorSubmit(event) {
+            event.preventDefault();
 
-            try {
-                await api.updateMonitor(monitorId, {
-                    config: {
-                        url: document.getElementById('editWebsiteUrl').value,
-                        timeout_seconds: parseInt(document.getElementById('editWebsiteTimeout').value),
-                        follow_redirects: true,
-                        verify_ssl: true
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('editWebsiteInterval').value)
-                });
+            const monitorId = document.getElementById('editMonitorId').value;
+            const monitorType = document.getElementById('editMonitorType').value;
 
-                hideEditMonitorModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to update monitor: ' + error.message);
+            const monitorPlugin = monitorRegistry.get(monitorType);
+            if (!monitorPlugin) {
+                showError('Monitor type not found: ' + monitorType);
+                return;
             }
-        });
-
-        document.getElementById('editApiMonitorForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const monitorId = document.getElementById('editApiMonitorId').value;
 
             try {
-                await api.updateMonitor(monitorId, {
-                    config: {
-                        url: document.getElementById('editApiUrl').value,
-                        method: document.getElementById('editApiMethod').value,
-                        expected_status_code: parseInt(document.getElementById('editApiStatusCode').value),
-                        timeout_seconds: 10
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('editApiInterval').value)
-                });
+                // Extract configuration using plugin's extractConfig method
+                const config = monitorPlugin.extractConfig('editMonitor');
 
-                hideEditMonitorModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to update monitor: ' + error.message);
-            }
-        });
-
-        document.getElementById('editMetricMonitorForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const monitorId = document.getElementById('editMetricMonitorId').value;
-            const monitorName = document.getElementById('editMetricMonitorName').value;
-
-            try {
-                const config = {
-                    warning_threshold: parseFloat(document.getElementById('editMetricWarning').value),
-                    critical_threshold: parseFloat(document.getElementById('editMetricCritical').value),
-                    comparison: document.getElementById('editMetricComparison').value
-                };
-                if (monitorName) {
-                    config.name = monitorName;
+                // Validate using plugin's validate method
+                const validationError = monitorPlugin.validate(config);
+                if (validationError) {
+                    showError('Validation error: ' + validationError);
+                    return;
                 }
 
+                // Get interval
+                const interval = parseInt(document.getElementById('editMonitorInterval').value);
+
+                // Update monitor
                 await api.updateMonitor(monitorId, {
-                    config: config
+                    config: config,
+                    check_interval_minutes: interval
                 });
 
                 hideEditMonitorModal();
                 loadServices();
+                showSuccess('Monitor updated successfully');
             } catch (error) {
                 showError('Failed to update monitor: ' + error.message);
             }
-        });
-
-        document.getElementById('editPortMonitorForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const monitorId = document.getElementById('editPortMonitorId').value;
-
-            try {
-                await api.updateMonitor(monitorId, {
-                    config: {
-                        host: document.getElementById('editPortHost').value,
-                        port: parseInt(document.getElementById('editPortNumber').value),
-                        timeout_seconds: 5
-                    },
-                    check_interval_minutes: parseInt(document.getElementById('editPortInterval').value)
-                });
-
-                hideEditMonitorModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to update monitor: ' + error.message);
-            }
-        });
-
-        document.getElementById('editDeadmanMonitorForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const monitorId = document.getElementById('editDeadmanMonitorId').value;
-            const monitorName = document.getElementById('editDeadmanMonitorName').value;
-
-            try {
-                const config = {
-                    expected_interval_hours: parseFloat(document.getElementById('editDeadmanExpectedInterval').value),
-                    grace_period_hours: parseFloat(document.getElementById('editDeadmanGracePeriod').value)
-                };
-                if (monitorName) {
-                    config.name = monitorName;
-                }
-
-                await api.updateMonitor(monitorId, {
-                    config: config
-                });
-
-                hideEditMonitorModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to update monitor: ' + error.message);
-            }
-        });
-
-        document.getElementById('editSSLCertMonitorForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const monitorId = document.getElementById('editSSLCertMonitorId').value;
-
-            try {
-                await api.updateMonitor(monitorId, {
-                    config: {
-                        hostname: document.getElementById('editSSLCertHostname').value,
-                        port: parseInt(document.getElementById('editSSLCertPort').value),
-                        warning_days: parseInt(document.getElementById('editSSLCertWarningDays').value),
-                        critical_days: parseInt(document.getElementById('editSSLCertCriticalDays').value)
-                    }
-                });
-
-                hideEditMonitorModal();
-                loadServices();
-            } catch (error) {
-                showError('Failed to update monitor: ' + error.message);
-            }
-        });
-
-        // Update service name preview in Quick Monitor API examples (URL-encoded)
-        document.getElementById('metricServiceName').addEventListener('input', (e) => {
-            const serviceName = e.target.value || 'SERVICE_NAME';
-            const monitorName = document.getElementById('metricMonitorName').value;
-            const encodedService = serviceName !== 'SERVICE_NAME' ? encodeURIComponent(serviceName) : serviceName;
-            const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-            const preview = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
-            document.getElementById('quickMetricServicePreview').textContent = preview;
-        });
-
-        document.getElementById('metricMonitorName').addEventListener('input', (e) => {
-            const serviceName = document.getElementById('metricServiceName').value || 'SERVICE_NAME';
-            const monitorName = e.target.value;
-            const encodedService = serviceName !== 'SERVICE_NAME' ? encodeURIComponent(serviceName) : serviceName;
-            const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-            const preview = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
-            document.getElementById('quickMetricServicePreview').textContent = preview;
-        });
-
-        document.getElementById('deadmanServiceName').addEventListener('input', (e) => {
-            const serviceName = e.target.value || 'SERVICE_NAME';
-            const monitorName = document.getElementById('deadmanMonitorName').value;
-            const encodedService = serviceName !== 'SERVICE_NAME' ? encodeURIComponent(serviceName) : serviceName;
-            const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-            const preview = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
-            document.getElementById('quickDeadmanServicePreview').textContent = preview;
-        });
-
-        document.getElementById('deadmanMonitorName').addEventListener('input', (e) => {
-            const serviceName = document.getElementById('deadmanServiceName').value || 'SERVICE_NAME';
-            const monitorName = e.target.value;
-            const encodedService = serviceName !== 'SERVICE_NAME' ? encodeURIComponent(serviceName) : serviceName;
-            const encodedMonitor = monitorName ? encodeURIComponent(monitorName) : '';
-            const preview = encodedMonitor ? `${encodedService}/${encodedMonitor}` : encodedService;
-            document.getElementById('quickDeadmanServicePreview').textContent = preview;
-        });
+        }
 
         // Close modals on background click
         document.querySelectorAll('.modal').forEach(modal => {
