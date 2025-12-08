@@ -316,9 +316,43 @@ Update a service.
 
 #### DELETE /api/v1/services/{service_id}
 
-Archive a service.
+Permanently delete a service and all associated data (CASCADE delete).
 
 **Requires:** JWT authentication
+
+**Warning:** This permanently deletes the service, all monitors, and all status history. This action cannot be undone.
+
+#### POST /api/v1/services/{service_id}/pause
+
+Pause a service and all its monitors (sets is_active to False without deleting).
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Service and all monitors paused"
+}
+```
+
+**Note:** All monitors attached to this service will also be paused.
+
+#### POST /api/v1/services/{service_id}/resume
+
+Resume a paused service and all its monitors (sets is_active to True).
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Service and all monitors resumed"
+}
+```
+
+**Note:** All monitors attached to this service will also be resumed.
 
 #### GET /api/v1/services/{service_id}/history
 
@@ -499,9 +533,43 @@ Update a monitor.
 
 #### DELETE /api/v1/monitors/{monitor_id}
 
-Delete a monitor.
+Permanently delete a monitor and all associated status data (CASCADE delete).
 
 **Requires:** JWT authentication
+
+**Note:** If this is the last active monitor for a service, the service will automatically be paused. A service must have at least one active monitor to remain active.
+
+#### POST /api/v1/monitors/{monitor_id}/pause
+
+Pause a monitor (sets is_active to False without deleting).
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Monitor paused"
+}
+```
+
+**Note:** If this is the last active monitor for the service, the service will automatically be paused as well.
+
+#### POST /api/v1/monitors/{monitor_id}/resume
+
+Resume a paused monitor (sets is_active to True).
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Monitor resumed"
+}
+```
+
+**Note:** If the service was paused, it will automatically be resumed when you resume a monitor.
 
 #### POST /api/v1/monitors/{monitor_id}/test
 

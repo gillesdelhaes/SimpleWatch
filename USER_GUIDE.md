@@ -436,23 +436,72 @@ To update monitor configuration:
 4. Update configuration
 5. Click **Update**
 
+### Pausing a Service
+
+Temporarily disable a service and all its monitors without deleting data:
+
+1. Click **Services**
+2. Find the service
+3. Click **Pause** button (pause icon)
+4. Service and all attached monitors are paused
+
+**What happens when paused:**
+- Service stops being monitored (no checks run)
+- All attached monitors are also paused
+- Service shows with dashed border and "(Paused)" label
+- Historical data is retained
+- Can be resumed at any time
+
+### Resuming a Service
+
+Reactivate a paused service:
+
+1. Click **Services**
+2. Find the paused service
+3. Click **Resume** button (play icon)
+4. Service and all attached monitors are resumed
+
+### Pausing a Monitor
+
+Temporarily disable a single monitor:
+
+1. Click **Services**
+2. Find the monitor under its service
+3. Click **Pause** button (pause icon) next to the monitor
+
+**Note:** If you pause all monitors for a service, the service will automatically pause as well. A service must have at least one active monitor to remain active.
+
+### Resuming a Monitor
+
+Reactivate a paused monitor:
+
+1. Click **Services**
+2. Find the paused monitor
+3. Click **Resume** button (play icon) next to the monitor
+
+**Note:** If the service was paused, resuming a monitor will automatically resume the service.
+
 ### Deleting a Service
+
+Permanently delete a service and all associated data:
 
 1. Click **Services**
 2. Find the service
 3. Click **Delete** button (X icon)
 4. Confirm deletion
 
-**Note:** This archives the service and all its monitors. Historical data is retained based on retention policy.
+**Warning:** This permanently deletes the service, all monitors, and all historical status data via CASCADE delete. This action cannot be undone. Consider pausing instead if you want to temporarily disable monitoring.
 
 ### Deleting a Monitor
+
+Permanently delete a monitor:
 
 1. Click **Services**
 2. Find the service with the monitor
 3. Click **Delete** button (X icon) next to the monitor
 4. Confirm deletion
 
-The service remains with other monitors intact.
+**Note:** The service remains with other monitors intact. If you delete all monitors for a service, the service will automatically pause. Historical data for this monitor is permanently deleted via CASCADE delete.
 
 ---
 
