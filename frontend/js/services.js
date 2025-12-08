@@ -42,8 +42,8 @@ async function loadServices() {
                         <h3 class="service-title">${service.name}</h3>
                         ${service.description ? `<p class="service-description">${service.description}</p>` : ''}
                         <div class="service-meta">
-                            ${service.category ? `<span>📁 ${service.category}</span>` : ''}
-                            <span>🔍 ${serviceMonitors.length} monitor${serviceMonitors.length !== 1 ? 's' : ''}</span>
+                            ${service.category ? `<span style="display: inline-flex; align-items: baseline; gap: 0.25rem;"><span class="icon" style="width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center;">${icons.folder}</span><span style="line-height: 1;">${service.category}</span></span>` : ''}
+                            <span style="display: inline-flex; align-items: baseline; gap: 0.25rem;"><span class="icon" style="width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center;">${icons.search}</span><span style="line-height: 1;">${serviceMonitors.length} monitor${serviceMonitors.length !== 1 ? 's' : ''}</span></span>
                         </div>
                     </div>
                     <div class="service-actions">
@@ -620,6 +620,15 @@ async function loadNotificationSettingsForService(serviceId) {
 document.addEventListener('DOMContentLoaded', () => {
     // Authentication check
     requireAuth();
+
+    // Add lightning icon to Quick Monitor button
+    const quickMonitorBtn = document.getElementById('quickMonitorBtn');
+    if (quickMonitorBtn) {
+        quickMonitorBtn.style.display = 'inline-flex';
+        quickMonitorBtn.style.alignItems = 'center';
+        quickMonitorBtn.style.gap = '0.5rem';
+        quickMonitorBtn.innerHTML = `<span class="icon" style="width: 16px; height: 16px;">${icons.zap}</span><span>Quick Monitor</span>`;
+    }
 
     // Load monitor plugins and services
     (async () => {

@@ -100,6 +100,15 @@ const icons = {
         <path d="M11 2L5 12h6l-1 6 6-10h-6l1-6z"/>
     </svg>`,
 
+    folder: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7v8a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-4l-2-2H5a2 2 0 00-2 2v2z"/>
+    </svg>`,
+
+    search: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8.5" cy="8.5" r="5.5"/>
+        <path d="M12.5 12.5L17 17"/>
+    </svg>`,
+
     key: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M15.5 7.5a4 4 0 11-8 0 4 4 0 018 0z"/>
         <path d="M7.5 10.5L2 16l1 1 2-2 1 1 2-2 1 1 1.5-1.5"/>
