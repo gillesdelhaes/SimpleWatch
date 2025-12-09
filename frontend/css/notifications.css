@@ -1,7 +1,7 @@
 /**
  * Notifications Page Specific Styles
  * Styles unique to the notifications page that aren't reusable
- * Generic styles like .page-section, .section-title, .badge now in theme.css
+ * Generic styles like .page-section, .section-title, .badge, .actions now in theme.css
  */
 
 /* Channel Cards */
@@ -46,11 +46,6 @@
     color: var(--text-secondary);
     word-break: break-all;
     margin-top: 0.5rem;
-}
-
-.channel-actions {
-    display: flex;
-    gap: 0.5rem;
 }
 
 /* Notification Log Styles */

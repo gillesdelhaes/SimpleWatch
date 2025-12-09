@@ -1,6 +1,7 @@
 /**
  * Services Page Specific Styles
  * Styles unique to the services page that aren't reusable
+ * Generic .actions class now in theme.css
  */
 
 /* Service Cards */
@@ -41,11 +42,6 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
-}
-
-.service-actions {
-    display: flex;
-    gap: 0.5rem;
 }
 
 .service-description {
@@ -126,11 +122,6 @@
     font-size: 0.75rem;
     color: var(--text-tertiary);
     text-transform: uppercase;
-}
-
-.monitor-actions {
-    display: flex;
-    gap: 0.5rem;
 }
 
 .monitor-type-badge {

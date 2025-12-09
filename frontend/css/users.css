@@ -1,7 +1,7 @@
 /**
  * Users Page Specific Styles
  * Styles unique to the users management page that aren't reusable
- * Generic styles like .page-header, .icon-btn, .modal-subtitle now in theme.css
+ * Generic styles like .page-header, .icon-btn, .modal-subtitle, .actions now in theme.css
  */
 
 .users-list {
@@ -53,11 +53,6 @@
     background: var(--accent-glow);
     color: var(--accent-primary);
     margin-left: 0.5rem;
-}
-
-.user-actions {
-    display: flex;
-    gap: 0.5rem;
 }
 
 .checkbox-group {

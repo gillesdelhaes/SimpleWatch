@@ -874,6 +874,12 @@ label {
   gap: 1rem;
 }
 
+/* Generic actions container for item-level actions (edit, delete, etc.) */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Page Sections - Generic section container used across pages */
 .page-section {
   background: var(--bg-secondary);

@@ -46,7 +46,7 @@ async function loadServices() {
                             <span style="display: inline-flex; align-items: baseline; gap: 0.25rem;"><span class="icon" style="width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center;">${icons.search}</span><span style="line-height: 1;">${serviceMonitors.length} monitor${serviceMonitors.length !== 1 ? 's' : ''}</span></span>
                         </div>
                     </div>
-                    <div class="service-actions">
+                    <div class="actions">
                         <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}')">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                         </button>
@@ -77,7 +77,7 @@ async function loadServices() {
                                     <div class="monitor-config">${getMonitorDescription(monitor)}</div>
                                     <div class="monitor-interval">Every ${monitor.check_interval_minutes} minutes</div>
                                 </div>
-                                <div class="monitor-actions">
+                                <div class="actions">
                                     <button class="icon-btn" onclick="editMonitor(${monitor.id})">
                                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                                     </button>

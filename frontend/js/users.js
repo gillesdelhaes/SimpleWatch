@@ -32,7 +32,7 @@ async function loadUsers() {
                     </div>
                     <div class="user-meta">${user.email || 'No email'}</div>
                 </div>
-                <div class="user-actions">
+                <div class="actions">
                     ${!(user.username != userInfo.username && user.is_admin) ? `
                         <button class="icon-btn" onclick="showChangePasswordModal(${user.id}, '${user.username}')" title="Change password">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
