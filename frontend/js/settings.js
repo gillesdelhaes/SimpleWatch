@@ -26,6 +26,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (keyIcon) {
         keyIcon.innerHTML = icons.key;
     }
+
+    const databaseIcon = document.getElementById('databaseIcon');
+    if (databaseIcon) {
+        databaseIcon.innerHTML = icons.database;
+    }
+
+    const infoCircleIcon = document.getElementById('infoCircleIcon');
+    if (infoCircleIcon) {
+        infoCircleIcon.innerHTML = icons.infoCircle;
+    }
+
+    const warningTriangleIcon = document.getElementById('warningTriangleIcon');
+    if (warningTriangleIcon) {
+        warningTriangleIcon.innerHTML = icons.alertTriangle;
+    }
+
+    const modalCloseIcon = document.getElementById('modalCloseIcon');
+    if (modalCloseIcon) {
+        modalCloseIcon.innerHTML = icons.x;
+    }
+
+    // Load current retention settings
+    loadRetentionSettings();
 });
 
 async function loadUserInfo() {
@@ -84,3 +107,81 @@ async function regenerateApiKey() {
 }
 
 loadUserInfo();
+
+// Data Retention Management
+let currentRetentionDays = 90;
+
+async function loadRetentionSettings() {
+    try {
+        const response = await authenticatedFetch('/api/v1/settings/retention');
+        currentRetentionDays = response.retention_days;
+        document.getElementById('currentRetentionDays').textContent = currentRetentionDays;
+        document.getElementById('retentionDaysInput').placeholder = currentRetentionDays;
+    } catch (error) {
+        console.error('Failed to load retention settings:', error);
+        showError('Failed to load retention settings');
+    }
+}
+
+function showRetentionModal() {
+    const input = document.getElementById('retentionDaysInput');
+    const newRetention = parseInt(input.value);
+
+    // Validation
+    if (!input.value || isNaN(newRetention)) {
+        showError('Please enter a valid number of days');
+        return;
+    }
+
+    if (newRetention < 1) {
+        showError('Retention period must be at least 1 day');
+        return;
+    }
+
+    // Update modal values
+    document.getElementById('modalCurrentRetention').textContent = currentRetentionDays;
+    document.getElementById('modalNewRetention').textContent = newRetention;
+    document.getElementById('modalRetentionDays').textContent = newRetention;
+
+    // Show modal
+    document.getElementById('retentionModal').classList.remove('hidden');
+}
+
+function closeRetentionModal() {
+    document.getElementById('retentionModal').classList.add('hidden');
+}
+
+async function confirmRetentionChange() {
+    const input = document.getElementById('retentionDaysInput');
+    const newRetention = parseInt(input.value);
+
+    try {
+        const response = await authenticatedFetch('/api/v1/settings/retention', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                retention_days: newRetention
+            })
+        });
+
+        currentRetentionDays = newRetention;
+        document.getElementById('currentRetentionDays').textContent = newRetention;
+        document.getElementById('retentionDaysInput').value = '';
+        document.getElementById('retentionDaysInput').placeholder = newRetention;
+
+        closeRetentionModal();
+        showSuccess(response.message || `Data retention updated to ${newRetention} days`);
+    } catch (error) {
+        closeRetentionModal();
+        showError('Failed to update retention policy: ' + error.message);
+    }
+}
+
+// Close modal when clicking backdrop
+document.getElementById('retentionModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'retentionModal') {
+        closeRetentionModal();
+    }
+});

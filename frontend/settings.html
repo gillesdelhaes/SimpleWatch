@@ -68,6 +68,68 @@
             </p>
         </div>
 
+        <!-- Data Retention -->
+        <div class="settings-section">
+            <h2 class="section-title">
+                <span class="icon" id="databaseIcon"></span>
+                Data Retention
+            </h2>
+            <p class="retention-description">Control how long status update history is stored in the database. Older data will be automatically cleaned up daily.</p>
+
+            <div class="retention-control">
+                <div class="retention-input-group">
+                    <input type="number" id="retentionDaysInput" class="retention-input" min="1" placeholder="90">
+                    <span class="retention-unit">days</span>
+                </div>
+                <button onclick="showRetentionModal()" class="btn btn-primary retention-save-btn">
+                    Save Retention Policy
+                </button>
+            </div>
+
+            <div class="retention-info">
+                <span class="icon retention-info-icon" id="infoCircleIcon"></span>
+                <span>Current retention: <strong id="currentRetentionDays">90</strong> days</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Data Retention Confirmation Modal -->
+    <div id="retentionModal" class="modal-backdrop hidden">
+        <div class="modal-content retention-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Confirm Data Retention Change</h2>
+                <button onclick="closeRetentionModal()" class="modal-close">
+                    <span class="icon" id="modalCloseIcon"></span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="retention-warning">
+                    <span class="icon retention-warning-icon" id="warningTriangleIcon"></span>
+                    <div class="retention-warning-content">
+                        <p class="retention-warning-title">This action will immediately clean up old data</p>
+                        <p class="retention-warning-text">Setting retention to <strong id="modalRetentionDays">0</strong> days will remove all status updates older than this period. This action cannot be undone.</p>
+                    </div>
+                </div>
+
+                <div class="retention-confirm-details">
+                    <div class="retention-detail-row">
+                        <span class="retention-detail-label">Current retention:</span>
+                        <span class="retention-detail-value"><strong id="modalCurrentRetention">90</strong> days</span>
+                    </div>
+                    <div class="retention-detail-row">
+                        <span class="retention-detail-label">New retention:</span>
+                        <span class="retention-detail-value retention-detail-highlight"><strong id="modalNewRetention">0</strong> days</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeRetentionModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="confirmRetentionChange()" class="btn btn-danger">Confirm &amp; Apply</button>
+            </div>
+        </div>
     </div>
 
     <script src="/static/js/components.js"></script>

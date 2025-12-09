@@ -130,6 +130,21 @@ const icons = {
 
     play: `<svg viewBox="0 0 20 20" fill="currentColor">
         <path d="M6 4l10 6-10 6V4z"/>
+    </svg>`,
+
+    database: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="10" cy="5" rx="7" ry="3"/>
+        <path d="M3 5v6c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/>
+        <path d="M3 11v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4"/>
+    </svg>`,
+
+    infoCircle: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="10" r="8"/>
+        <path d="M10 10v4m0-7h.01"/>
+    </svg>`,
+
+    x: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 5L5 15M5 5l10 10"/>
     </svg>`
 };
 

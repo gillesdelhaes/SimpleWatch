@@ -5,7 +5,7 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings
+from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings
 from monitors.website import WebsiteMonitor
 from monitors.api import APIMonitor
 from monitors.metric import MetricThresholdMonitor
@@ -152,6 +152,40 @@ def initialize_monitors():
         db.close()
 
 
+def cleanup_old_status_updates():
+    """
+    Clean up old status updates based on retention policy.
+    Runs daily to remove status updates older than the configured retention period.
+    """
+    db = SessionLocal()
+    try:
+        # Get retention days from settings (default: 90 days)
+        retention_setting = db.query(AppSettings).filter(
+            AppSettings.key == "retention_days"
+        ).first()
+
+        retention_days = int(retention_setting.value) if retention_setting else 90
+
+        # Calculate cutoff date
+        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+
+        # Delete old status updates
+        deleted_count = db.query(StatusUpdate).filter(
+            StatusUpdate.timestamp < cutoff_date
+        ).delete(synchronize_session=False)
+
+        db.commit()
+
+        if deleted_count > 0:
+            logger.info(f"Cleaned up {deleted_count} status updates older than {retention_days} days")
+
+    except Exception as e:
+        logger.error(f"Error cleaning up old status updates: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def start_scheduler():
     """Start the APScheduler background scheduler."""
     global scheduler
@@ -167,6 +201,14 @@ def start_scheduler():
         trigger=IntervalTrigger(seconds=30),
         id='monitor_scheduler',
         name='Check monitors every 30 seconds',
+        replace_existing=True
+    )
+
+    scheduler.add_job(
+        func=cleanup_old_status_updates,
+        trigger=IntervalTrigger(hours=24),
+        id='cleanup_scheduler',
+        name='Clean up old status updates daily',
         replace_existing=True
     )
 
