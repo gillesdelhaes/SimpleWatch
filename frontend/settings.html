@@ -14,9 +14,9 @@
         <h1 class="page-title">Settings</h1>
 
         <!-- Appearance Settings -->
-        <div class="settings-section">
-            <h2 class="section-title" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="icon" style="color: var(--accent-primary);" id="zapIcon"></span>
+        <div class="page-section">
+            <h2 class="section-title">
+                <span class="section-icon" id="zapIcon"></span>
                 Appearance
             </h2>
             <div class="setting-row">
@@ -29,9 +29,9 @@
         </div>
 
         <!-- API Key -->
-        <div class="settings-section">
-            <h2 class="section-title" style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="icon" style="color: var(--accent-primary);" id="keyIcon"></span>
+        <div class="page-section">
+            <h2 class="section-title">
+                <span class="section-icon" id="keyIcon"></span>
                 API Key
             </h2>
             <p style="color: var(--text-secondary); margin-bottom: 1rem;">Use this key to authenticate API requests from your scripts and applications.</p>
@@ -69,12 +69,12 @@
         </div>
 
         <!-- Data Retention -->
-        <div class="settings-section">
+        <div class="page-section">
             <h2 class="section-title">
-                <span class="icon" id="databaseIcon"></span>
+                <span class="section-icon" id="databaseIcon"></span>
                 Data Retention
             </h2>
-            <p class="retention-description">Control how long status update history is stored in the database. Older data will be automatically cleaned up daily.</p>
+            <p class="section-desc">Control how long status update history is stored in the database. Older data will be automatically cleaned up daily.</p>
 
             <div class="retention-control">
                 <div class="retention-input-group">
@@ -105,11 +105,11 @@
             </div>
 
             <div class="modal-body">
-                <div class="retention-warning">
-                    <span class="icon retention-warning-icon" id="warningTriangleIcon"></span>
-                    <div class="retention-warning-content">
-                        <p class="retention-warning-title">This action will immediately clean up old data</p>
-                        <p class="retention-warning-text">Setting retention to <strong id="modalRetentionDays">0</strong> days will remove all status updates older than this period. This action cannot be undone.</p>
+                <div class="alert-box alert-warning">
+                    <span class="alert-icon" id="warningTriangleIcon"></span>
+                    <div class="alert-content">
+                        <p class="alert-title">This action will immediately clean up old data</p>
+                        <p class="alert-text">Setting retention to <strong id="modalRetentionDays">0</strong> days will remove all status updates older than this period. This action cannot be undone.</p>
                     </div>
                 </div>
 

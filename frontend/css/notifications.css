@@ -1,67 +1,8 @@
 /**
  * Notifications Page Specific Styles
  * Styles unique to the notifications page that aren't reusable
+ * Generic styles like .page-section, .section-title, .badge now in theme.css
  */
-
-/* Notification Section */
-.notification-section {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 1rem;
-    padding: 2rem;
-    margin-bottom: 2rem;
-}
-
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.section-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    color: var(--accent-primary);
-}
-
-.section-icon svg {
-    width: 100%;
-    height: 100%;
-}
-
-.section-desc {
-    color: var(--text-secondary);
-    margin-bottom: 1.5rem;
-    font-size: 0.875rem;
-}
-
-/* Badge Variants */
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.badge-success {
-    background: rgba(34, 197, 94, 0.1);
-    color: var(--status-operational);
-}
-
-.badge-warning {
-    background: rgba(251, 146, 60, 0.1);
-    color: var(--status-degraded);
-}
 
 /* Channel Cards */
 .channel-card {
