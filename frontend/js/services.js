@@ -345,7 +345,8 @@ async function handleQuickMonitorSubmit(event) {
 
         // Get service name and interval
         const serviceName = document.getElementById(`${currentQuickMonitorType}ServiceName`).value;
-        const interval = parseInt(document.getElementById(`${currentQuickMonitorType}Interval`).value);
+        const intervalField = document.getElementById(`${currentQuickMonitorType}Interval`);
+        const interval = intervalField ? parseInt(intervalField.value) : monitor.defaultInterval;
 
         // Create service
         const service = await api.createService({
@@ -465,7 +466,8 @@ async function handleAddMonitorSubmit(event) {
         // Get service ID and interval
         const serviceId = parseInt(document.getElementById('targetServiceId').value);
         const serviceName = document.getElementById('targetServiceName').textContent;
-        const interval = parseInt(document.getElementById('addMonitorInterval').value);
+        const intervalField = document.getElementById('addMonitorInterval');
+        const interval = intervalField ? parseInt(intervalField.value) : monitor.defaultInterval;
 
         // Create monitor
         await api.createMonitor({
@@ -542,7 +544,10 @@ async function editMonitor(monitorId) {
 
         // Populate form with existing monitor values
         monitorPlugin.populateForm(formPrefix, monitor.config);
-        document.getElementById('editMonitorInterval').value = monitor.check_interval_minutes;
+        const intervalField = document.getElementById('editMonitorInterval');
+        if (intervalField) {
+            intervalField.value = monitor.check_interval_minutes;
+        }
 
         // Initialize collapsible triggers
         initializeCollapsibles();
@@ -582,7 +587,8 @@ async function handleEditMonitorSubmit(event) {
         }
 
         // Get interval
-        const interval = parseInt(document.getElementById('editMonitorInterval').value);
+        const intervalField = document.getElementById('editMonitorInterval');
+        const interval = intervalField ? parseInt(intervalField.value) : monitorPlugin.defaultInterval;
 
         // Update monitor
         await api.updateMonitor(monitorId, {

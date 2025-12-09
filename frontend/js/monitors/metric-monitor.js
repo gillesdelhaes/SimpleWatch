@@ -45,17 +45,10 @@ export default {
         }
     },
 
-    // Default check interval in minutes (passive monitor, but still needs interval)
-    defaultInterval: 5,
-
-    // Available interval options for the dropdown
-    intervalOptions: [
-        { value: 1, label: 'Every 1 minute' },
-        { value: 5, label: 'Every 5 minutes' },
-        { value: 15, label: 'Every 15 minutes' },
-        { value: 30, label: 'Every 30 minutes' },
-        { value: 60, label: 'Every 1 hour' }
-    ],
+    // Passive monitor - receives data via API, doesn't actively check
+    // Therefore no check interval is shown in the UI
+    showInterval: false,
+    defaultInterval: 5, // Still need a default for database, but not user-configurable
 
     // Validate configuration before submission
     // Returns error message string if invalid, null if valid

@@ -155,13 +155,27 @@ class MonitorRegistry {
         return html;
     }
 
-    // Generate interval dropdown HTML
+    // Generate interval dropdown HTML (only if monitor needs it)
     renderIntervalDropdown(monitor, formPrefix) {
+        // Skip interval dropdown for passive monitors (e.g., metric_threshold)
+        if (monitor.showInterval === false) {
+            return '';
+        }
+
+        // Default interval options if not specified by monitor
+        const intervalOptions = monitor.intervalOptions || [
+            { value: 1, label: 'Every 1 minute' },
+            { value: 5, label: 'Every 5 minutes' },
+            { value: 15, label: 'Every 15 minutes' },
+            { value: 30, label: 'Every 30 minutes' },
+            { value: 60, label: 'Every 1 hour' }
+        ];
+
         return `
             <div class="form-group">
                 <label class="form-label">Check Interval</label>
                 <select id="${formPrefix}Interval" class="form-input">
-                    ${monitor.intervalOptions.map(opt => `
+                    ${intervalOptions.map(opt => `
                         <option value="${opt.value}"
                                 ${opt.value === monitor.defaultInterval ? 'selected' : ''}>
                             ${opt.label}
