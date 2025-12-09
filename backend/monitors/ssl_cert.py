@@ -63,7 +63,6 @@ class SSLCertMonitor(BaseMonitor):
 
             return {
                 "status": status,
-                "response_time_ms": 0,  # Not applicable for SSL cert checks
                 "metadata": {
                     "hostname": hostname,
                     "port": port,
@@ -79,7 +78,6 @@ class SSLCertMonitor(BaseMonitor):
             message = f"SSL error: {str(e)}"
             return {
                 "status": "down",
-                "response_time_ms": 0,
                 "metadata": {
                     "error": "ssl_error",
                     "hostname": hostname,
@@ -93,7 +91,6 @@ class SSLCertMonitor(BaseMonitor):
             message = f"Connection timed out"
             return {
                 "status": "down",
-                "response_time_ms": 0,
                 "metadata": {
                     "error": "timeout",
                     "hostname": hostname,
@@ -107,7 +104,6 @@ class SSLCertMonitor(BaseMonitor):
             message = f"DNS resolution failed: {str(e)}"
             return {
                 "status": "down",
-                "response_time_ms": 0,
                 "metadata": {
                     "error": "dns_error",
                     "hostname": hostname,
@@ -121,7 +117,6 @@ class SSLCertMonitor(BaseMonitor):
             message = f"Check failed: {str(e)}"
             return {
                 "status": "down",
-                "response_time_ms": 0,
                 "metadata": {
                     "error": "unknown_error",
                     "hostname": hostname,
