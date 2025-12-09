@@ -8,5 +8,4 @@ bcrypt==4.0.1
 python-multipart==0.0.6
 APScheduler==3.10.4
 requests==2.31.0
-python-dotenv==1.0.0
 cryptography>=41.0.0

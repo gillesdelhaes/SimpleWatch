@@ -8,15 +8,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 
 from database import init_db, SessionLocal
 from utils.db import create_default_admin, initialize_encryption_key
 from scheduler import start_scheduler, stop_scheduler
 
 from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings
-
-load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
