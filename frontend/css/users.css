@@ -1,14 +1,8 @@
 /**
  * Users Page Specific Styles
  * Styles unique to the users management page that aren't reusable
+ * Generic styles like .page-header, .icon-btn, .modal-subtitle now in theme.css
  */
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 3rem;
-}
 
 .users-list {
     background: var(--bg-secondary);
@@ -64,31 +58,6 @@
 .user-actions {
     display: flex;
     gap: 0.5rem;
-}
-
-.icon-btn {
-    background: none;
-    border: none;
-    padding: 0.5rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-    transition: all var(--transition-normal);
-    border-radius: 0.5rem;
-}
-
-.icon-btn:hover {
-    color: var(--accent-primary);
-    background: var(--bg-tertiary);
-}
-
-.icon-btn.delete:hover {
-    color: var(--status-down);
-}
-
-.modal-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
 }
 
 .checkbox-group {
