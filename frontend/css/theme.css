@@ -259,6 +259,24 @@ h6 { font-size: 1.125rem; }
   box-shadow: 0 0 20px var(--status-down-glow);
 }
 
+.btn-export {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-export:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.btn-export:active {
+  transform: translateY(0);
+}
+
 /* Form Elements */
 input, select, textarea {
   font-family: var(--font-body);

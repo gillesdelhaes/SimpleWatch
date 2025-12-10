@@ -102,10 +102,10 @@ def receive_heartbeat(
     db.commit()
 
     # Check if service status changed and send notifications
-    from services.notification_service import determine_service_status, send_service_notification
+    from utils.service_helpers import calculate_service_status, send_service_notification
     from database import ServiceNotificationSettings
 
-    new_service_status = determine_service_status(db, service.id)
+    new_service_status = calculate_service_status(db, service.id)
 
     # Get previous service status from notification settings
     settings = db.query(ServiceNotificationSettings).filter(
@@ -117,6 +117,10 @@ def receive_heartbeat(
     # If status changed, send notification
     if new_service_status != old_service_status:
         send_service_notification(db, service.id, old_service_status, new_service_status)
+
+    # Update incidents based on service status
+    from utils.service_helpers import update_service_incidents
+    update_service_incidents(db, service.id)
 
     return {
         "success": True,
@@ -213,10 +217,10 @@ def update_metric(
     db.commit()
 
     # Check if service status changed and send notifications
-    from services.notification_service import determine_service_status, send_service_notification
+    from utils.service_helpers import calculate_service_status, send_service_notification
     from database import ServiceNotificationSettings
 
-    new_service_status = determine_service_status(db, service.id)
+    new_service_status = calculate_service_status(db, service.id)
 
     # Get previous service status from notification settings
     settings = db.query(ServiceNotificationSettings).filter(
@@ -228,6 +232,10 @@ def update_metric(
     # If status changed, send notification
     if new_service_status != old_service_status:
         send_service_notification(db, service.id, old_service_status, new_service_status)
+
+    # Update incidents based on service status
+    from utils.service_helpers import update_service_incidents
+    update_service_incidents(db, service.id)
 
     return MetricUpdateResponse(
         success=True,

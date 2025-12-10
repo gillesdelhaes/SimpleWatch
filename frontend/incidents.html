@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incidents - SimpleWatch</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/incidents.css">
+</head>
+<body>
+    <div id="navigation" data-page="incidents"></div>
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Incident Command Center</h1>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">Track outages, analyze trends, and measure reliability</p>
+            </div>
+            <button onclick="exportIncidentsCSV()" class="btn btn-export">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export CSV
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="page-section">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label class="form-label">Time Window</label>
+                    <select id="timeWindow" class="form-input" onchange="loadIncidents(); loadStats();">
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d" selected>Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="form-label">Service</label>
+                    <select id="serviceFilter" class="form-input" onchange="loadIncidents(); loadStats();">
+                        <option value="">All Services</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="form-label">Status</label>
+                    <select id="statusFilter" class="form-input" onchange="loadIncidents();">
+                        <option value="">All</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="page-section">
+                <h2 class="section-title">
+                    <span class="section-icon" id="chartIcon"></span>
+                    Incident Timeline
+                </h2>
+                <canvas id="timelineChart"></canvas>
+            </div>
+            <div class="page-section">
+                <h2 class="section-title">
+                    <span class="section-icon" id="barChartIcon"></span>
+                    By Service
+                </h2>
+                <canvas id="serviceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Incidents Table -->
+        <div class="page-section">
+            <h2 class="section-title">
+                <span class="section-icon" id="listIcon"></span>
+                Incident Log
+            </h2>
+            <div id="incidentsTable"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/components.js"></script>
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/incidents.js"></script>
+</body>
+</html>

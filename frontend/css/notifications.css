@@ -221,29 +221,9 @@
     height: 100%;
 }
 
+/* Export button style moved to theme.css as .btn-export */
 .log-export-btn {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    box-shadow: var(--shadow-sm);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.log-export-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md), var(--shadow-glow);
-}
-
-.log-export-btn:active {
-    transform: translateY(0);
+    margin-top: 1rem;
 }
 
 .log-loading {

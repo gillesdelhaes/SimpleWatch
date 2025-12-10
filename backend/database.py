@@ -51,6 +51,7 @@ class Service(Base):
     owner = relationship("User", back_populates="services")
     status_updates = relationship("StatusUpdate", back_populates="service", cascade="all, delete-orphan")
     monitors = relationship("Monitor", back_populates="service", cascade="all, delete-orphan")
+    incidents = relationship("Incident", back_populates="service", cascade="all, delete-orphan")
 
 
 class StatusUpdate(Base):
@@ -161,6 +162,31 @@ class NotificationLog(Base):
     delivery_status = Column(String(50), nullable=False)  # 'sent', 'failed'
     error_message = Column(Text)
     sent_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+
+
+class Incident(Base):
+    __tablename__ = "incidents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey("services.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Incident timeline
+    started_at = Column(TIMESTAMP, nullable=False, index=True)
+    ended_at = Column(TIMESTAMP, nullable=True)  # NULL = ongoing incident
+    duration_seconds = Column(Integer, nullable=True)  # Calculated when ended_at is set
+
+    # Severity and status
+    severity = Column(String(50), nullable=False)  # "degraded" or "down"
+    status = Column(String(50), nullable=False, default="ongoing")  # "ongoing" or "resolved"
+
+    # Affected monitors (JSON array of monitor IDs that were failing)
+    affected_monitors_json = Column(Text, nullable=True)  # JSON: [1, 2, 3]
+
+    # Metadata
+    recovery_metadata_json = Column(Text, nullable=True)  # JSON: {"trigger": "manual" | "auto", "note": "..."}
+
+    # Relationships
+    service = relationship("Service", back_populates="incidents")
 
 
 class EncryptionKey(Base):

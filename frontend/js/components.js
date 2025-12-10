@@ -145,6 +145,25 @@ const icons = {
 
     x: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M15 5L5 15M5 5l10 10"/>
+    </svg>`,
+
+    download: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3v10m0 0l-4-4m4 4l4-4"/>
+        <path d="M4 14v2a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+    </svg>`,
+
+    list: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 5h14M3 10h14M3 15h14"/>
+    </svg>`,
+
+    checkCircle: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="10" r="8"/>
+        <path d="M7 10l2 2 4-4"/>
+    </svg>`,
+
+    alertCircle: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="10" r="8"/>
+        <path d="M10 7v4m0 4h.01"/>
     </svg>`
 };
 

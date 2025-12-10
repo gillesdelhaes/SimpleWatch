@@ -192,6 +192,13 @@ class APIClient {
             method: 'PUT'
         });
     }
+
+    // Incidents API
+    async get(endpoint, params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        const url = `${API_BASE}${endpoint}${queryString ? '?' + queryString : ''}`;
+        return this.request(url);
+    }
 }
 
 const api = new APIClient();

@@ -1,24 +1,32 @@
 """
-Notification service - orchestrates sending notifications when service status changes.
+Service-level helper functions for status calculation, incident management, and notifications.
+Consolidates all service-related operations in one place.
 """
 from sqlalchemy.orm import Session
-from database import Service, Monitor, StatusUpdate, SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog
+from database import (
+    Service, Monitor, StatusUpdate, Incident,
+    SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog
+)
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
     format_slack_payload, format_discord_payload, format_generic_payload
 )
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def determine_service_status(db: Session, service_id: int) -> str:
+# ============================================
+# Service Status Calculation
+# ============================================
+
+def calculate_service_status(db: Session, service_id: int) -> str:
     """
-    Determine overall service status by aggregating monitor statuses.
-    Uses the same logic as api/dashboard.py for consistency.
+    Calculate overall service status by aggregating monitor statuses.
+    Single source of truth for service status determination.
 
     Returns: 'operational', 'degraded', 'down', or 'unknown'
     """
@@ -55,6 +63,97 @@ def determine_service_status(db: Session, service_id: int) -> str:
         operational_count, degraded_count, down_count
     )
 
+
+def get_failing_monitor_ids(db: Session, service_id: int) -> List[int]:
+    """
+    Get list of monitor IDs that are currently failing (degraded or down).
+    Used for incident tracking.
+
+    Returns: List of monitor IDs
+    """
+    monitors = db.query(Monitor).filter(
+        Monitor.service_id == service_id,
+        Monitor.is_active == True
+    ).all()
+
+    failing = []
+    for monitor in monitors:
+        latest = db.query(StatusUpdate).filter(
+            StatusUpdate.monitor_id == monitor.id
+        ).order_by(StatusUpdate.timestamp.desc()).first()
+
+        if latest and latest.status in ["degraded", "down"]:
+            failing.append(monitor.id)
+
+    return failing
+
+
+# ============================================
+# Incident Management
+# ============================================
+
+def update_service_incidents(db: Session, service_id: int):
+    """
+    Check if service status has changed and create/close incidents accordingly.
+    Called after monitor checks and data ingestion.
+
+    Handles:
+    - Creating new incidents when service goes degraded/down
+    - Updating severity if it changes mid-incident
+    - Closing incidents when service recovers
+    """
+    try:
+        # Calculate current aggregated service status
+        current_status = calculate_service_status(db, service_id)
+
+        # Check for existing ongoing incident
+        ongoing = db.query(Incident).filter(
+            Incident.service_id == service_id,
+            Incident.status == "ongoing"
+        ).first()
+
+        # State transitions
+        if current_status in ["degraded", "down"]:
+            if not ongoing:
+                # Service just went degraded/down - create new incident
+                affected = get_failing_monitor_ids(db, service_id)
+                incident = Incident(
+                    service_id=service_id,
+                    started_at=datetime.utcnow(),
+                    severity=current_status,
+                    status="ongoing",
+                    affected_monitors_json=json.dumps(affected)
+                )
+                db.add(incident)
+                db.commit()
+                logger.info(f"Created incident for service {service_id} (severity: {current_status})")
+            elif ongoing.severity != current_status:
+                # Severity changed (e.g., degraded -> down or down -> degraded)
+                ongoing.severity = current_status
+                # Update affected monitors
+                affected = get_failing_monitor_ids(db, service_id)
+                ongoing.affected_monitors_json = json.dumps(affected)
+                db.commit()
+                logger.info(f"Updated incident {ongoing.id} severity to {current_status}")
+
+        elif current_status == "operational":
+            if ongoing:
+                # Service recovered - close incident
+                ongoing.ended_at = datetime.utcnow()
+                ongoing.status = "resolved"
+                ongoing.duration_seconds = int((ongoing.ended_at - ongoing.started_at).total_seconds())
+                ongoing.recovery_metadata_json = json.dumps({"trigger": "auto"})
+                db.commit()
+                logger.info(f"Resolved incident {ongoing.id} (duration: {ongoing.duration_seconds}s)")
+
+    except Exception as e:
+        logger.error(f"Error updating incidents for service {service_id}: {e}")
+        db.rollback()
+
+
+# ============================================
+# Notification Helper Functions
+# ============================================
 
 def should_send_notification(db: Session, service_id: int, new_status: str) -> bool:
     """
@@ -210,11 +309,16 @@ To change notification settings, visit the dashboard and edit this service."""
     return body
 
 
+# ============================================
+# Main Notification Function
+# ============================================
+
 def send_service_notification(db: Session, service_id: int, old_status: str, new_status: str):
     """
     Main function to send notifications for a service status change.
 
-    This is called from scheduler.py after a status update is created.
+    This is called from scheduler.py and monitor_ingestion.py after status updates.
+    Handles email and webhook notifications with proper logging.
     """
     # Get service
     service = db.query(Service).filter(Service.id == service_id).first()
@@ -369,3 +473,7 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
     db.commit()
 
     logger.info(f"Notification process completed for service {service.name}: {old_status} → {new_status}")
+
+
+# Backwards compatibility - alias for old function name
+determine_service_status = calculate_service_status

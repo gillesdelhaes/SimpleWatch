@@ -12,7 +12,9 @@ from monitors.metric import MetricThresholdMonitor
 from monitors.port import PortMonitor
 from monitors.deadman import DeadmanMonitor
 from monitors.ssl_cert import SSLCertMonitor
-from services.notification_service import determine_service_status, send_service_notification
+from utils.service_helpers import (
+    calculate_service_status, send_service_notification, update_service_incidents
+)
 import json
 import time
 
@@ -78,7 +80,7 @@ def check_monitor(monitor_id: int):
         db.commit()
 
         # Check if service status changed and send notifications
-        new_service_status = determine_service_status(db, monitor.service_id)
+        new_service_status = calculate_service_status(db, monitor.service_id)
 
         # Get previous service status from notification settings
         settings = db.query(ServiceNotificationSettings).filter(
@@ -91,6 +93,9 @@ def check_monitor(monitor_id: int):
         if new_service_status != old_service_status:
             logger.info(f"Service {monitor.service_id} status changed: {old_service_status} → {new_service_status}")
             send_service_notification(db, monitor.service_id, old_service_status, new_service_status)
+
+        # Update incidents based on service status
+        update_service_incidents(db, monitor.service_id)
 
         logger.info(f"Monitor {monitor.id} check completed: {result.get('status')}")
 
