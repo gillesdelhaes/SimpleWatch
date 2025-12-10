@@ -9,10 +9,11 @@ Complete guide to using SimpleWatch for monitoring your services.
 3. [Creating Monitors](#creating-monitors)
 4. [Managing Services](#managing-services)
 5. [Setting Up Notifications](#setting-up-notifications)
-6. [Using the API](#using-the-api)
-7. [User Management](#user-management)
-8. [Best Practices](#best-practices)
-9. [FAQ](#faq)
+6. [Incident Command Center](#incident-command-center)
+7. [Using the API](#using-the-api)
+8. [User Management](#user-management)
+9. [Best Practices](#best-practices)
+10. [FAQ](#faq)
 
 ---
 
@@ -765,6 +766,144 @@ Rich formatted message with:
 - Test channels after creation and after changes
 - Document which services use which channels
 - Review and prune unused channels periodically
+
+---
+
+## Incident Command Center
+
+The Incident Command Center provides comprehensive incident tracking, analytics, and reporting capabilities. Access it by clicking **Incidents** in the navigation bar.
+
+### What is an Incident?
+
+An **incident** is automatically created whenever a service transitions from "operational" to "degraded" or "down" status. SimpleWatch tracks:
+- When the incident started
+- Which monitors were affected
+- Severity level (degraded or down)
+- Duration (calculated when resolved)
+- Current status (ongoing or resolved)
+
+Incidents are automatically resolved when the service returns to operational status.
+
+### Dashboard Overview
+
+The Incident Command Center displays:
+
+#### Summary Statistics
+- **Total Incidents** - Count of all incidents in the selected time window
+- **Mean Time To Recovery (MTTR)** - Average incident duration (only resolved incidents)
+- **Uptime** - Percentage of time services were operational
+- **Critical Incidents** - Count of "down" severity incidents vs "degraded"
+
+#### Visual Analytics
+- **Incident Timeline** - Line chart showing incident frequency over time
+- **By Service** - Bar chart breaking down incidents by service
+
+#### Filters
+- **Time Window** - 24 hours, 7 days, 30 days, 90 days, or all time
+- **Service** - Filter by specific service or view all services
+- **Status** - Filter by ongoing, resolved, or all incidents
+
+### Incident Log
+
+The incident log table shows complete incident history with:
+- **Service** - Which service experienced the incident
+- **Started** - Incident start time (and end time if resolved)
+- **Duration** - How long the incident lasted
+- **Severity** - Degraded or Down
+- **Status** - Ongoing or Resolved
+- **Affected Monitors** - Which specific monitors detected the issue
+
+Click column headers to sort by any field.
+
+### Filtering and Analysis
+
+**Time Window Filtering:**
+- All filters affect statistics, charts, and the incident log simultaneously
+- Choose shorter windows (24h, 7d) for recent incident analysis
+- Use longer windows (30d, 90d) for trend analysis
+- Select "All Time" for complete historical view
+
+**Service Filtering:**
+- Select a specific service to see only its incidents
+- When filtered, uptime percentage shows that service's uptime
+- Use this for service-specific reliability reports
+
+**Status Filtering:**
+- "Ongoing" - View active incidents requiring attention
+- "Resolved" - View historical incidents for post-mortems
+- "All" - Complete incident history
+
+### Exporting Data
+
+Click **Export CSV** to download incident data including:
+- Incident ID and service name
+- Start and end timestamps
+- Duration in seconds
+- Severity and status
+- Affected monitor details
+
+**Use cases for export:**
+- Monthly reliability reports
+- SLA compliance documentation
+- Executive summaries
+- Post-incident review documentation
+- Trend analysis in spreadsheets
+
+### Understanding Uptime Calculation
+
+The uptime percentage uses the same accurate StatusUpdate-based calculation as the dashboard:
+- Counts operational time from every monitor check (not just incidents)
+- Includes ongoing incidents in the calculation
+- When filtering by service, shows that service's specific uptime
+- When viewing all services, shows average uptime across all services
+
+### Common Use Cases
+
+**Post-Incident Review:**
+1. Filter to the incident timeframe
+2. Identify affected services and monitors
+3. Review incident duration and severity
+4. Export data for incident report
+
+**SLA Compliance Reporting:**
+1. Set time window to reporting period (e.g., 30 days)
+2. Filter by service if needed
+3. Note uptime percentage for SLA verification
+4. Export for documentation
+
+**Reliability Trends:**
+1. Use 90-day or All Time view
+2. Examine incident timeline chart for patterns
+3. Check "By Service" chart to identify problematic services
+4. Review MTTR trends over time
+
+**Identifying Problem Services:**
+1. View "All Services" with 30-day window
+2. Sort incident log by service
+3. Check "By Service" chart for highest incident counts
+4. Drill down into specific services for details
+
+### Best Practices
+
+**Regular Review:**
+- Check the Incident Center weekly to identify trends
+- Review MTTR to ensure efficient incident response
+- Monitor uptime percentages for SLA compliance
+
+**Documentation:**
+- Export incident data monthly for records
+- Use CSV exports in post-incident reviews
+- Track MTTR improvements over time
+
+**Proactive Monitoring:**
+- Use "Ongoing" filter to see active incidents
+- Set up notification channels (Email, Slack, Discord) for real-time alerts
+- Review frequently-failing services for underlying issues
+
+**Reporting:**
+- Generate monthly reliability reports from exported data
+- Include MTTR and uptime trends in team meetings
+- Use incident breakdown by service to prioritize infrastructure improvements
 
 ---
 

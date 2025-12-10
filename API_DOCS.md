@@ -796,6 +796,188 @@ Configure notification settings for a service.
 
 ---
 
+### Incidents
+
+Endpoints for incident tracking, analytics, and reporting. Incidents are automatically created when services transition to degraded or down status.
+
+#### GET /api/v1/incidents
+
+List all incidents with optional filtering.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `time_window` (optional): Time window for filtering
+  - Options: `24h`, `7d`, `30d`, `90d`, `all`
+  - Default: `30d`
+- `service_id` (optional): Filter by specific service ID
+- `status` (optional): Filter by incident status
+  - Options: `ongoing`, `resolved`
+
+**Response:**
+```json
+{
+  "success": true,
+  "incidents": [
+    {
+      "id": 1,
+      "service_id": 2,
+      "service_name": "Slow Response API",
+      "started_at": "2025-12-10T09:15:30",
+      "ended_at": "2025-12-10T09:45:20",
+      "duration_seconds": 1790,
+      "severity": "down",
+      "status": "resolved",
+      "affected_monitors": [
+        {
+          "id": 3,
+          "type": "api",
+          "name": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/incidents?time_window=7d&status=ongoing"
+```
+
+#### GET /api/v1/incidents/stats
+
+Get aggregated incident statistics including MTTR, uptime, and breakdowns.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `time_window` (optional): Time window for statistics
+  - Options: `24h`, `7d`, `30d`, `90d`
+  - Default: `30d`
+- `service_id` (optional): Calculate stats for specific service only
+
+**Response:**
+```json
+{
+  "success": true,
+  "time_window": "30d",
+  "total_incidents": 15,
+  "ongoing_incidents": 2,
+  "resolved_incidents": 13,
+  "mttr_seconds": 3600,
+  "mttr_formatted": "1h",
+  "uptime_percentage": 99.5,
+  "by_service": [
+    {
+      "service_id": 1,
+      "service_name": "Google Search",
+      "count": 0
+    },
+    {
+      "service_id": 2,
+      "service_name": "Slow Response API",
+      "count": 15
+    }
+  ],
+  "by_severity": {
+    "degraded": 5,
+    "down": 10
+  }
+}
+```
+
+**Notes:**
+- MTTR (Mean Time To Recovery) only includes resolved incidents
+- Uptime calculation uses StatusUpdate-based method (same as dashboard)
+- When `service_id` is provided, shows that service's specific uptime
+- When no `service_id`, shows average uptime across all services
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/incidents/stats?time_window=7d&service_id=2"
+```
+
+#### GET /api/v1/incidents/timeline
+
+Get incident frequency data for timeline visualization.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `time_window` (optional): Time window for timeline
+  - Options: `24h`, `7d`, `30d`
+  - Default: `7d`
+- `service_id` (optional): Filter by specific service ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "labels": [
+    "2025-12-09 09:00",
+    "2025-12-09 10:00",
+    "2025-12-09 11:00"
+  ],
+  "data": [2, 1, 0]
+}
+```
+
+**Notes:**
+- Data is bucketed by hour for 24h and 7d windows
+- Data is bucketed by day for 30d window
+- Labels are formatted for Chart.js compatibility
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/incidents/timeline?time_window=24h"
+```
+
+#### GET /api/v1/incidents/export
+
+Export incident data as CSV file.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `time_window` (optional): Time window for export
+  - Options: `24h`, `7d`, `30d`, `90d`, `all`
+  - Default: `30d`
+- `service_id` (optional): Filter by specific service ID
+
+**Response:** CSV file download
+
+**CSV Columns:**
+- Incident ID
+- Service Name
+- Started At
+- Ended At
+- Duration (seconds)
+- Severity
+- Status
+- Affected Monitor IDs
+- Affected Monitor Types
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/incidents/export?time_window=30d" \
+  -o incidents_30d.csv
+```
+
+**Notes:**
+- Incidents are automatically created/resolved by the system
+- No manual incident creation or modification endpoints (automated only)
+- Incident severity matches service status (degraded or down)
+- Affected monitors list includes monitor ID, type, and name (if set)
+- Duration is only calculated for resolved incidents
+- Uptime calculation matches dashboard for consistency
+
+---
+
 ### Users
 
 #### GET /api/v1/users

@@ -28,6 +28,7 @@ A self-hosted monitoring dashboard designed for business users and non-technical
 - Full CRUD operations (create, read, update, delete) for services and monitors
 - Real-time status updates (10-second polling)
 - Last heartbeat timestamp display for deadman monitors
+- Incident Command Center - Track outages, analyze trends, calculate MTTR and uptime
 - Notification system - Email (SMTP), Slack, Discord, and custom webhooks
 - Service-level notification settings with cooldown and recovery alerts
 - Simple REST API for automation
@@ -139,6 +140,38 @@ Notifications are sent automatically when:
 - View sent notification history on Notifications page
 - Download full audit log as CSV
 - Track delivery status and troubleshoot failed notifications
+
+## Incident Command Center
+
+Track service reliability and outage history with the built-in Incident Command Center.
+
+### What You Get
+- **Automatic Incident Tracking** - Incidents are automatically created and resolved as service status changes
+- **Real-time Statistics** - Total incidents, ongoing vs resolved, MTTR (Mean Time To Recovery), uptime percentage
+- **Visual Analytics** - Timeline charts showing incident frequency over time, breakdown by service
+- **Incident Log** - Detailed history of all outages with start time, duration, severity, affected monitors
+- **Flexible Filtering** - Filter by time window (24h, 7d, 30d, 90d, all time), service, or status
+- **CSV Export** - Download incident data for reporting and analysis
+
+### How It Works
+1. **Automatic Creation** - When a service transitions to degraded or down status, an incident is automatically created
+2. **Severity Tracking** - Incidents are marked as "degraded" or "down" based on service status
+3. **Monitor Attribution** - Each incident tracks which specific monitors were affected
+4. **Auto-Resolution** - When a service returns to operational, the incident is automatically resolved and duration is calculated
+5. **Uptime Calculation** - Uptime percentages are calculated using the same accurate method as the dashboard
+
+### Accessing the Incident Center
+Click "Incidents" in the navigation bar to view:
+- Summary statistics (total incidents, MTTR, uptime, critical incidents)
+- Incident timeline chart
+- Incidents by service breakdown
+- Complete incident log with filtering
+
+**Perfect for:**
+- Post-incident reviews and RCA (Root Cause Analysis)
+- SLA compliance reporting
+- Identifying reliability trends
+- Measuring infrastructure stability
 
 ## Ultra-Simple API
 
