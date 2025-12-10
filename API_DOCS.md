@@ -892,7 +892,8 @@ Get aggregated incident statistics including MTTR, uptime, and breakdowns.
 - MTTR (Mean Time To Recovery) only includes resolved incidents
 - Uptime calculation uses StatusUpdate-based method (same as dashboard)
 - When `service_id` is provided, shows that service's specific uptime
-- When no `service_id`, shows average uptime across all services
+- When no `service_id`, shows average uptime across all active services (excludes services with no data)
+- `uptime_percentage` will be `null` for services with no status update data
 
 **Example:**
 ```bash
