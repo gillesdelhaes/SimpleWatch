@@ -20,7 +20,8 @@ async function loadServices() {
         const services = Array.isArray(response) ? response : (response.services || []);
         const select = document.getElementById('serviceFilter');
 
-        services.forEach(service => {
+        // Only show active services in the dropdown
+        services.filter(service => service.is_active).forEach(service => {
             const option = document.createElement('option');
             option.value = service.id;
             option.textContent = service.name;

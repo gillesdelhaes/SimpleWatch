@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 import json
 import io
 import csv
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 
@@ -26,8 +29,10 @@ def list_incidents(
     """
     List all incidents with optional filters.
     Returns incidents in reverse chronological order (newest first).
+    Only includes incidents from active services.
     """
-    query = db.query(Incident)
+    # Join with Service table to filter by is_active
+    query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(Service.is_active == True)
 
     # Filter by service
     if service_id:
@@ -56,11 +61,11 @@ def list_incidents(
     for incident in incidents:
         service = db.query(Service).filter(Service.id == incident.service_id).first()
 
-        # Get affected monitor names
+        # Get affected monitor names (only active monitors)
         affected_ids = json.loads(incident.affected_monitors_json) if incident.affected_monitors_json else []
         affected_monitors = []
         for mid in affected_ids:
-            monitor = db.query(Monitor).filter(Monitor.id == mid).first()
+            monitor = db.query(Monitor).filter(Monitor.id == mid, Monitor.is_active == True).first()
             if monitor:
                 config = json.loads(monitor.config_json) if monitor.config_json else {}
                 affected_monitors.append({
@@ -94,6 +99,7 @@ def get_incident_stats(
     """
     Get aggregated incident statistics for dashboard/charts.
     Returns: incident count, MTTR, uptime %, incidents by service, incidents by severity.
+    Only includes incidents from active services.
     """
     window_map = {
         "24h": timedelta(hours=24),
@@ -103,8 +109,11 @@ def get_incident_stats(
     }
     cutoff = datetime.utcnow() - window_map.get(time_window, timedelta(days=30))
 
-    # Get all incidents in time window
-    query = db.query(Incident).filter(Incident.started_at >= cutoff)
+    # Get all incidents in time window from active services only
+    query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(
+        Service.is_active == True,
+        Incident.started_at >= cutoff
+    )
 
     # Filter by service if specified
     if service_id:
@@ -138,7 +147,8 @@ def get_incident_stats(
     if service_id:
         # Single service: use accurate StatusUpdate-based calculation
         uptime_data = calculate_service_uptime(db, service_id)
-        uptime_percentage = uptime_data["percentage"] if uptime_data else 100.0
+        # Don't default to 100% for services with no data - return None instead
+        uptime_percentage = uptime_data["percentage"] if uptime_data else None
     else:
         # All services: calculate average uptime across all services
         all_services = db.query(Service).filter(Service.is_active == True).all()
@@ -176,6 +186,7 @@ def get_incident_timeline(
     """
     Get incident timeline data for chart visualization.
     Returns hourly/daily incident counts suitable for Chart.js.
+    Only includes incidents from active services.
     """
     window_map = {
         "24h": (timedelta(hours=24), "hour"),
@@ -185,7 +196,11 @@ def get_incident_timeline(
     delta, granularity = window_map.get(time_window, (timedelta(days=7), "hour"))
     cutoff = datetime.utcnow() - delta
 
-    query = db.query(Incident).filter(Incident.started_at >= cutoff)
+    # Only include incidents from active services
+    query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(
+        Service.is_active == True,
+        Incident.started_at >= cutoff
+    )
     if service_id:
         query = query.filter(Incident.service_id == service_id)
 
@@ -223,9 +238,9 @@ def export_incidents_csv(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Export incidents as CSV for reporting."""
-    # Build query for incidents
-    query = db.query(Incident)
+    """Export incidents as CSV for reporting. Only includes incidents from active services."""
+    # Build query for incidents from active services only
+    query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(Service.is_active == True)
 
     # Filter by service
     if service_id:
@@ -250,11 +265,11 @@ def export_incidents_csv(
     for incident in incidents_list:
         service = db.query(Service).filter(Service.id == incident.service_id).first()
 
-        # Get affected monitor names
+        # Get affected monitor names (only active monitors)
         affected_ids = json.loads(incident.affected_monitors_json) if incident.affected_monitors_json else []
         affected_monitors = []
         for mid in affected_ids:
-            monitor = db.query(Monitor).filter(Monitor.id == mid).first()
+            monitor = db.query(Monitor).filter(Monitor.id == mid, Monitor.is_active == True).first()
             if monitor:
                 config = json.loads(monitor.config_json) if monitor.config_json else {}
                 affected_monitors.append({
