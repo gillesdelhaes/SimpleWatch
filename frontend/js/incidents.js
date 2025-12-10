@@ -69,6 +69,7 @@ async function loadStats() {
 
 function renderStats(stats) {
     const grid = document.getElementById('statsGrid');
+    const uptimeDisplay = stats.uptime_percentage !== null ? `${stats.uptime_percentage}%` : 'N/A';
     grid.innerHTML = `
         <div class="stat-card">
             <div class="stat-label">Total Incidents</div>
@@ -82,7 +83,7 @@ function renderStats(stats) {
         </div>
         <div class="stat-card">
             <div class="stat-label">Uptime</div>
-            <div class="stat-value">${stats.uptime_percentage}%</div>
+            <div class="stat-value">${uptimeDisplay}</div>
             <div class="stat-trend">Last ${stats.time_window}</div>
         </div>
         <div class="stat-card">

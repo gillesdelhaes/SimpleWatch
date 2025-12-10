@@ -128,15 +128,15 @@ def get_incident_stats(
     # Incidents by service
     by_service = {}
     for incident in incidents:
-        service_id = incident.service_id
-        if service_id not in by_service:
-            service = db.query(Service).filter(Service.id == service_id).first()
-            by_service[service_id] = {
-                "service_id": service_id,
+        incident_service_id = incident.service_id
+        if incident_service_id not in by_service:
+            service = db.query(Service).filter(Service.id == incident_service_id).first()
+            by_service[incident_service_id] = {
+                "service_id": incident_service_id,
                 "service_name": service.name if service else "Unknown",
                 "count": 0
             }
-        by_service[service_id]["count"] += 1
+        by_service[incident_service_id]["count"] += 1
 
     # Incidents by severity
     by_severity = {"degraded": 0, "down": 0}
@@ -170,7 +170,7 @@ def get_incident_stats(
         "resolved_incidents": len(resolved_incidents),
         "mttr_seconds": int(mttr_seconds),
         "mttr_formatted": format_duration(mttr_seconds),
-        "uptime_percentage": round(uptime_percentage, 2),
+        "uptime_percentage": round(uptime_percentage, 2) if uptime_percentage is not None else None,
         "by_service": list(by_service.values()),
         "by_severity": by_severity
     }
