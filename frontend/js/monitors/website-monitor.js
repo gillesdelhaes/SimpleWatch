@@ -83,5 +83,11 @@ export default {
             return `${monitor.response_time_ms}ms`;
         }
         return null;
+    },
+
+    // Get description text for services page
+    getDescription(config) {
+        if (!config) return '';
+        return config.url;
     }
 };

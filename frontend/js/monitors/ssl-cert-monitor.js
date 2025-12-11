@@ -104,5 +104,11 @@ export default {
             return `Expires in ${monitor.metadata.days_until_expiry} days`;
         }
         return null;
+    },
+
+    // Get description text for services page
+    getDescription(config) {
+        if (!config) return '';
+        return `${config.hostname}:${config.port} (Warn: ${config.warning_days}d, Critical: ${config.critical_days}d)`;
     }
 };

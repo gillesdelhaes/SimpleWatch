@@ -118,7 +118,8 @@ function getMonitorTypeName(type) {
         'metric_threshold': icons.chart,
         'port': icons.port,
         'deadman': icons.skull,
-        'ssl_cert': icons.shield
+        'ssl_cert': icons.shield,
+        'dns': icons.database
     };
     const nameMap = {
         'website': 'Website',
@@ -126,7 +127,8 @@ function getMonitorTypeName(type) {
         'metric_threshold': 'Metric',
         'port': 'Port',
         'deadman': 'Deadman',
-        'ssl_cert': 'SSL Certificate'
+        'ssl_cert': 'SSL Certificate',
+        'dns': 'DNS'
     };
     const icon = iconMap[type] || '';
     const name = nameMap[type] || type;
@@ -135,13 +137,10 @@ function getMonitorTypeName(type) {
 
 function getMonitorDescription(monitor) {
     if (!monitor.config) return '';
-    const c = monitor.config;
-    if (monitor.monitor_type === 'website') return c.url;
-    if (monitor.monitor_type === 'api') return `${c.method || 'GET'} ${c.url}`;
-    if (monitor.monitor_type === 'metric_threshold') return `Warning ${c.comparison === 'greater' ? '>' : '<'} ${c.warning_threshold}, Critical ${c.comparison === 'greater' ? '>' : '<'} ${c.critical_threshold}`;
-    if (monitor.monitor_type === 'port') return `${c.host}:${c.port}`;
-    if (monitor.monitor_type === 'deadman') return `Expect every ${c.expected_interval_hours}h (grace: ${c.grace_period_hours}h)`;
-    if (monitor.monitor_type === 'ssl_cert') return `${c.hostname}:${c.port} (Warn: ${c.warning_days}d, Critical: ${c.critical_days}d)`;
+    const monitorPlugin = window.monitorRegistry.get(monitor.monitor_type);
+    if (monitorPlugin && monitorPlugin.getDescription) {
+        return monitorPlugin.getDescription(monitor.config);
+    }
     return '';
 }
 
@@ -691,32 +690,8 @@ document.addEventListener('DOMContentLoaded', () => {
         quickMonitorBtn.style.display = 'inline-flex';
         quickMonitorBtn.style.alignItems = 'center';
         quickMonitorBtn.style.gap = '0.5rem';
-        quickMonitorBtn.innerHTML = `<span class="icon" style="width: 16px; height: 16px;">${icons.zap}</span><span>Quick Monitor</span>`;
+        quickMonitorBtn.innerHTML = `<span class="icon" style="width: 16px; height: 16px; color: white;">${icons.zap}</span><span>Quick Monitor</span>`;
     }
-
-    // Load monitor plugins and services
-    (async () => {
-        try {
-            await monitorRegistry.loadMonitors();
-
-            // Render Quick Monitor type cards
-            const quickMonitorTypeGrid = document.getElementById('quickMonitorTypeGrid');
-            if (quickMonitorTypeGrid) {
-                quickMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectMonitorType');
-            }
-
-            // Render Add Monitor type cards
-            const addMonitorTypeGrid = document.getElementById('addMonitorTypeGrid');
-            if (addMonitorTypeGrid) {
-                addMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectAddMonitorType');
-            }
-        } catch (error) {
-            console.error('Failed to initialize monitor plugin system:', error);
-        }
-    })();
-
-    // Load services
-    loadServices();
 
     // Form submissions
     document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
@@ -802,4 +777,9 @@ document.addEventListener('DOMContentLoaded', () => {
             content.style.pointerEvents = 'none';
         }
     });
+});
+
+// Wait for monitor plugins to load before loading services
+window.addEventListener('monitorPluginsLoaded', () => {
+    loadServices();
 });

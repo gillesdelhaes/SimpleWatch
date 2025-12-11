@@ -113,5 +113,12 @@ export default {
                 </div>
             </div>
         `;
+    },
+
+    // Get description text for services page
+    getDescription(config) {
+        if (!config) return '';
+        const op = config.comparison === 'greater' ? '>' : '<';
+        return `Warning ${op} ${config.warning_threshold}, Critical ${op} ${config.critical_threshold}`;
     }
 };

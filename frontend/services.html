@@ -18,7 +18,7 @@
             </div>
             <div class="action-buttons">
                 <button onclick="showAddServiceModal()" class="btn btn-secondary">+ Add Service</button>
-                <button onclick="showQuickMonitorModal()" class="btn btn-primary" id="quickMonitorBtn">
+                <button onclick="showQuickMonitorModal()" class="btn btn-export" id="quickMonitorBtn">
                     Quick Monitor
                 </button>
             </div>
@@ -244,7 +244,6 @@
             try {
                 // Load all monitor plugins
                 await monitorRegistry.loadMonitors();
-                console.log('Monitor plugins loaded successfully');
 
                 // Render Quick Monitor type cards
                 const quickMonitorTypeGrid = document.getElementById('quickMonitorTypeGrid');
@@ -257,13 +256,15 @@
                 if (addMonitorTypeGrid) {
                     addMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectAddMonitorType');
                 }
+
+                // Dispatch event to signal plugins are ready
+                window.dispatchEvent(new CustomEvent('monitorPluginsLoaded'));
             } catch (error) {
                 console.error('Failed to initialize monitor plugin system:', error);
             }
         });
     </script>
 
-    <script src="/static/js/components.js"></script>
     <script src="/static/js/services.js"></script>
 </body>
 </html>

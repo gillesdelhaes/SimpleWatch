@@ -111,5 +111,11 @@ export default {
                 </div>
             </div>
         `;
+    },
+
+    // Get description text for services page
+    getDescription(config) {
+        if (!config) return '';
+        return `Expect every ${config.expected_interval_hours}h (grace: ${config.grace_period_hours}h)`;
     }
 };

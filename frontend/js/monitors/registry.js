@@ -12,7 +12,6 @@ class MonitorRegistry {
         if (!monitorPlugin.type || !monitorPlugin.name) {
             throw new Error('Monitor plugin must have type and name');
         }
-        console.log(`Registering monitor: ${monitorPlugin.name} (${monitorPlugin.type})`);
         this.monitors.set(monitorPlugin.type, monitorPlugin);
     }
 
@@ -34,11 +33,8 @@ class MonitorRegistry {
     // Load monitor plugins
     async loadMonitors() {
         if (this.loaded) {
-            console.log('Monitors already loaded');
             return;
         }
-
-        console.log('Loading monitor plugins...');
 
         try {
             // Import all monitor plugins
@@ -60,8 +56,10 @@ class MonitorRegistry {
             const sslCertMonitor = await import('./ssl-cert-monitor.js');
             this.register(sslCertMonitor.default);
 
+            const dnsMonitor = await import('./dns-monitor.js');
+            this.register(dnsMonitor.default);
+
             this.loaded = true;
-            console.log(`Loaded ${this.monitors.size} monitor plugins`);
         } catch (error) {
             console.error('Failed to load monitor plugins:', error);
             throw error;
