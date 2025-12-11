@@ -112,27 +112,14 @@ async function loadServices() {
 }
 
 function getMonitorTypeName(type) {
-    const iconMap = {
-        'website': icons.globe,
-        'api': icons.api,
-        'metric_threshold': icons.chart,
-        'port': icons.port,
-        'deadman': icons.skull,
-        'ssl_cert': icons.shield,
-        'dns': icons.database
-    };
-    const nameMap = {
-        'website': 'Website',
-        'api': 'API',
-        'metric_threshold': 'Metric',
-        'port': 'Port',
-        'deadman': 'Deadman',
-        'ssl_cert': 'SSL Certificate',
-        'dns': 'DNS'
-    };
-    const icon = iconMap[type] || '';
-    const name = nameMap[type] || type;
-    return `<span class="monitor-type-badge"><span class="icon" style="width: 14px; height: 14px;">${icon}</span>${name}</span>`;
+    const monitorPlugin = window.monitorRegistry.get(type);
+    if (!monitorPlugin) {
+        return `<span class="monitor-type-badge">${type}</span>`;
+    }
+
+    const iconSvg = icons[monitorPlugin.icon] || '';
+    const name = monitorPlugin.name.replace(' Monitor', ''); // Strip "Monitor" suffix for brevity
+    return `<span class="monitor-type-badge"><span class="icon" style="width: 14px; height: 14px;">${iconSvg}</span>${name}</span>`;
 }
 
 function getMonitorDescription(monitor) {
