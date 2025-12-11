@@ -471,12 +471,9 @@ async function editMonitor(monitorId) {
             return;
         }
 
-        // Fetch service for metric and deadman monitors (needed for API endpoint preview)
-        let serviceName = '';
-        if (monitor.monitor_type === 'metric_threshold' || monitor.monitor_type === 'deadman') {
-            const service = await api.getService(monitor.service_id);
-            serviceName = service.name;
-        }
+        // Fetch service (needed for collapsible API endpoint previews)
+        const service = await api.getService(monitor.service_id);
+        const serviceName = service.name;
 
         // Store monitor info in hidden fields
         document.getElementById('editMonitorId').value = monitor.id;
@@ -490,9 +487,8 @@ async function editMonitor(monitorId) {
         // Generate form fields using registry and populate with existing values
         const formPrefix = 'editMonitor';
 
-        // Pass monitor name for metric/deadman monitors when available
-        const monitorName = (monitor.monitor_type === 'metric_threshold' || monitor.monitor_type === 'deadman')
-            ? monitor.config?.name : null;
+        // Pass monitor name if it exists in config
+        const monitorName = monitor.config?.name || null;
 
         const formHTML = monitorRegistry.renderForm(monitorPlugin, formPrefix, false) +
                         monitorRegistry.renderIntervalDropdown(monitorPlugin, formPrefix) +
