@@ -4,6 +4,7 @@ Deadman (heartbeat) monitor implementation.
 from typing import Dict, Any
 from datetime import datetime, timedelta
 from monitors.base import BaseMonitor
+from database import SessionLocal, Monitor
 
 
 class DeadmanMonitor(BaseMonitor):
@@ -14,16 +15,15 @@ class DeadmanMonitor(BaseMonitor):
     Useful for monitoring cron jobs, backups, and scheduled tasks.
     """
 
-    def __init__(self, config: Dict[str, Any], last_heartbeat: datetime = None):
+    def __init__(self, config: Dict[str, Any]):
         """
         Initialize deadman monitor.
 
         Args:
-            config: Monitor configuration with expected_interval_hours and grace_period_hours
-            last_heartbeat: Timestamp of last received heartbeat
+            config: Monitor configuration with expected_interval_hours, grace_period_hours,
+                   and monitor_id (for retrieving last heartbeat from database)
         """
         super().__init__(config)
-        self.last_heartbeat = last_heartbeat
 
     def check(self) -> Dict[str, Any]:
         """
@@ -32,11 +32,20 @@ class DeadmanMonitor(BaseMonitor):
         Returns:
             Dictionary with check results
         """
+        # Retrieve last_check_at from database
+        monitor_id = self.config.get('monitor_id')
+        db = SessionLocal()
+        try:
+            monitor = db.query(Monitor).filter(Monitor.id == monitor_id).first()
+            last_heartbeat = monitor.last_check_at if monitor else None
+        finally:
+            db.close()
+
         expected_interval_hours = self.config.get("expected_interval_hours", 24)
         grace_period_hours = self.config.get("grace_period_hours", 1)
 
         # If no heartbeat received yet, status is down
-        if not self.last_heartbeat:
+        if not last_heartbeat:
             return {
                 "status": "down",
                 "message": "No heartbeat received yet",
@@ -48,7 +57,7 @@ class DeadmanMonitor(BaseMonitor):
             }
 
         now = datetime.utcnow()
-        time_since_last_heartbeat = now - self.last_heartbeat
+        time_since_last_heartbeat = now - last_heartbeat
 
         # Calculate thresholds
         expected_interval = timedelta(hours=expected_interval_hours)
@@ -66,7 +75,7 @@ class DeadmanMonitor(BaseMonitor):
                 "metadata": {
                     "expected_interval_hours": expected_interval_hours,
                     "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": self.last_heartbeat.isoformat(),
+                    "last_heartbeat": last_heartbeat.isoformat(),
                     "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
                 }
             }
@@ -78,7 +87,7 @@ class DeadmanMonitor(BaseMonitor):
                 "metadata": {
                     "expected_interval_hours": expected_interval_hours,
                     "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": self.last_heartbeat.isoformat(),
+                    "last_heartbeat": last_heartbeat.isoformat(),
                     "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
                 }
             }
@@ -90,7 +99,7 @@ class DeadmanMonitor(BaseMonitor):
                 "metadata": {
                     "expected_interval_hours": expected_interval_hours,
                     "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": self.last_heartbeat.isoformat(),
+                    "last_heartbeat": last_heartbeat.isoformat(),
                     "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
                 }
             }

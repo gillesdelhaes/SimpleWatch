@@ -23,6 +23,19 @@ logger = logging.getLogger(__name__)
 
 scheduler = None
 
+# Monitor class registry
+MONITOR_CLASSES = {
+    'website': WebsiteMonitor,
+    'api': APIMonitor,
+    'port': PortMonitor,
+    'deadman': DeadmanMonitor,
+    'ssl_cert': SSLCertMonitor,
+    'dns': DNSMonitor,
+}
+
+# Passive monitors that don't actively check (only receive data via API)
+PASSIVE_MONITORS = {'metric_threshold'}
+
 
 def check_monitor(monitor_id: int):
     """
@@ -37,27 +50,22 @@ def check_monitor(monitor_id: int):
         if not monitor or not monitor.is_active:
             return
 
+        # Skip passive monitors (they only receive data via API)
+        if monitor.monitor_type in PASSIVE_MONITORS:
+            return
+
         config = json.loads(monitor.config_json)
 
-        monitor_instance = None
-        if monitor.monitor_type == "website":
-            monitor_instance = WebsiteMonitor(config)
-        elif monitor.monitor_type == "api":
-            monitor_instance = APIMonitor(config)
-        elif monitor.monitor_type == "metric_threshold":
-            return
-        elif monitor.monitor_type == "port":
-            monitor_instance = PortMonitor(config)
-        elif monitor.monitor_type == "deadman":
-            # Deadman monitor needs last_check_at timestamp
-            monitor_instance = DeadmanMonitor(config, monitor.last_check_at)
-        elif monitor.monitor_type == "ssl_cert":
-            monitor_instance = SSLCertMonitor(config)
-        elif monitor.monitor_type == "dns":
-            monitor_instance = DNSMonitor(config)
-        else:
+        # Add monitor_id to config so monitors can access their database record if needed
+        config['monitor_id'] = monitor.id
+
+        # Get monitor class from registry
+        monitor_class = MONITOR_CLASSES.get(monitor.monitor_type)
+        if not monitor_class:
             logger.error(f"Unknown monitor type: {monitor.monitor_type}")
             return
+
+        monitor_instance = monitor_class(config)
 
         logger.info(f"Checking monitor {monitor.id} ({monitor.monitor_type})")
 
