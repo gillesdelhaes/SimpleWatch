@@ -48,6 +48,11 @@ const icons = {
         <path d="M8 2h4a2 2 0 012 2v0H6v0a2 2 0 012-2zM6 4H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2h-1"/>
     </svg>`,
 
+    clipboardList: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 2h4a2 2 0 012 2v0H6v0a2 2 0 012-2zM6 4H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2h-1"/>
+        <path d="M6 9h8M6 12h8M6 15h5"/>
+    </svg>`,
+
     // Monitor type icons
     globe: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="10" cy="10" r="8"/>

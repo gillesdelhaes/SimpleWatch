@@ -10,7 +10,7 @@ let editingChannelId = null;
 document.addEventListener('DOMContentLoaded', () => {
     const emptyIcon = document.getElementById('emptyIcon');
     if (emptyIcon) {
-        emptyIcon.innerHTML = icons.bellSlash;
+        emptyIcon.innerHTML = icons.inbox;
     }
 
     const smtpIcon = document.getElementById('smtpIcon');
