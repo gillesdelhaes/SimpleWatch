@@ -571,24 +571,6 @@ Resume a paused monitor (sets is_active to True).
 
 **Note:** If the service was paused, it will automatically be resumed when you resume a monitor.
 
-#### POST /api/v1/monitors/{monitor_id}/test
-
-Test a monitor immediately without waiting for scheduled check.
-
-**Requires:** JWT authentication
-
-**Response:**
-```json
-{
-  "success": true,
-  "result": {
-    "status": "operational",
-    "response_time_ms": 123,
-    "message": "Website returned status code 200"
-  }
-}
-```
-
 ---
 
 ### Notifications
