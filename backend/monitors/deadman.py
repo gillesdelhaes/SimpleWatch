@@ -94,20 +94,3 @@ class DeadmanMonitor(BaseMonitor):
                     "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
                 }
             }
-
-    def receive_heartbeat(self) -> Dict[str, Any]:
-        """
-        Process a heartbeat ping.
-
-        Returns:
-            Success status and updated timestamp
-        """
-        self.last_heartbeat = datetime.utcnow()
-
-        return {
-            "status": "operational",
-            "message": "Heartbeat received",
-            "metadata": {
-                "heartbeat_time": self.last_heartbeat.isoformat()
-            }
-        }

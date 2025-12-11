@@ -31,12 +31,19 @@ class BulkStatusUpdateRequest(BaseModel):
     updates: List[BulkStatusUpdate]
 
 
+class HeartbeatRequest(BaseModel):
+    """Heartbeat ping request for deadman monitors."""
+    api_key: str
+
+
 class MetricUpdateRequest(BaseModel):
+    """Metric value update request for threshold monitors."""
     api_key: str
     value: float
 
 
 class MetricUpdateResponse(BaseModel):
+    """Metric update response."""
     success: bool
     service: str
     value: float

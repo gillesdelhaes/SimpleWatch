@@ -32,20 +32,3 @@ class BaseMonitor(ABC):
             }
         """
         pass
-
-    def _determine_status_from_http_code(self, status_code: int) -> str:
-        """
-        Determine service status from HTTP status code.
-
-        Args:
-            status_code: HTTP status code
-
-        Returns:
-            Status string: "operational", "degraded", or "down"
-        """
-        if 200 <= status_code < 300:
-            return "operational"
-        elif 300 <= status_code < 400:
-            return "degraded"
-        else:
-            return "down"

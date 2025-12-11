@@ -131,12 +131,6 @@ class APIClient {
         });
     }
 
-    async testMonitor(monitorId) {
-        return this.request(`${API_BASE}/monitors/${monitorId}/test`, {
-            method: 'POST'
-        });
-    }
-
     async listUsers() {
         return this.request(`${API_BASE}/users`);
     }

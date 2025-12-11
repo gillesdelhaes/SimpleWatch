@@ -5,33 +5,14 @@ Includes heartbeat pings for deadman monitors and metric values for threshold mo
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db, Service, Monitor, StatusUpdate
 from datetime import datetime
-from pydantic import BaseModel
 import json
+
+from database import get_db, Service, Monitor, StatusUpdate
+from models import HeartbeatRequest, MetricUpdateRequest, MetricUpdateResponse
 
 heartbeat_router = APIRouter(prefix="/api/v1/heartbeat", tags=["monitor-ingestion"])
 metric_router = APIRouter(prefix="/api/v1/metric", tags=["monitor-ingestion"])
-
-
-class HeartbeatRequest(BaseModel):
-    """Heartbeat ping request."""
-    api_key: str
-
-
-class MetricUpdateRequest(BaseModel):
-    """Metric value update request."""
-    api_key: str
-    value: float
-
-
-class MetricUpdateResponse(BaseModel):
-    """Metric update response."""
-    success: bool
-    service: str
-    value: float
-    status: str
-    reason: str
 
 
 @heartbeat_router.post("/{service_name}/{monitor_name}")
@@ -180,30 +161,16 @@ def update_metric(
             detail=f"No active metric threshold monitor named '{monitor_name}' found for service '{service_name}'"
         )
 
-    # Load monitor configuration
+    # Load monitor configuration and evaluate metric using monitor class
     config = json.loads(monitor.config_json)
-    warning_threshold = config.get("warning_threshold")
-    critical_threshold = config.get("critical_threshold")
-    comparison = config.get("comparison", "greater")
 
-    # Evaluate metric value against thresholds
-    status = "operational"
-    reason = f"Value {request.value} is within normal range"
+    # Use monitor's evaluation logic instead of duplicating it
+    from monitors.metric import MetricThresholdMonitor
+    monitor_instance = MetricThresholdMonitor(config)
+    result = monitor_instance.evaluate_metric(request.value)
 
-    if comparison == "greater":
-        if request.value >= critical_threshold:
-            status = "down"
-            reason = f"Value {request.value} exceeds critical threshold of {critical_threshold}"
-        elif request.value >= warning_threshold:
-            status = "degraded"
-            reason = f"Value {request.value} exceeds warning threshold of {warning_threshold}"
-    else:
-        if request.value <= critical_threshold:
-            status = "down"
-            reason = f"Value {request.value} is below critical threshold of {critical_threshold}"
-        elif request.value <= warning_threshold:
-            status = "degraded"
-            reason = f"Value {request.value} is below warning threshold of {warning_threshold}"
+    status = result["status"]
+    reason = result["reason"]
 
     # Create status update
     status_update = StatusUpdate(

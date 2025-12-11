@@ -31,11 +31,6 @@ export default {
             type: 'checkbox',
             label: 'Follow Redirects',
             default: true
-        },
-        verify_ssl: {
-            type: 'checkbox',
-            label: 'Verify SSL Certificate',
-            default: true
         }
     },
 
@@ -69,8 +64,7 @@ export default {
         return {
             url: document.getElementById(`${formPrefix}Url`).value,
             timeout_seconds: parseInt(document.getElementById(`${formPrefix}TimeoutSeconds`).value),
-            follow_redirects: document.getElementById(`${formPrefix}FollowRedirects`).checked,
-            verify_ssl: document.getElementById(`${formPrefix}VerifySsl`).checked
+            follow_redirects: document.getElementById(`${formPrefix}FollowRedirects`).checked
         };
     },
 
@@ -80,7 +74,6 @@ export default {
         document.getElementById(`${formPrefix}Url`).value = config.url;
         document.getElementById(`${formPrefix}TimeoutSeconds`).value = config.timeout_seconds;
         document.getElementById(`${formPrefix}FollowRedirects`).checked = config.follow_redirects;
-        document.getElementById(`${formPrefix}VerifySsl`).checked = config.verify_ssl;
     },
 
     // Optional: Custom rendering logic for monitor status display

@@ -23,7 +23,7 @@ class MetricThresholdMonitor(BaseMonitor):
             "message": "Metric monitors are passive and receive data via API"
         }
 
-    def evaluate_metric(self, value: float) -> Dict[str, Any]:
+    def evaluate_metric(self, value: float) -> Dict[str, str]:
         """
         Evaluate a metric value against thresholds.
 
@@ -31,7 +31,7 @@ class MetricThresholdMonitor(BaseMonitor):
             value: The metric value to evaluate
 
         Returns:
-            Dictionary with evaluation results
+            Dictionary with 'status' and 'reason' keys
         """
         warning_threshold = self.config.get("warning_threshold")
         critical_threshold = self.config.get("critical_threshold")
@@ -41,61 +41,31 @@ class MetricThresholdMonitor(BaseMonitor):
             if value >= critical_threshold:
                 return {
                     "status": "down",
-                    "message": f"Value {value} exceeds critical threshold of {critical_threshold}",
-                    "metadata": {
-                        "value": value,
-                        "warning_threshold": warning_threshold,
-                        "critical_threshold": critical_threshold
-                    }
+                    "reason": f"Value {value} exceeds critical threshold of {critical_threshold}"
                 }
             elif value >= warning_threshold:
                 return {
                     "status": "degraded",
-                    "message": f"Value {value} exceeds warning threshold of {warning_threshold}",
-                    "metadata": {
-                        "value": value,
-                        "warning_threshold": warning_threshold,
-                        "critical_threshold": critical_threshold
-                    }
+                    "reason": f"Value {value} exceeds warning threshold of {warning_threshold}"
                 }
             else:
                 return {
                     "status": "operational",
-                    "message": f"Value {value} is within normal range",
-                    "metadata": {
-                        "value": value,
-                        "warning_threshold": warning_threshold,
-                        "critical_threshold": critical_threshold
-                    }
+                    "reason": f"Value {value} is within normal range"
                 }
-        else:
+        else:  # "less"
             if value <= critical_threshold:
                 return {
                     "status": "down",
-                    "message": f"Value {value} is below critical threshold of {critical_threshold}",
-                    "metadata": {
-                        "value": value,
-                        "warning_threshold": warning_threshold,
-                        "critical_threshold": critical_threshold
-                    }
+                    "reason": f"Value {value} is below critical threshold of {critical_threshold}"
                 }
             elif value <= warning_threshold:
                 return {
                     "status": "degraded",
-                    "message": f"Value {value} is below warning threshold of {warning_threshold}",
-                    "metadata": {
-                        "value": value,
-                        "warning_threshold": warning_threshold,
-                        "critical_threshold": critical_threshold
-                    }
+                    "reason": f"Value {value} is below warning threshold of {warning_threshold}"
                 }
             else:
                 return {
                     "status": "operational",
-                    "message": f"Value {value} is within normal range",
-                    "metadata": {
-                        "value": value,
-                        "warning_threshold": warning_threshold,
-                        "critical_threshold": critical_threshold
-                    }
+                    "reason": f"Value {value} is within normal range"
                 }

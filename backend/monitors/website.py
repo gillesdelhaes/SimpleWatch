@@ -10,12 +10,28 @@ from monitors.base import BaseMonitor
 class WebsiteMonitor(BaseMonitor):
     """Monitor for checking website/URL availability."""
 
+    def _determine_status_from_http_code(self, status_code: int) -> str:
+        """
+        Determine service status from HTTP status code.
+
+        Args:
+            status_code: HTTP status code
+
+        Returns:
+            Status string: "operational", "degraded", or "down"
+        """
+        if 200 <= status_code < 300:
+            return "operational"
+        elif 300 <= status_code < 400:
+            return "degraded"
+        else:
+            return "down"
+
     def check(self) -> Dict[str, Any]:
         """Check if website responds properly."""
         url = self.config.get("url")
         timeout = self.config.get("timeout_seconds", 10)
         follow_redirects = self.config.get("follow_redirects", True)
-        verify_ssl = self.config.get("verify_ssl", True)
 
         try:
             start_time = time.time()
@@ -24,7 +40,7 @@ class WebsiteMonitor(BaseMonitor):
                 url,
                 timeout=timeout,
                 allow_redirects=follow_redirects,
-                verify=verify_ssl,
+                verify=True,  # Always verify SSL certificates
                 headers={"User-Agent": "SimpleWatch-Monitor/1.0"}
             )
 
