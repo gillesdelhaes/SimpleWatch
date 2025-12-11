@@ -175,6 +175,35 @@ function openMonitorModal(serviceId) {
                         <div class="monitor-metric-value">${new Date(monitor.metadata.expiry_date).toLocaleDateString()}</div>
                     </div>
                     ` : ''}
+                    ` : monitor.monitor_type === 'dns' && monitor.metadata ? `
+                    <div class="monitor-metric">
+                        <div class="monitor-metric-label">Hostname</div>
+                        <div class="monitor-metric-value">${monitor.metadata.hostname || 'N/A'}</div>
+                    </div>
+                    <div class="monitor-metric">
+                        <div class="monitor-metric-label">Record Type</div>
+                        <div class="monitor-metric-value">${monitor.metadata.record_type || 'N/A'}</div>
+                    </div>
+                    ${monitor.metadata.expected_value ? `
+                    <div class="monitor-metric">
+                        <div class="monitor-metric-label">Expected Value</div>
+                        <div class="monitor-metric-value">${monitor.metadata.expected_value}</div>
+                    </div>
+                    ` : ''}
+                    ${monitor.metadata.resolved_values && monitor.metadata.resolved_values.length > 0 ? `
+                    <div class="monitor-metric">
+                        <div class="monitor-metric-label">Resolved Values</div>
+                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
+                            ${monitor.metadata.resolved_values.join('<br>')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${monitor.response_time_ms ? `
+                    <div class="monitor-metric">
+                        <div class="monitor-metric-label">Query Time</div>
+                        <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
+                    </div>
+                    ` : ''}
                     ` : monitor.response_time_ms ? `
                     <div class="monitor-metric">
                         <div class="monitor-metric-label">Response Time</div>

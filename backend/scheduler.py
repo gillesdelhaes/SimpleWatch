@@ -12,6 +12,7 @@ from monitors.metric import MetricThresholdMonitor
 from monitors.port import PortMonitor
 from monitors.deadman import DeadmanMonitor
 from monitors.ssl_cert import SSLCertMonitor
+from monitors.dns import DNSMonitor
 from utils.service_helpers import (
     calculate_service_status, send_service_notification, update_service_incidents
 )
@@ -52,6 +53,8 @@ def check_monitor(monitor_id: int):
             monitor_instance = DeadmanMonitor(config, monitor.last_check_at)
         elif monitor.monitor_type == "ssl_cert":
             monitor_instance = SSLCertMonitor(config)
+        elif monitor.monitor_type == "dns":
+            monitor_instance = DNSMonitor(config)
         else:
             logger.error(f"Unknown monitor type: {monitor.monitor_type}")
             return
