@@ -351,21 +351,7 @@ async function handleQuickMonitorSubmit(event) {
 
         hideQuickMonitorModal();
         loadServices();
-
-        // Show success with endpoint info for metric_threshold and deadman monitors
-        if (currentQuickMonitorType === 'metric_threshold' && config.name) {
-            const encodedService = encodeURIComponent(serviceName);
-            const encodedMonitor = encodeURIComponent(config.name);
-            const endpoint = `/api/v1/metric/${encodedService}/${encodedMonitor}`;
-            showSuccess(`Monitor created successfully! Send values to: POST ${endpoint}`);
-        } else if (currentQuickMonitorType === 'deadman' && config.name) {
-            const encodedService = encodeURIComponent(serviceName);
-            const encodedMonitor = encodeURIComponent(config.name);
-            const endpoint = `/api/v1/heartbeat/${encodedService}/${encodedMonitor}`;
-            showSuccess(`Monitor created successfully! Send heartbeats to: POST ${endpoint}`);
-        } else {
-            showSuccess('Monitor created successfully');
-        }
+        showSuccess('Monitor created successfully');
     } catch (error) {
         showError('Failed to create monitor: ' + error.message);
     }
@@ -465,21 +451,7 @@ async function handleAddMonitorSubmit(event) {
 
         hideAddMonitorToServiceModal();
         loadServices();
-
-        // Show success with endpoint info for metric_threshold and deadman monitors
-        if (currentAddMonitorType === 'metric_threshold' && config.name) {
-            const encodedService = encodeURIComponent(serviceName);
-            const encodedMonitor = encodeURIComponent(config.name);
-            const endpoint = `/api/v1/metric/${encodedService}/${encodedMonitor}`;
-            showSuccess(`Monitor added successfully! Send values to: POST ${endpoint}`);
-        } else if (currentAddMonitorType === 'deadman' && config.name) {
-            const encodedService = encodeURIComponent(serviceName);
-            const encodedMonitor = encodeURIComponent(config.name);
-            const endpoint = `/api/v1/heartbeat/${encodedService}/${encodedMonitor}`;
-            showSuccess(`Monitor added successfully! Send heartbeats to: POST ${endpoint}`);
-        } else {
-            showSuccess('Monitor added successfully');
-        }
+        showSuccess('Monitor added successfully');
     } catch (error) {
         showError('Failed to add monitor: ' + error.message);
     }
