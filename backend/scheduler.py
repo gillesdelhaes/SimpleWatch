@@ -2,19 +2,14 @@
 Background scheduler for monitor checks using APScheduler.
 """
 import logging
+import os
+import importlib
+import inspect
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
 from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings
-from monitors.website import WebsiteMonitor
-from monitors.api import APIMonitor
-from monitors.metric import MetricThresholdMonitor
-from monitors.port import PortMonitor
-from monitors.deadman import DeadmanMonitor
-from monitors.ssl_cert import SSLCertMonitor
-from monitors.dns import DNSMonitor
-from monitors.ping import PingMonitor
-from monitors.seo import SEOMonitor
+from monitors.base import BaseMonitor
 from utils.service_helpers import (
     calculate_service_status, send_service_notification, update_service_incidents
 )
@@ -25,17 +20,46 @@ logger = logging.getLogger(__name__)
 
 scheduler = None
 
-# Monitor class registry
-MONITOR_CLASSES = {
-    'website': WebsiteMonitor,
-    'api': APIMonitor,
-    'port': PortMonitor,
-    'deadman': DeadmanMonitor,
-    'ssl_cert': SSLCertMonitor,
-    'dns': DNSMonitor,
-    'ping': PingMonitor,
-    'seo': SEOMonitor,
-}
+
+def discover_monitors():
+    """
+    Automatically discover and register all monitor classes.
+    Scans the monitors/ directory for Python files and dynamically imports them.
+
+    Returns:
+        dict: Mapping of monitor_type (str) to monitor class
+    """
+    monitor_classes = {}
+    monitors_dir = os.path.join(os.path.dirname(__file__), 'monitors')
+
+    # Scan all Python files in monitors directory
+    for filename in os.listdir(monitors_dir):
+        if filename.endswith('.py') and filename not in ('base.py', '__init__.py'):
+            module_name = filename[:-3]  # Remove .py extension
+
+            try:
+                # Dynamically import the module
+                module = importlib.import_module(f'monitors.{module_name}')
+
+                # Find all classes that inherit from BaseMonitor
+                for name, obj in inspect.getmembers(module, inspect.isclass):
+                    if issubclass(obj, BaseMonitor) and obj != BaseMonitor:
+                        # Use the module name as the monitor type
+                        # e.g., 'website' from 'website.py', 'ssl_cert' from 'ssl_cert.py'
+                        monitor_type = module_name
+                        monitor_classes[monitor_type] = obj
+                        logger.info(f"Auto-registered monitor: {monitor_type} -> {obj.__name__}")
+                        break  # Only register the first BaseMonitor subclass per file
+
+            except Exception as e:
+                logger.error(f"Failed to import monitor module '{module_name}': {e}")
+
+    logger.info(f"Monitor auto-discovery complete: {len(monitor_classes)} monitor types registered")
+    return monitor_classes
+
+
+# Auto-discover all monitor classes at module load time
+MONITOR_CLASSES = discover_monitors()
 
 # Passive monitors that don't actively check (only receive data via API)
 PASSIVE_MONITORS = {'metric_threshold'}
