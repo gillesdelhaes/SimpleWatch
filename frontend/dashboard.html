@@ -61,11 +61,32 @@
         </div>
     </div>
 
+    <script src="/static/js/components.js"></script>
     <script src="/static/js/theme.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/nav.js"></script>
     <script src="/static/js/polling.js"></script>
+
+    <!-- Monitor Plugin System -->
+    <script type="module">
+        import monitorRegistry from '/static/js/monitors/registry.js';
+
+        // Make registry available globally
+        window.monitorRegistry = monitorRegistry;
+
+        // Initialize plugin system and load dashboard
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Load all monitor plugins
+                await monitorRegistry.loadMonitors();
+                console.log('Monitor plugins loaded successfully');
+            } catch (error) {
+                console.error('Failed to load monitor plugins:', error);
+            }
+        });
+    </script>
+
     <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

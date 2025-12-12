@@ -90,59 +90,20 @@ function createStatusWidget(service) {
 let currentServiceData = [];
 
 function getMonitorTypeName(type) {
-    const typeNames = {
-        'website': 'Website',
-        'api': 'API',
-        'metric_threshold': 'Metric Threshold',
-        'port': 'Port',
-        'deadman': 'Deadman/Heartbeat',
-        'ssl_cert': 'SSL Certificate',
-        'dns': 'DNS',
-        'ping': 'Ping',
-        'seo': 'SEO'
-    };
-    return typeNames[type] || type;
+    const monitorPlugin = window.monitorRegistry?.get(type);
+    if (!monitorPlugin) {
+        return type; // Fallback to type string if registry not loaded or plugin not found
+    }
+    return monitorPlugin.name.replace(' Monitor', ''); // Strip "Monitor" suffix for brevity
 }
 
 function getMonitorDescription(monitor) {
     if (!monitor.config) return '';
-
-    let description = '';
-    if (monitor.monitor_type === 'website') {
-        description = monitor.config.url;
-    } else if (monitor.monitor_type === 'api') {
-        description = `${monitor.config.method || 'GET'} ${monitor.config.url}`;
-    } else if (monitor.monitor_type === 'metric_threshold') {
-        const comparison = monitor.config.comparison === 'greater' ? '>' : '<';
-        const thresholds = `Warning ${comparison} ${monitor.config.warning_threshold}, Critical ${comparison} ${monitor.config.critical_threshold}`;
-        description = monitor.config.name ? `[${monitor.config.name}] ${thresholds}` : thresholds;
-    } else if (monitor.monitor_type === 'port') {
-        description = `${monitor.config.host}:${monitor.config.port}`;
-    } else if (monitor.monitor_type === 'deadman') {
-        const heartbeat = `Expect heartbeat every ${monitor.config.expected_interval_hours}h (grace: ${monitor.config.grace_period_hours}h)`;
-        description = monitor.config.name ? `[${monitor.config.name}] ${heartbeat}` : heartbeat;
-    } else if (monitor.monitor_type === 'ssl_cert') {
-        description = `${monitor.config.hostname} (Warning: ${monitor.config.warning_threshold_days}d, Critical: ${monitor.config.critical_threshold_days}d)`;
-    } else if (monitor.monitor_type === 'dns') {
-        description = `${monitor.config.hostname} (${monitor.config.record_type})${monitor.config.expected_value ? ' → ' + monitor.config.expected_value : ''}`;
-    } else if (monitor.monitor_type === 'ping') {
-        description = `${monitor.config.host} (${monitor.config.count || 4} pings, max latency: ${monitor.config.latency_threshold_ms || 200}ms)`;
-    } else if (monitor.monitor_type === 'seo') {
-        const checks = [];
-        if (monitor.config.check_title) checks.push('Title');
-        if (monitor.config.check_description) checks.push('Description');
-        if (monitor.config.check_og_tags) checks.push('OG');
-        if (monitor.config.check_canonical) checks.push('Canonical');
-        if (monitor.config.check_robots) checks.push('Robots');
-        try {
-            const url = new URL(monitor.config.url);
-            const domain = url.hostname.replace('www.', '');
-            description = `${domain} (${checks.join(', ')})`;
-        } catch {
-            description = `${monitor.config.url} (${checks.join(', ')})`;
-        }
+    const monitorPlugin = window.monitorRegistry?.get(monitor.monitor_type);
+    if (monitorPlugin && monitorPlugin.getDescription) {
+        return monitorPlugin.getDescription(monitor.config);
     }
-    return description;
+    return '';
 }
 
 function openMonitorModal(serviceId) {
