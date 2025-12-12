@@ -67,8 +67,6 @@ def calculate_service_uptime(db: Session, service_id: int) -> Optional[Dict]:
         StatusUpdate.timestamp >= cutoff_time
     ).order_by(StatusUpdate.timestamp).all()
 
-    logger.info(f"Service {service_id}: Found {len(status_updates)} status updates since {cutoff_time}")
-
     if not status_updates:
         # No status updates in period - service never initialized
         # Return None so frontend can display "N/A" or hide uptime
