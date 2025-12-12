@@ -104,7 +104,7 @@ Click any service card to open a modal showing:
 
 ## Creating Monitors
 
-SimpleWatch offers 6 types of built-in monitors that require NO coding.
+SimpleWatch offers 9 types of built-in monitors that require NO coding.
 
 ### Quick Monitor Feature
 
@@ -378,6 +378,189 @@ The monitor will:
 - Monitor multiple certificates in one place
 - Automatic daily checks (no manual tracking)
 - See exact expiration dates at a glance
+
+### Monitor Type 7: DNS Monitor
+
+**Use Case:** Verify DNS record resolution and ensure DNS records point to the correct values
+
+**Setup Time:** 60 seconds
+
+**Steps:**
+1. Select "DNS Monitor"
+2. Enter service name (e.g., "Company DNS")
+3. Enter hostname to query (e.g., "example.com")
+4. Select record type (A, AAAA, CNAME, MX, or TXT)
+5. Enter expected value (e.g., "93.184.216.34" for A record)
+6. Optionally specify DNS server (e.g., "8.8.8.8"), leave blank for system default
+7. Set timeout (default: 5 seconds)
+8. Choose check interval
+9. Create
+
+**How It Works:**
+- Queries the specified DNS server for the hostname
+- Retrieves the DNS record of the specified type
+- Compares the result with the expected value
+- Determines status:
+  - Record matches expected value: Operational
+  - Record doesn't match: Down
+  - DNS query timeout or error: Down
+
+**Example Uses:**
+- Verify website DNS points to correct IP
+- Monitor mail server MX records
+- Check CDN CNAME records
+- Ensure TXT records for domain verification
+- Track DNS propagation after changes
+- Monitor backup DNS servers
+
+**Practical Example - Website DNS:**
+
+Create a DNS monitor with:
+- Hostname: www.example.com
+- Record type: A
+- Expected value: 93.184.216.34
+- DNS server: 8.8.8.8 (Google DNS)
+- Check interval: 15 minutes
+
+The monitor will alert if DNS resolves to a different IP, indicating potential DNS hijacking or misconfiguration.
+
+**Status Logic:**
+- ✅ **Operational:** DNS record matches expected value
+- ❌ **Down:** DNS record doesn't match, timeout, or query error
+
+### Monitor Type 8: Ping/ICMP Monitor
+
+**Use Case:** Check host reachability and network latency via ICMP ping
+
+**Setup Time:** 45 seconds
+
+**Steps:**
+1. Select "Ping Monitor"
+2. Enter service name (e.g., "Network Gateway")
+3. Enter host (IP address or hostname, e.g., "8.8.8.8")
+4. Set packet count (default: 4)
+5. Set timeout (default: 5 seconds)
+6. Set latency threshold in milliseconds (default: 200ms)
+7. Set packet loss threshold as percentage (default: 20%)
+8. Choose check interval
+9. Create
+
+**How It Works:**
+- Sends ICMP echo requests to the host
+- Measures round-trip time (RTT) for each packet
+- Calculates average, min, and max latency
+- Measures packet loss percentage
+- Determines status:
+  - All packets received, latency below threshold: Operational
+  - Packet loss or latency exceeds threshold: Degraded
+  - Host unreachable or complete packet loss: Down
+
+**Example Uses:**
+- Monitor network gateway availability
+- Check server reachability
+- Measure network latency to remote locations
+- Verify VPN connections
+- Monitor ISP uptime
+- Track quality of network links
+
+**Practical Example - Gateway Monitor:**
+
+Create a ping monitor with:
+- Host: 192.168.1.1 (your router)
+- Packet count: 4
+- Timeout: 5 seconds
+- Latency threshold: 50ms
+- Packet loss threshold: 10%
+- Check interval: 1 minute
+
+The monitor will alert if your gateway becomes unreachable or network quality degrades.
+
+**Status Logic:**
+- ✅ **Operational:** Host reachable, latency < threshold, packet loss < threshold
+- ⚠️ **Degraded:** Host reachable but latency or packet loss exceeds threshold
+- ❌ **Down:** Host unreachable or complete packet loss
+
+**Displayed Metrics:**
+- Average RTT (round-trip time)
+- Minimum RTT
+- Maximum RTT
+- Packet loss percentage
+- Packets sent/received
+
+### Monitor Type 9: SEO Monitor
+
+**Use Case:** Perform comprehensive SEO health checks on web pages
+
+**Setup Time:** 60 seconds
+
+**Steps:**
+1. Select "SEO Monitor"
+2. Enter service name (e.g., "Homepage SEO")
+3. Enter URL to check (e.g., "https://example.com")
+4. Set timeout (default: 10 seconds)
+5. Enable checks you want to perform:
+   - **Title Tag** - Verify page has a title
+   - **Meta Description** - Check for meta description
+   - **H1 Heading** - Ensure page has H1 tag
+   - **Canonical URL** - Verify canonical link tag
+   - **Robots Meta** - Check robots meta tag
+   - **Sitemap** - Verify sitemap.xml accessibility
+   - **Structured Data** - Validate JSON-LD structured data
+6. Choose check interval (default: 24 hours/daily)
+7. Create
+
+**How It Works:**
+- Fetches the specified URL
+- Parses HTML and extracts SEO elements
+- Validates each enabled check
+- Reports findings with specific issues
+- Determines status:
+  - All checks pass: Operational
+  - Some issues found: Degraded
+  - Critical SEO problems or page unreachable: Down
+
+**Example Uses:**
+- Monitor homepage SEO health
+- Track product page SEO compliance
+- Verify blog post SEO elements
+- Ensure landing pages have proper metadata
+- Monitor sitemap accessibility
+- Validate structured data implementation
+
+**Practical Example - Homepage SEO:**
+
+Create an SEO monitor with:
+- URL: https://example.com
+- All checks enabled
+- Check interval: 24 hours (daily)
+
+The monitor will alert if:
+- Title tag is missing or empty
+- Meta description is missing
+- No H1 heading found
+- Canonical URL is missing
+- Sitemap.xml is not accessible
+- Structured data is invalid
+
+**Status Logic:**
+- ✅ **Operational:** All enabled checks pass
+- ⚠️ **Degraded:** Some non-critical SEO issues detected
+- ❌ **Down:** Critical SEO problems or page unreachable
+
+**Displayed Information:**
+- SEO score breakdown
+- Missing elements
+- Issues found
+- Structured data validation results
+- Recommendations for improvement
+
+**Benefits:**
+- Automated SEO monitoring
+- Early detection of SEO regressions
+- Ensure consistent SEO across deployments
+- Track sitemap availability
+- Validate structured data markup
+- Peace of mind for marketing teams
 
 ---
 

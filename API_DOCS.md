@@ -12,9 +12,19 @@ http://localhost:5050/api/v1
 
 SimpleWatch supports two authentication methods:
 
-### 1. API Key (for automated scripts)
+### 1. JWT Token (for web UI and general API access)
 
-Include your API key in request body:
+Include Bearer token in Authorization header:
+
+```
+Authorization: Bearer your_jwt_token
+```
+
+Obtain token via `/api/v1/auth/login` endpoint.
+
+### 2. API Key (for metric and heartbeat endpoints only)
+
+Include your API key in request body for metric and heartbeat endpoints:
 
 ```json
 {
@@ -24,15 +34,7 @@ Include your API key in request body:
 
 Get your API key from Settings page in the web interface.
 
-### 2. JWT Token (for web UI)
-
-Include Bearer token in Authorization header:
-
-```
-Authorization: Bearer your_jwt_token
-```
-
-Obtain token via `/api/v1/auth/login` endpoint.
+**Note:** Dashboard status endpoints (`/status/all`, `/status/{service_name}`) require JWT authentication only.
 
 ## Status Values
 
@@ -78,8 +80,7 @@ Authenticate and receive JWT token.
 
 Get current status for a specific service.
 
-**Parameters:**
-- `api_key` (query parameter)
+**Requires:** JWT authentication
 
 **Response:**
 ```json
@@ -96,15 +97,15 @@ Get current status for a specific service.
 
 **curl Example:**
 ```bash
-curl "http://localhost:5050/api/v1/status/my_service?api_key=your_key"
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/status/my_service"
 ```
 
 #### GET /api/v1/status/all
 
 Get current status for all services with aggregated monitor status.
 
-**Parameters:**
-- `api_key` (query parameter)
+**Requires:** JWT authentication
 
 **Response:**
 ```json
@@ -507,6 +508,64 @@ Create a new monitor.
 ```
 
 **Note:** SSL Certificate monitors check the expiration date of SSL/TLS certificates. Service goes DEGRADED when certificate expires within `warning_days` and DOWN when within `critical_days` or already expired. Default check interval is 1440 minutes (24 hours/daily). The monitor displays days until expiry and the exact expiration date on the dashboard.
+
+**DNS Monitor Example:**
+```json
+{
+  "service_id": 7,
+  "monitor_type": "dns",
+  "config": {
+    "hostname": "example.com",
+    "record_type": "A",
+    "expected_value": "93.184.216.34",
+    "dns_server": "8.8.8.8",
+    "timeout_seconds": 5
+  },
+  "check_interval_minutes": 15
+}
+```
+
+**Note:** DNS monitors verify DNS record resolution. Checks if the specified hostname resolves to the expected value. Supports A, AAAA, CNAME, MX, and TXT record types. Can optionally verify against a specific DNS server.
+
+**Ping/ICMP Monitor Example:**
+```json
+{
+  "service_id": 8,
+  "monitor_type": "ping",
+  "config": {
+    "host": "8.8.8.8",
+    "count": 4,
+    "timeout_seconds": 5,
+    "latency_threshold_ms": 200,
+    "packet_loss_threshold_percent": 20
+  },
+  "check_interval_minutes": 5
+}
+```
+
+**Note:** Ping monitors check host reachability via ICMP ping. Measures average latency, min/max RTT, and packet loss. Service goes DEGRADED if latency or packet loss exceeds thresholds, DOWN if host unreachable.
+
+**SEO Monitor Example:**
+```json
+{
+  "service_id": 9,
+  "monitor_type": "seo",
+  "config": {
+    "url": "https://example.com",
+    "timeout_seconds": 10,
+    "check_title": true,
+    "check_meta_description": true,
+    "check_h1": true,
+    "check_canonical": true,
+    "check_robots": true,
+    "check_sitemap": true,
+    "check_structured_data": true
+  },
+  "check_interval_minutes": 1440
+}
+```
+
+**Note:** SEO monitors perform comprehensive SEO health checks including title tags, meta descriptions, heading structure, canonical URLs, robots meta tags, sitemap accessibility, and structured data validation. Identifies missing or problematic SEO elements. Default check interval is 1440 minutes (24 hours/daily).
 
 #### GET /api/v1/monitors/{monitor_id}
 

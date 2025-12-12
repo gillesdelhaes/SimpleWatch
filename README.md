@@ -19,6 +19,9 @@ A self-hosted monitoring dashboard designed for business users and non-technical
 - **Port Monitor** - Test if TCP ports are open (45-second setup)
 - **Deadman Monitor** - Alert if no heartbeat received within expected interval (perfect for cron jobs and scheduled tasks)
 - **SSL Certificate Monitor** - Monitor certificate expiration with configurable warning thresholds (daily checks by default)
+- **DNS Monitor** - Verify DNS record resolution and values (supports A, AAAA, CNAME, MX, TXT records)
+- **Ping/ICMP Monitor** - Check host reachability, measure latency and packet loss
+- **SEO Monitor** - Comprehensive SEO health checks (title, meta, headings, structured data, etc.)
 
 ### Key Capabilities
 - Multiple monitors per service (track services in different ways)
