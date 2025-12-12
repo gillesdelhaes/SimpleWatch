@@ -62,6 +62,9 @@ class MonitorRegistry {
             const pingMonitor = await import('./ping-monitor.js');
             this.register(pingMonitor.default);
 
+            const seoMonitor = await import('./seo-monitor.js');
+            this.register(seoMonitor.default);
+
             this.loaded = true;
         } catch (error) {
             console.error('Failed to load monitor plugins:', error);
