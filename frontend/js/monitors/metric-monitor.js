@@ -120,5 +120,53 @@ export default {
         if (!config) return '';
         const op = config.comparison === 'greater' ? '>' : '<';
         return `Warning ${op} ${config.warning_threshold}, Critical ${op} ${config.critical_threshold}`;
+    },
+
+    // Render custom metrics for dashboard modal
+    // monitor: full monitor object with metadata
+    renderDetailMetrics(monitor) {
+        if (!monitor.config) return '';
+
+        const comparison = monitor.config.comparison || 'greater';
+        const operator = comparison === 'greater' ? '>' : '<';
+
+        // Extract current value from metadata if available
+        let currentValueHtml = '';
+        if (monitor.metadata && monitor.metadata.value !== undefined) {
+            const value = monitor.metadata.value;
+            const warningThreshold = monitor.config.warning_threshold;
+            const criticalThreshold = monitor.config.critical_threshold;
+
+            // Determine color based on status
+            let valueColor = 'var(--status-operational)';
+            if (monitor.status === 'degraded') {
+                valueColor = 'var(--status-degraded)';
+            } else if (monitor.status === 'down') {
+                valueColor = 'var(--status-down)';
+            }
+
+            currentValueHtml = `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Current Value</div>
+                <div class="monitor-metric-value" style="color: ${valueColor}; font-weight: 600;">${value}</div>
+            </div>
+            `;
+        }
+
+        return `
+            ${currentValueHtml}
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Warning Threshold</div>
+                <div class="monitor-metric-value">${operator} ${monitor.config.warning_threshold}</div>
+            </div>
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Critical Threshold</div>
+                <div class="monitor-metric-value">${operator} ${monitor.config.critical_threshold}</div>
+            </div>
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Comparison Type</div>
+                <div class="monitor-metric-value">${comparison === 'greater' ? 'Greater than' : 'Less than'}</div>
+            </div>
+        `;
     }
 };

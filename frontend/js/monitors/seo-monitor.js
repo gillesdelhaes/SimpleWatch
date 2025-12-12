@@ -208,5 +208,84 @@ export default {
         const domain = url.hostname.replace('www.', '');
 
         return `${domain} (${checks.join(', ')})`;
+    },
+
+    // Render custom metrics for dashboard modal
+    // monitor: full monitor object with metadata
+    renderDetailMetrics(monitor) {
+        if (!monitor.metadata) return '';
+
+        return `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">URL</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; word-break: break-all;">
+                    ${monitor.metadata.url || monitor.config?.url || 'N/A'}
+                </div>
+            </div>
+            ${monitor.metadata.title !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Title Tag</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
+                    ${monitor.metadata.title ? `${monitor.metadata.title_length || monitor.metadata.title.length} chars: "${monitor.metadata.title}"` : '<span style="color: var(--status-down);">Missing</span>'}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.description !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Meta Description</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
+                    ${monitor.metadata.description ? `${monitor.metadata.description_length || monitor.metadata.description.length} chars: "${monitor.metadata.description.substring(0, 80)}${monitor.metadata.description.length > 80 ? '...' : ''}"` : '<span style="color: var(--status-degraded);">Missing</span>'}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.og_title !== undefined || monitor.metadata.og_description !== undefined || monitor.metadata.og_image !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Open Graph Tags</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.6;">
+                    og:title: ${monitor.metadata.og_title ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}<br>
+                    og:description: ${monitor.metadata.og_description ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}<br>
+                    og:image: ${monitor.metadata.og_image ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.canonical !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Canonical Link</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; word-break: break-all;">
+                    ${monitor.metadata.canonical || '<span style="color: var(--status-degraded);">Not set</span>'}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.robots !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Robots Meta</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
+                    ${monitor.metadata.robots || '<span style="color: var(--status-degraded);">Not set</span>'}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.issues && monitor.metadata.issues.length > 0 ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Critical Issues</div>
+                <div class="monitor-metric-value" style="color: var(--status-down); font-size: 0.8125rem; line-height: 1.6;">
+                    ${monitor.metadata.issues.map(issue => `• ${issue}`).join('<br>')}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.warnings && monitor.metadata.warnings.length > 0 ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Warnings</div>
+                <div class="monitor-metric-value" style="color: var(--status-degraded); font-size: 0.8125rem; line-height: 1.6;">
+                    ${monitor.metadata.warnings.map(warning => `• ${warning}`).join('<br>')}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.response_time_ms ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Page Load Time</div>
+                <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
+            </div>
+            ` : ''}
+        `;
     }
 };

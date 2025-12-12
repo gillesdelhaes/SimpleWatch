@@ -160,5 +160,60 @@ export default {
         }
 
         return parts.join(', ');
+    },
+
+    // Render custom metrics for dashboard modal
+    // monitor: full monitor object with metadata
+    renderDetailMetrics(monitor) {
+        if (!monitor.metadata) return '';
+
+        return `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Host</div>
+                <div class="monitor-metric-value">${monitor.metadata.host || 'N/A'}</div>
+            </div>
+            ${monitor.metadata.packets_sent !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Packets</div>
+                <div class="monitor-metric-value">${monitor.metadata.packets_received || 0} / ${monitor.metadata.packets_sent || 0} received</div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.packet_loss_percent !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Packet Loss</div>
+                <div class="monitor-metric-value">${monitor.metadata.packet_loss_percent}%</div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.avg_rtt_ms !== undefined && monitor.metadata.avg_rtt_ms !== null ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Average RTT</div>
+                <div class="monitor-metric-value">${monitor.metadata.avg_rtt_ms}ms</div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.min_rtt_ms !== undefined && monitor.metadata.min_rtt_ms !== null ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Min RTT</div>
+                <div class="monitor-metric-value">${monitor.metadata.min_rtt_ms}ms</div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.max_rtt_ms !== undefined && monitor.metadata.max_rtt_ms !== null ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Max RTT</div>
+                <div class="monitor-metric-value">${monitor.metadata.max_rtt_ms}ms</div>
+            </div>
+            ` : ''}
+            ${monitor.config?.latency_threshold_ms ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Latency Threshold</div>
+                <div class="monitor-metric-value">${monitor.config.latency_threshold_ms}ms</div>
+            </div>
+            ` : ''}
+            ${monitor.config?.packet_loss_threshold_percent !== undefined ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Packet Loss Threshold</div>
+                <div class="monitor-metric-value">${monitor.config.packet_loss_threshold_percent}%</div>
+            </div>
+            ` : ''}
+        `;
     }
 };

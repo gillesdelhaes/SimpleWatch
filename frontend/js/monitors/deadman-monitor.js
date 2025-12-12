@@ -117,5 +117,29 @@ export default {
     getDescription(config) {
         if (!config) return '';
         return `Expect every ${config.expected_interval_hours}h (grace: ${config.grace_period_hours}h)`;
+    },
+
+    // Render custom metrics for dashboard modal
+    // monitor: full monitor object with metadata
+    renderDetailMetrics(monitor) {
+        // Helper function to format timestamp like dashboard.js
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Never';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
+        }
+
+        return `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Last Heartbeat</div>
+                <div class="monitor-metric-value">${formatTimestamp(monitor.timestamp)}</div>
+            </div>
+        `;
     }
 };

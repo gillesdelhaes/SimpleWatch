@@ -106,6 +106,44 @@ function getMonitorDescription(monitor) {
     return '';
 }
 
+function getMonitorMetrics(monitor) {
+    let html = '';
+
+    // Try to get custom metrics from monitor plugin
+    const monitorPlugin = window.monitorRegistry?.get(monitor.monitor_type);
+    if (monitorPlugin && monitorPlugin.renderDetailMetrics) {
+        try {
+            const customMetrics = monitorPlugin.renderDetailMetrics(monitor);
+            if (customMetrics) {
+                html += customMetrics;
+            }
+        } catch (error) {
+            console.error(`Error rendering metrics for ${monitor.monitor_type}:`, error);
+        }
+    }
+
+    // Add common metrics that apply to all monitors
+    if (monitor.metadata && monitor.metadata.reason) {
+        html += `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Reason</div>
+                <div class="monitor-metric-value">${monitor.metadata.reason}</div>
+            </div>
+        `;
+    }
+
+    if (monitor.timestamp) {
+        html += `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Last Check</div>
+                <div class="monitor-metric-value">${formatTimestamp(monitor.timestamp)}</div>
+            </div>
+        `;
+    }
+
+    return html;
+}
+
 function openMonitorModal(serviceId) {
     const service = currentServiceData.find(s => s.service_id === serviceId);
     if (!service) return;
@@ -144,140 +182,7 @@ function openMonitorModal(serviceId) {
                     </div>
                 </div>
                 <div class="monitor-metrics">
-                    ${monitor.monitor_type === 'deadman' ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Last Heartbeat</div>
-                        <div class="monitor-metric-value">${monitor.timestamp ? formatTimestamp(monitor.timestamp) : 'Never'}</div>
-                    </div>
-                    ` : monitor.monitor_type === 'ssl_cert' && monitor.metadata && monitor.metadata.days_until_expiry !== undefined ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Days Until Expiry</div>
-                        <div class="monitor-metric-value">${monitor.metadata.days_until_expiry} days</div>
-                    </div>
-                    ${monitor.metadata.expiry_date ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Expires On</div>
-                        <div class="monitor-metric-value">${new Date(monitor.metadata.expiry_date).toLocaleDateString()}</div>
-                    </div>
-                    ` : ''}
-                    ` : monitor.monitor_type === 'dns' && monitor.metadata ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Hostname</div>
-                        <div class="monitor-metric-value">${monitor.metadata.hostname || 'N/A'}</div>
-                    </div>
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Record Type</div>
-                        <div class="monitor-metric-value">${monitor.metadata.record_type || 'N/A'}</div>
-                    </div>
-                    ${monitor.metadata.expected_value ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Expected Value</div>
-                        <div class="monitor-metric-value">${monitor.metadata.expected_value}</div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.resolved_values && monitor.metadata.resolved_values.length > 0 ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Resolved Values</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                            ${monitor.metadata.resolved_values.join('<br>')}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.response_time_ms ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Query Time</div>
-                        <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
-                    </div>
-                    ` : ''}
-                    ` : monitor.monitor_type === 'seo' && monitor.metadata ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">URL</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; word-break: break-all;">
-                            ${monitor.metadata.url || monitor.config?.url || 'N/A'}
-                        </div>
-                    </div>
-                    ${monitor.metadata.title !== undefined ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Title Tag</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                            ${monitor.metadata.title ? `${monitor.metadata.title_length || monitor.metadata.title.length} chars: "${monitor.metadata.title}"` : '<span style="color: var(--status-down);">Missing</span>'}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.description !== undefined ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Meta Description</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                            ${monitor.metadata.description ? `${monitor.metadata.description_length || monitor.metadata.description.length} chars: "${monitor.metadata.description.substring(0, 80)}${monitor.metadata.description.length > 80 ? '...' : ''}"` : '<span style="color: var(--status-degraded);">Missing</span>'}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.og_title !== undefined || monitor.metadata.og_description !== undefined || monitor.metadata.og_image !== undefined ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Open Graph Tags</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.6;">
-                            og:title: ${monitor.metadata.og_title ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}<br>
-                            og:description: ${monitor.metadata.og_description ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}<br>
-                            og:image: ${monitor.metadata.og_image ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.canonical !== undefined ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Canonical Link</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; word-break: break-all;">
-                            ${monitor.metadata.canonical || '<span style="color: var(--status-degraded);">Not set</span>'}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.robots !== undefined ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Robots Meta</div>
-                        <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                            ${monitor.metadata.robots || '<span style="color: var(--status-degraded);">Not set</span>'}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.issues && monitor.metadata.issues.length > 0 ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Critical Issues</div>
-                        <div class="monitor-metric-value" style="color: var(--status-down); font-size: 0.8125rem; line-height: 1.6;">
-                            ${monitor.metadata.issues.map(issue => `• ${issue}`).join('<br>')}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata.warnings && monitor.metadata.warnings.length > 0 ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Warnings</div>
-                        <div class="monitor-metric-value" style="color: var(--status-degraded); font-size: 0.8125rem; line-height: 1.6;">
-                            ${monitor.metadata.warnings.map(warning => `• ${warning}`).join('<br>')}
-                        </div>
-                    </div>
-                    ` : ''}
-                    ${monitor.response_time_ms ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Page Load Time</div>
-                        <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
-                    </div>
-                    ` : ''}
-                    ` : monitor.response_time_ms ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Response Time</div>
-                        <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
-                    </div>
-                    ` : ''}
-                    ${monitor.metadata && monitor.metadata.reason ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Reason</div>
-                        <div class="monitor-metric-value">${monitor.metadata.reason}</div>
-                    </div>
-                    ` : ''}
-                    ${monitor.monitor_type !== 'deadman' ? `
-                    <div class="monitor-metric">
-                        <div class="monitor-metric-label">Last Check</div>
-                        <div class="monitor-metric-value">${monitor.timestamp ? formatTimestamp(monitor.timestamp) : 'Never'}</div>
-                    </div>
-                    ` : ''}
+                    ${getMonitorMetrics(monitor)}
                 </div>
             </div>
         `}).join('');

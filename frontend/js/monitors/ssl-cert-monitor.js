@@ -110,5 +110,26 @@ export default {
     getDescription(config) {
         if (!config) return '';
         return `${config.hostname}:${config.port} (Warn: ${config.warning_days}d, Critical: ${config.critical_days}d)`;
+    },
+
+    // Render custom metrics for dashboard modal
+    // monitor: full monitor object with metadata
+    renderDetailMetrics(monitor) {
+        if (!monitor.metadata || monitor.metadata.days_until_expiry === undefined) {
+            return '';
+        }
+
+        return `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Days Until Expiry</div>
+                <div class="monitor-metric-value">${monitor.metadata.days_until_expiry} days</div>
+            </div>
+            ${monitor.metadata.expiry_date ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Expires On</div>
+                <div class="monitor-metric-value">${new Date(monitor.metadata.expiry_date).toLocaleDateString()}</div>
+            </div>
+            ` : ''}
+        `;
     }
 };

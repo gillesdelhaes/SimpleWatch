@@ -151,5 +151,42 @@ export default {
     getDescription(config) {
         if (!config) return '';
         return `${config.hostname} (${config.record_type})${config.expected_value ? ' → ' + config.expected_value : ''}`;
+    },
+
+    // Render custom metrics for dashboard modal
+    // monitor: full monitor object with metadata
+    renderDetailMetrics(monitor) {
+        if (!monitor.metadata) return '';
+
+        return `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Hostname</div>
+                <div class="monitor-metric-value">${monitor.metadata.hostname || 'N/A'}</div>
+            </div>
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Record Type</div>
+                <div class="monitor-metric-value">${monitor.metadata.record_type || 'N/A'}</div>
+            </div>
+            ${monitor.metadata.expected_value ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Expected Value</div>
+                <div class="monitor-metric-value">${monitor.metadata.expected_value}</div>
+            </div>
+            ` : ''}
+            ${monitor.metadata.resolved_values && monitor.metadata.resolved_values.length > 0 ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Resolved Values</div>
+                <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
+                    ${monitor.metadata.resolved_values.join('<br>')}
+                </div>
+            </div>
+            ` : ''}
+            ${monitor.response_time_ms ? `
+            <div class="monitor-metric">
+                <div class="monitor-metric-label">Query Time</div>
+                <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
+            </div>
+            ` : ''}
+        `;
     }
 };
