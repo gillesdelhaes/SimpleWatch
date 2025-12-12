@@ -51,7 +51,9 @@ class SEOMonitor(BaseMonitor):
             # Track findings
             issues = []
             warnings = []
-            metadata = {}
+            metadata = {
+                'url': url
+            }
 
             # Check title tag
             if check_title:
@@ -84,7 +86,7 @@ class SEOMonitor(BaseMonitor):
                     elif desc_length > description_max_length:
                         warnings.append(f"Description too long ({desc_length} chars, recommended: {description_min_length}-{description_max_length})")
                 else:
-                    issues.append("Missing meta description")
+                    warnings.append("Missing meta description")
                     metadata['description'] = None
 
             # Check Open Graph tags
