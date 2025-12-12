@@ -96,11 +96,11 @@ class APIClient {
     }
 
     async getAllStatus() {
-        return this.request(`${API_BASE}/status/all?api_key=${this.apiKey}`);
+        return this.request(`${API_BASE}/status/all`);
     }
 
     async getStatus(serviceName) {
-        return this.request(`${API_BASE}/status/${serviceName}?api_key=${this.apiKey}`);
+        return this.request(`${API_BASE}/status/${serviceName}`);
     }
 
     async listMonitors() {

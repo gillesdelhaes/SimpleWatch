@@ -5,9 +5,9 @@ All status is derived from monitors - no arbitrary status updates allowed.
 """
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from database import get_db, StatusUpdate, Service
+from database import get_db, StatusUpdate, Service, User
 from models import StatusResponse
-from api.auth import get_user_from_api_key
+from api.auth import get_current_user
 from utils.uptime import calculate_service_uptime
 from datetime import datetime
 import json
@@ -52,10 +52,12 @@ def calculate_service_status_from_counts(operational: int, degraded: int, down: 
 # ============================================
 
 @router.get("/status/all")
-def get_all_status(api_key: str, db: Session = Depends(get_db)):
+def get_all_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """Get current status for all services with aggregated monitor status."""
     from database import Monitor
-    get_user_from_api_key(api_key, db)
 
     services = db.query(Service).filter(Service.is_active == True).all()
 
@@ -178,11 +180,10 @@ def get_all_status(api_key: str, db: Session = Depends(get_db)):
 @router.get("/status/{service_name}", response_model=StatusResponse)
 def get_status(
     service_name: str,
-    api_key: str,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get current status for a service."""
-    get_user_from_api_key(api_key, db)
 
     service = get_service_by_name(db, service_name)
     if not service:
