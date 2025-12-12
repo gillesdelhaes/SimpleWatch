@@ -13,6 +13,7 @@ from monitors.port import PortMonitor
 from monitors.deadman import DeadmanMonitor
 from monitors.ssl_cert import SSLCertMonitor
 from monitors.dns import DNSMonitor
+from monitors.ping import PingMonitor
 from utils.service_helpers import (
     calculate_service_status, send_service_notification, update_service_incidents
 )
@@ -31,6 +32,7 @@ MONITOR_CLASSES = {
     'deadman': DeadmanMonitor,
     'ssl_cert': SSLCertMonitor,
     'dns': DNSMonitor,
+    'ping': PingMonitor,
 }
 
 # Passive monitors that don't actively check (only receive data via API)

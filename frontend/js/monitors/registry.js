@@ -59,6 +59,9 @@ class MonitorRegistry {
             const dnsMonitor = await import('./dns-monitor.js');
             this.register(dnsMonitor.default);
 
+            const pingMonitor = await import('./ping-monitor.js');
+            this.register(pingMonitor.default);
+
             this.loaded = true;
         } catch (error) {
             console.error('Failed to load monitor plugins:', error);
