@@ -1,271 +1,155 @@
 # SimpleWatch
 
-![Python](https://img.shields.io/badge/python-3.11-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg)
-![SQLite](https://img.shields.io/badge/sqlite-3-003B57.svg)
-![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg)
-![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
+Monitoring for teams who just want to know when something breaks.
 
-**Monitor your services in under 60 seconds. No coding required.**
+Most monitoring tools are designed for large infrastructures and dedicated ops teams.
+They are powerful, flexible, and far more complex than what many small teams actually need.
 
-A self-hosted monitoring dashboard designed for business users and non-technical teams. Track websites, APIs, servers, and scheduled tasks with simple point-and-click setup. If you can fill out a form, you can monitor your infrastructure.
+SimpleWatch takes a different approach.
 
-## Features
+It is a self-hosted monitoring dashboard built for small businesses and small teams who want to:
 
-### Built-in Monitors (Zero Code Required!)
-- **Website Monitor** - Check if URLs respond (60-second setup)
-- **API Monitor** - Call API endpoints with validation (2-minute setup)
-- **Metric Threshold Monitor** - Receive numbers, alert on thresholds (90-second setup)
-- **Port Monitor** - Test if TCP ports are open (45-second setup)
-- **Deadman Monitor** - Alert if no heartbeat received within expected interval (perfect for cron jobs and scheduled tasks)
-- **SSL Certificate Monitor** - Monitor certificate expiration with configurable warning thresholds (daily checks by default)
-- **DNS Monitor** - Verify DNS record resolution and values (supports A, AAAA, CNAME, MX, TXT records)
-- **Ping/ICMP Monitor** - Check host reachability, measure latency and packet loss
-- **SEO Monitor** - Comprehensive SEO health checks (title, meta, headings, structured data, etc.)
+- Know when a service goes down
+- Get notified without noise
+- Understand uptime and incidents over time
+- Move on with their day
 
-### Key Capabilities
-- Multiple monitors per service (track services in different ways)
-- Named monitors for metric and deadman types (multiple metrics/heartbeats per service)
-- Aggregated status display (see which monitors are operational/degraded/down)
-- Clickable dashboard cards with detailed monitor modals
-- Full CRUD operations (create, read, update, delete) for services and monitors
-- Real-time status updates (10-second polling)
-- Last heartbeat timestamp display for deadman monitors
-- Incident Command Center - Track outages, analyze trends, calculate MTTR and uptime
-- Notification system - Email (SMTP), Slack, Discord, and custom webhooks
-- Service-level notification settings with cooldown and recovery alerts
-- Simple REST API for automation
-- Built-in background scheduler (no Redis/Celery needed)
-- 4 working example monitors included
-- Docker-based deployment
+---
 
-## Quick Start
+## Who SimpleWatch is for
 
-### Option 1: Deploy from Docker Hub (Fastest)
+SimpleWatch is a good fit if you:
 
-```bash
-# Pull and run SimpleWatch in one command
-docker run -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
-```
+- Run a small business, internal tools, or side projects
+- Monitor a few websites, APIs, servers, or background jobs
+- Do not want to maintain a monitoring stack
+- Want alerts that are clear and calm
 
-This creates a volume named `simplewatch-data` to persist your database.
+SimpleWatch is not a metrics platform, a query engine, or a full observability solution.
+Those tools exist and work very well for large and complex environments.
 
-### Option 2: Deploy with docker-compose
+---
 
-```bash
-# Clone or download SimpleWatch
-cd simplewatch
+## What SimpleWatch does
 
-# Start SimpleWatch (no .env file needed!)
-docker-compose up -d
-```
+- Monitor services with a few clicks
+- Send alerts only on meaningful status changes
+- Track incidents automatically
+- Show uptime and recovery metrics
+- Stay quiet when everything is fine
 
-### First-Time Setup
+Everything is configured through the web interface.
+No configuration files. No scripting.
 
-Open http://localhost:5050
+---
 
-You'll see the **Setup Page** on first launch:
+## Monitors
 
-1. Choose your admin username
-2. Create a secure password (minimum 8 characters)
-3. Confirm your password
-4. Optionally create example monitors (recommended for first-time users)
-5. Click "Initialize System"
+SimpleWatch includes 9 ready-to-use monitor types:
 
-That's it! You'll be redirected to the login page.
+- **Website** - HTTP/HTTPS endpoint checks
+- **API** - JSON API validation with custom headers
+- **Metric Threshold** - Push metrics from scripts, alert on thresholds
+- **Port** - TCP port availability checks
+- **Deadman/Heartbeat** - Alert if no ping received (perfect for cron jobs)
+- **SSL Certificate** - Expiration tracking with configurable warnings
+- **DNS** - Verify DNS records resolve to expected values (A, AAAA, CNAME, MX, TXT)
+- **Ping/ICMP** - Host reachability, latency, and packet loss measurement
+- **SEO** - Comprehensive SEO health checks (title, meta, headings, structured data)
 
-### Create Your First Monitor
+Monitors are designed to be practical, not endlessly configurable.
 
-1. Click "Services" in the navigation
-2. Click "Quick Monitor" button
-3. Select "Website Monitor"
-4. Enter your website URL
-5. Click "Create Monitor"
-6. Done! Check your dashboard
+---
 
-## Tech Stack
+## Alerts and notifications
 
-- **Backend:** FastAPI + Python 3.11
-- **Frontend:** HTML + Tailwind CSS + Vanilla JavaScript
-- **Database:** SQLite (no external DB needed)
-- **Scheduler:** APScheduler (no Redis/Celery complexity)
-- **Charts:** Chart.js 4.x
-- **Deployment:** Docker + docker-compose
+- Alerts trigger only on status changes
+- Built-in cooldown to avoid notification spam
+- Pause/resume at service or monitor level
+- Notification history is kept for traceability
 
-## Configuration
+**Supported channels:**
 
-**SimpleWatch requires NO environment variables or .env file!**
+- Email (SMTP)
+- Slack
+- Discord
+- Custom webhooks
 
-All configuration is handled through the web interface.
+The notification system is extensible.
 
-## Built-in Examples
+---
 
-If you enable "Create Example Monitors" during setup (recommended), SimpleWatch creates 4 example monitors:
+## Incidents and reliability
 
-1. **Google Search** - Website monitor (always operational)
-2. **Slow Response API** - API monitor (intentionally times out)
-3. **Server Disk Usage** - Metric threshold monitor
-4. **Cloudflare DNS** - Port monitor (checks port 53)
+When something goes down, SimpleWatch creates an incident automatically.
 
-These examples demonstrate all monitor types and can be deleted after testing.
+You can:
 
-## Notifications
+- View incident timelines
+- See uptime percentages
+- Review mean time to recovery (MTTR)
+- Filter by service or time range
+- Export incident logs
 
-SimpleWatch includes a built-in notification system to alert you when service status changes.
+This provides reliability insight without becoming an incident management platform.
 
-### Supported Channels
-- **Email (SMTP)** - Configure in Settings → Email Notifications
-- **Slack** - Add webhook URL in Settings → Notification Channels
-- **Discord** - Add webhook URL in Settings → Notification Channels
-- **Custom Webhooks** - Generic JSON webhooks for any system
+---
 
-### Per-Service Configuration
-For each service, you can configure:
-- Enable/disable notifications
-- Email recipients (comma-separated)
-- Webhook channels to notify
-- Cooldown period (prevent alert spam)
-- Recovery notifications (alert when service comes back up)
+## Quick start
 
-**Setup:**
-1. Go to Settings → Configure SMTP or add webhook channels
-2. Test your configuration
-3. Go to Services → Click notification icon for a service
-4. Enable notifications and select channels
-5. Save
-
-Notifications are sent automatically when:
-- Service status changes (operational ↔ degraded ↔ down)
-- Respects cooldown period (default: 5 minutes)
-- Always sends recovery notifications (when service comes back up)
-
-**Notification Log:**
-- View sent notification history on Notifications page
-- Download full audit log as CSV
-- Track delivery status and troubleshoot failed notifications
-
-## Incident Command Center
-
-Track service reliability and outage history with the built-in Incident Command Center.
-
-### What You Get
-- **Automatic Incident Tracking** - Incidents are automatically created and resolved as service status changes
-- **Real-time Statistics** - Total incidents, ongoing vs resolved, MTTR (Mean Time To Recovery), uptime percentage
-- **Visual Analytics** - Timeline charts showing incident frequency over time, breakdown by service
-- **Incident Log** - Detailed history of all outages with start time, duration, severity, affected monitors
-- **Flexible Filtering** - Filter by time window (24h, 7d, 30d, 90d, all time), service, or status
-- **CSV Export** - Download incident data for reporting and analysis
-
-### How It Works
-1. **Automatic Creation** - When a service transitions to degraded or down status, an incident is automatically created
-2. **Severity Tracking** - Incidents are marked as "degraded" or "down" based on service status
-3. **Monitor Attribution** - Each incident tracks which specific monitors were affected
-4. **Auto-Resolution** - When a service returns to operational, the incident is automatically resolved and duration is calculated
-5. **Uptime Calculation** - Uptime percentages are calculated using the same accurate method as the dashboard
-
-### Accessing the Incident Center
-Click "Incidents" in the navigation bar to view:
-- Summary statistics (total incidents, MTTR, uptime, critical incidents)
-- Incident timeline chart
-- Incidents by service breakdown
-- Complete incident log with filtering
-
-**Perfect for:**
-- Post-incident reviews and RCA (Root Cause Analysis)
-- SLA compliance reporting
-- Identifying reliability trends
-- Measuring infrastructure stability
-
-## Ultra-Simple API
-
-### Send Metric Value
+### Pull the image
 
 ```bash
-# Update specific named monitor (required)
-curl -X POST http://localhost:5050/api/v1/metric/SERVICE_NAME/MONITOR_NAME \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY",
-    "value": 87.5
-  }'
+docker pull gdelhaes/simplewatch
 ```
 
-### Send Heartbeat (Deadman Monitor)
+### Run SimpleWatch
 
 ```bash
-# Ping specific named monitor (required)
-curl -X POST http://localhost:5050/api/v1/heartbeat/SERVICE_NAME/MONITOR_NAME \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "YOUR_API_KEY"
-  }'
+docker run -d \
+  --name simplewatch \
+  -p 5050:5050 \
+  -v simplewatch-data:/data \
+  gdelhaes/simplewatch
 ```
 
-Get your API key from Settings page after logging in.
+### Open the interface
 
-**Note:** Service name and monitor name are both required. Monitor names are specified when creating the monitor.
+Open your browser at:
 
-## Security Considerations
+```
+http://localhost:5050
+```
 
-- Choose a strong admin password during first-run setup (minimum 8 characters)
-- Use HTTPS in production (configure reverse proxy)
-- Keep API keys secure (regenerate in Settings if exposed)
-- Enable firewall rules to restrict access
-- Regular backups of `./data` directory
-- SECRET_KEY is auto-generated securely on first startup
+On first launch you will:
+
+1. Create an admin account
+2. Optionally enable demo monitors
+3. Start adding your own services
+
+**Important:** Mounting `/data` is required to persist the database across restarts.
+
+---
 
 ## Documentation
 
-- [API Documentation](API_DOCS.md) - Complete API reference
-- [User Guide](USER_GUIDE.md) - Detailed usage instructions
+SimpleWatch includes a complete user manual that covers all features, configuration options, and advanced usage.
+
+If you need more details, see:
+
+- **User Guide:** [USER_GUIDE.md](USER_GUIDE.md)
+- **API Documentation:** [API_DOCS.md](API_DOCS.md)
+
+---
 
 ## License
 
-SimpleWatch is **dual-licensed**.
+SimpleWatch is open source under the **AGPL-3.0** license.
+See the [LICENSE](LICENSE) file for details.
 
-### Open Source License (AGPL-3.0)
-
-SimpleWatch is available under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
-
-You are free to:
-- ✅ Use SimpleWatch free of charge
-- ✅ Self-host it for personal or internal organizational use
-- ✅ Modify the source code
-- ✅ Use it in commercial environments
-
-**Condition:**
-If you modify SimpleWatch and make it available to users over a network
-(for example, as a hosted web service), you must make the complete
-corresponding source code available under the same AGPL-3.0 license.
-
-See the [LICENSE](LICENSE) file for full AGPL-3.0 terms.
+For commercial or proprietary use cases, a commercial license is available.
+See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for more information.
 
 ---
 
-### Commercial License
-
-If you want to:
-- Offer SimpleWatch as a **hosted SaaS** to external customers **without**
-  open-sourcing your modifications
-- Embed SimpleWatch in a proprietary or closed-source product
-- Create closed-source extensions
-
-you must obtain a **commercial license**, which replaces the AGPL-3.0
-requirements for your deployment.
-
-See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for details, or contact the
-author for licensing inquiries.
-
----
-
-**Why dual licensing?**  
-This approach keeps SimpleWatch open for the community while allowing the
-author to sustainably maintain and commercially support the project.
-
-## Support
-
-For issues and questions:
-- Check documentation
-- Check GitHub issues
-
-**SimpleWatch** - Making monitoring simple for everyone.
+**SimpleWatch** - Monitor what matters. Ignore the rest.
