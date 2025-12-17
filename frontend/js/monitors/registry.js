@@ -65,6 +65,9 @@ class MonitorRegistry {
             const seoMonitor = await import('./seo-monitor.js');
             this.register(seoMonitor.default);
 
+            const ollamaMonitor = await import('./ollama-monitor.js');
+            this.register(ollamaMonitor.default);
+
             this.loaded = true;
         } catch (error) {
             console.error('Failed to load monitor plugins:', error);

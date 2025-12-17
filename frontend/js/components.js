@@ -169,6 +169,12 @@ const icons = {
     alertCircle: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="10" cy="10" r="8"/>
         <path d="M10 7v4m0 4h.01"/>
+    </svg>`,
+
+    brain: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 10a2 2 0 012-2h0a2 2 0 012-2h0a2 2 0 012 2h0a2 2 0 012 2h0a2 2 0 01-2 2h0a2 2 0 01-2 2h0a2 2 0 01-2-2h0a2 2 0 01-2-2z"/>
+        <path d="M7 6V5a2 2 0 012-2h2a2 2 0 012 2v1"/>
+        <path d="M7 14v1a2 2 0 002 2h2a2 2 0 002-2v-1"/>
     </svg>`
 };
 
