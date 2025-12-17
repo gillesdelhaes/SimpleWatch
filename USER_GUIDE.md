@@ -562,6 +562,106 @@ The monitor will alert if:
 - Validate structured data markup
 - Peace of mind for marketing teams
 
+### Monitor Type 10: Ollama/Local LLM Monitor
+
+**Use Case:** Monitor local LLM API availability and model loading status
+
+**Setup Time:** 60 seconds
+
+**Steps:**
+1. Select "Ollama/LLM Monitor"
+2. Enter service name (e.g., "Local AI Server")
+3. Enter host (e.g., "localhost" or "host.docker.internal" when running in Docker)
+4. Enter port:
+   - Ollama: 11434 (default)
+   - LM Studio: 1234 (default)
+   - LocalAI: 8080 (default)
+5. Choose protocol (HTTP or HTTPS)
+6. Select API type (Ollama, LM Studio, or OpenAI Compatible)
+7. Optionally specify expected model name (e.g., "llama3.2:latest")
+8. Set timeout (default: 10 seconds)
+9. Set slow response threshold (default: 5000ms)
+10. Choose check interval (default: 5 minutes)
+11. Create
+
+**How It Works:**
+- Checks if LLM API is responding
+- Verifies models are loaded and accessible
+- Tests completion endpoint for APIs that show all available models
+- Validates expected model is actually loaded (if specified)
+- Measures response time
+- Determines status:
+  - API responding, models loaded: Operational
+  - Slow responses or wrong model loaded: Degraded
+  - API down or no models loaded: Down
+
+**Example Uses:**
+- Monitor Ollama server availability
+- Ensure LM Studio has models loaded
+- Track LocalAI API health
+- Verify specific AI models are running
+- Monitor self-hosted AI infrastructure
+- Alert if local LLM services go offline
+
+**Practical Example - Ollama Server:**
+
+Create an Ollama monitor with:
+- Host: localhost (or host.docker.internal if SimpleWatch runs in Docker)
+- Port: 11434
+- Protocol: HTTP
+- API Type: Ollama
+- Expected Model: llama3.2:latest
+- Check interval: 5 minutes
+
+The monitor will:
+- Check API availability every 5 minutes
+- Verify llama3.2:latest is loaded
+- Alert if model is unloaded or different model is running
+- Show loaded model name in dashboard modal
+- Track response time
+
+**API-Specific Behaviors:**
+
+**Ollama:**
+- Uses `/api/tags` endpoint (shows only loaded models)
+- If expected model specified, checks if it's in the loaded models list
+- If no models loaded, status becomes degraded
+
+**LM Studio:**
+- Uses `/v1/models` endpoint (shows all available models)
+- Tests `/v1/chat/completions` to verify a model is actually loaded in memory
+- If expected model specified, verifies the loaded model matches
+- Detects "no models loaded" error and sets status to degraded
+
+**OpenAI Compatible (LocalAI, etc.):**
+- Uses standard OpenAI-compatible endpoints
+- Tests completion request to verify model availability
+- Validates expected model if specified
+
+**Status Logic:**
+- ✅ **Operational:** API responds, models loaded, response time normal
+- ⚠️ **Degraded:** Slow responses, wrong model loaded, or no models loaded
+- ❌ **Down:** API unreachable, connection refused, or timeout
+
+**Displayed Metrics (in modal):**
+- Response Time (milliseconds)
+- Loaded Model (which model is currently active)
+- Available Models (count of models)
+- Model status (expected vs actual)
+
+**Docker Networking Note:**
+When SimpleWatch runs in Docker and you want to monitor LLM services on your host machine:
+- Use `host.docker.internal` instead of `localhost`
+- Example: `host.docker.internal:11434` for Ollama on Mac/Windows Docker Desktop
+
+**Benefits:**
+- Monitor self-hosted AI infrastructure
+- Ensure LLM services stay online
+- Verify correct models are loaded
+- Track AI API response times
+- First monitoring tool specifically for local LLMs
+- Perfect for privacy-focused AI deployments
+
 ---
 
 ## Managing Services

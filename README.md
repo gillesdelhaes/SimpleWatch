@@ -45,7 +45,7 @@ No configuration files. No scripting.
 
 ## Monitors
 
-SimpleWatch includes 9 ready-to-use monitor types:
+SimpleWatch includes 10 ready-to-use monitor types:
 
 - **Website** - HTTP/HTTPS endpoint checks
 - **API** - JSON API validation with custom headers
@@ -56,6 +56,7 @@ SimpleWatch includes 9 ready-to-use monitor types:
 - **DNS** - Verify DNS records resolve to expected values (A, AAAA, CNAME, MX, TXT)
 - **Ping/ICMP** - Host reachability, latency, and packet loss measurement
 - **SEO** - Comprehensive SEO health checks (title, meta, headings, structured data)
+- **Ollama/Local LLM** - Monitor local LLM APIs (Ollama, LM Studio, LocalAI)
 
 Monitors are designed to be practical, not endlessly configurable.
 
