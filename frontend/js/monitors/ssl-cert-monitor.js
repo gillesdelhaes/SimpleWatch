@@ -9,6 +9,7 @@ export default {
     name: 'SSL Certificate',
     description: 'Monitor certificate expiration',
     icon: 'shield',
+    category: 'Infrastructure',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

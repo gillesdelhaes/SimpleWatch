@@ -9,6 +9,7 @@ export default {
     name: 'Ping Monitor',
     description: 'Check host reachability and latency via ICMP ping',
     icon: 'zap', // Lightning bolt for quick network check
+    category: 'Infrastructure',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

@@ -9,6 +9,7 @@ export default {
     name: 'SEO Monitor',
     description: 'Check SEO meta tags (title, description, Open Graph)',
     icon: 'search', // Magnifying glass for SEO
+    category: 'Web & API',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

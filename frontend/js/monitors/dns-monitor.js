@@ -9,6 +9,7 @@ export default {
     name: 'DNS Monitor',
     description: 'Check DNS record resolution',
     icon: 'database',
+    category: 'Infrastructure',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

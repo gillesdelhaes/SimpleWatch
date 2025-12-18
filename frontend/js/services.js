@@ -3,10 +3,6 @@
  * Handles service and monitor management using the plugin system
  */
 
-// State
-let currentQuickMonitorType = null;
-let currentAddMonitorType = null;
-
 // ============================================
 // Service Management
 // ============================================
@@ -215,40 +211,12 @@ async function resumeMonitor(id) {
 // Modal Functions
 // ============================================
 
-// Initialize collapsible triggers (for dynamically generated content)
-function initializeCollapsibles() {
-    document.querySelectorAll('.collapsible-trigger').forEach(trigger => {
-        // Remove any existing listeners
-        const newTrigger = trigger.cloneNode(true);
-        trigger.parentNode.replaceChild(newTrigger, trigger);
-
-        newTrigger.addEventListener('click', function() {
-            const isExpanded = this.getAttribute('aria-expanded') === 'true';
-            this.setAttribute('aria-expanded', !isExpanded);
-
-            const content = this.parentElement.querySelector('.collapsible-content');
-            if (content) {
-                content.classList.toggle('expanded');
-            }
-        });
-    });
-}
-
 function showAddServiceModal() {
     document.getElementById('addServiceModal').classList.remove('hidden');
 }
 
 function hideAddServiceModal() {
     document.getElementById('addServiceModal').classList.add('hidden');
-}
-
-function showQuickMonitorModal() {
-    document.getElementById('quickMonitorModal').classList.remove('hidden');
-}
-
-function hideQuickMonitorModal() {
-    document.getElementById('quickMonitorModal').classList.add('hidden');
-    backToMonitorSelection();
 }
 
 async function showEditServiceModal(id, name, desc, cat) {
@@ -268,293 +236,32 @@ function hideEditServiceModal() {
 }
 
 // ============================================
-// Quick Monitor Functions
+// Unified Monitor Modal Wrappers
 // ============================================
 
-function selectMonitorType(type) {
-    currentQuickMonitorType = type;
-    const monitor = monitorRegistry.get(type);
-    if (!monitor) {
-        showError('Monitor type not found: ' + type);
-        return;
-    }
-
-    // Hide type selection, show form
-    document.getElementById('monitorTypeSelection').classList.add('hidden');
-    document.getElementById('monitorConfigForm').classList.remove('hidden');
-
-    // Update form title
-    document.getElementById('monitorFormTitle').textContent = monitor.name + ' Configuration';
-
-    // Generate form fields using registry
-    const serviceName = ''; // Will be extracted from form on submit
-    const formHTML = monitorRegistry.renderForm(monitor, type, true) +
-                    monitorRegistry.renderIntervalDropdown(monitor, type) +
-                    monitorRegistry.renderCollapsible(monitor, type, serviceName || 'SERVICE_NAME');
-
-    document.getElementById('quickMonitorFormFields').innerHTML = formHTML;
-
-    // Initialize collapsible triggers
-    initializeCollapsibles();
-}
-
-function backToMonitorSelection() {
-    document.getElementById('monitorConfigForm').classList.add('hidden');
-    document.getElementById('monitorTypeSelection').classList.remove('hidden');
-    currentQuickMonitorType = null;
-}
-
-async function handleQuickMonitorSubmit(event) {
-    event.preventDefault();
-
-    if (!currentQuickMonitorType) {
-        showError('No monitor type selected');
-        return;
-    }
-
-    const monitor = monitorRegistry.get(currentQuickMonitorType);
-    if (!monitor) {
-        showError('Monitor not found: ' + currentQuickMonitorType);
-        return;
-    }
-
-    try {
-        // Extract configuration using plugin's extractConfig method
-        const config = monitor.extractConfig(currentQuickMonitorType);
-
-        // Validate using plugin's validate method
-        const validationError = monitor.validate(config);
-        if (validationError) {
-            showError('Validation error: ' + validationError);
-            return;
-        }
-
-        // Get service name and interval
-        const serviceName = document.getElementById(`${currentQuickMonitorType}ServiceName`).value;
-        const intervalField = document.getElementById(`${currentQuickMonitorType}Interval`);
-        const interval = intervalField ? parseInt(intervalField.value) : monitor.defaultInterval;
-
-        // Create service
-        const service = await api.createService({
-            name: serviceName,
-            description: monitor.name,
-            category: 'Monitor'
-        });
-
-        // Create monitor
-        await api.createMonitor({
-            service_id: service.id,
-            monitor_type: currentQuickMonitorType,
-            config: config,
-            check_interval_minutes: interval
-        });
-
-        hideQuickMonitorModal();
-        loadServices();
-        showSuccess('Monitor created successfully');
-    } catch (error) {
-        showError('Failed to create monitor: ' + error.message);
-    }
-}
-
-// ============================================
-// Add Monitor to Service Functions
-// ============================================
-
+// Wrapper for Add Monitor to Service button (called from HTML)
 function showAddMonitorToServiceModal(serviceId, serviceName) {
-    document.getElementById('targetServiceId').value = serviceId;
-    document.getElementById('targetServiceName').textContent = serviceName;
-
-    // Generate type selection cards using registry
-    document.getElementById('addMonitorTypeGrid').innerHTML = monitorRegistry.renderTypeCards('selectAddMonitorType');
-
-    document.getElementById('addMonitorToServiceModal').classList.remove('hidden');
-}
-
-function hideAddMonitorToServiceModal() {
-    document.getElementById('addMonitorToServiceModal').classList.add('hidden');
-    backToAddMonitorSelection();
-}
-
-function selectAddMonitorType(type) {
-    currentAddMonitorType = type;
-    const monitor = monitorRegistry.get(type);
-    if (!monitor) {
-        showError('Monitor type not found: ' + type);
-        return;
-    }
-
-    // Hide type selection, show form
-    document.getElementById('addMonitorTypeSelection').classList.add('hidden');
-    document.getElementById('addMonitorConfigForm').classList.remove('hidden');
-
-    // Update form title
-    document.getElementById('addMonitorFormTitle').textContent = monitor.name + ' Configuration';
-
-    // Generate form fields using registry
-    const serviceName = document.getElementById('targetServiceName').textContent;
-    const formPrefix = 'addMonitor';
-    const formHTML = monitorRegistry.renderForm(monitor, formPrefix, false) +
-                    monitorRegistry.renderIntervalDropdown(monitor, formPrefix) +
-                    monitorRegistry.renderCollapsible(monitor, formPrefix, serviceName);
-
-    document.getElementById('addMonitorFormFields').innerHTML = formHTML;
-
-    // Initialize collapsible triggers
-    initializeCollapsibles();
-}
-
-function backToAddMonitorSelection() {
-    document.getElementById('addMonitorConfigForm').classList.add('hidden');
-    document.getElementById('addMonitorTypeSelection').classList.remove('hidden');
-    currentAddMonitorType = null;
-}
-
-async function handleAddMonitorSubmit(event) {
-    event.preventDefault();
-
-    if (!currentAddMonitorType) {
-        showError('No monitor type selected');
-        return;
-    }
-
-    const monitor = monitorRegistry.get(currentAddMonitorType);
-    if (!monitor) {
-        showError('Monitor not found: ' + currentAddMonitorType);
-        return;
-    }
-
-    try {
-        // Extract configuration using plugin's extractConfig method
-        const config = monitor.extractConfig('addMonitor');
-
-        // Validate using plugin's validate method
-        const validationError = monitor.validate(config);
-        if (validationError) {
-            showError('Validation error: ' + validationError);
-            return;
-        }
-
-        // Get service ID and interval
-        const serviceId = parseInt(document.getElementById('targetServiceId').value);
-        const serviceName = document.getElementById('targetServiceName').textContent;
-        const intervalField = document.getElementById('addMonitorInterval');
-        const interval = intervalField ? parseInt(intervalField.value) : monitor.defaultInterval;
-
-        // Create monitor
-        await api.createMonitor({
-            service_id: serviceId,
-            monitor_type: currentAddMonitorType,
-            config: config,
-            check_interval_minutes: interval
-        });
-
-        hideAddMonitorToServiceModal();
-        loadServices();
-        showSuccess('Monitor added successfully');
-    } catch (error) {
-        showError('Failed to add monitor: ' + error.message);
-    }
+    openMonitorModal(MonitorModalMode.ADD_TO_SERVICE, { serviceId, serviceName });
 }
 
 // ============================================
 // Edit Monitor Functions
 // ============================================
 
+// Wrapper for Edit Monitor button (called from HTML)
 async function editMonitor(monitorId) {
     try {
         const monitor = await api.getMonitor(monitorId);
-        const monitorPlugin = monitorRegistry.get(monitor.monitor_type);
-
-        if (!monitorPlugin) {
-            showError('Monitor type not found: ' + monitor.monitor_type);
-            return;
-        }
-
-        // Fetch service (needed for collapsible API endpoint previews)
         const service = await api.getService(monitor.service_id);
-        const serviceName = service.name;
 
-        // Store monitor info in hidden fields
-        document.getElementById('editMonitorId').value = monitor.id;
-        document.getElementById('editMonitorType').value = monitor.monitor_type;
-        document.getElementById('editMonitorServiceId').value = monitor.service_id;
-        document.getElementById('editMonitorServiceName').value = serviceName;
-
-        // Update modal title
-        document.getElementById('editMonitorTitle').textContent = `Edit ${monitorPlugin.name}`;
-
-        // Generate form fields using registry and populate with existing values
-        const formPrefix = 'editMonitor';
-
-        // Pass monitor name if it exists in config
-        const monitorName = monitor.config?.name || null;
-
-        const formHTML = monitorRegistry.renderForm(monitorPlugin, formPrefix, false) +
-                        monitorRegistry.renderIntervalDropdown(monitorPlugin, formPrefix) +
-                        monitorRegistry.renderCollapsible(monitorPlugin, formPrefix, serviceName, monitorName);
-
-        document.getElementById('editMonitorFormFields').innerHTML = formHTML;
-
-        // Populate form with existing monitor values
-        monitorPlugin.populateForm(formPrefix, monitor.config);
-        const intervalField = document.getElementById('editMonitorInterval');
-        if (intervalField) {
-            intervalField.value = monitor.check_interval_minutes;
-        }
-
-        // Initialize collapsible triggers
-        initializeCollapsibles();
-
-        // Show modal
-        document.getElementById('editMonitorModal').classList.remove('hidden');
+        openMonitorModal(MonitorModalMode.EDIT, {
+            serviceId: monitor.service_id,
+            serviceName: service.name,
+            monitorId: monitor.id,
+            monitor: monitor
+        });
     } catch (error) {
         showError('Failed to load monitor: ' + error.message);
-    }
-}
-
-function hideEditMonitorModal() {
-    document.getElementById('editMonitorModal').classList.add('hidden');
-}
-
-async function handleEditMonitorSubmit(event) {
-    event.preventDefault();
-
-    const monitorId = document.getElementById('editMonitorId').value;
-    const monitorType = document.getElementById('editMonitorType').value;
-
-    const monitorPlugin = monitorRegistry.get(monitorType);
-    if (!monitorPlugin) {
-        showError('Monitor type not found: ' + monitorType);
-        return;
-    }
-
-    try {
-        // Extract configuration using plugin's extractConfig method
-        const config = monitorPlugin.extractConfig('editMonitor');
-
-        // Validate using plugin's validate method
-        const validationError = monitorPlugin.validate(config);
-        if (validationError) {
-            showError('Validation error: ' + validationError);
-            return;
-        }
-
-        // Get interval
-        const intervalField = document.getElementById('editMonitorInterval');
-        const interval = intervalField ? parseInt(intervalField.value) : monitorPlugin.defaultInterval;
-
-        // Update monitor
-        await api.updateMonitor(monitorId, {
-            config: config,
-            check_interval_minutes: interval
-        });
-
-        hideEditMonitorModal();
-        loadServices();
-        showSuccess('Monitor updated successfully');
-    } catch (error) {
-        showError('Failed to update monitor: ' + error.message);
     }
 }
 
@@ -738,3 +445,286 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('monitorPluginsLoaded', () => {
     loadServices();
 });
+/**
+ * Unified Monitor Modal System
+ * Handles Quick Monitor, Add to Service, and Edit Monitor flows
+ * Single source of truth for all monitor creation/editing
+ */
+
+// Modal modes
+const MonitorModalMode = {
+    CREATE_WITH_SERVICE: 'create_with_service',  // Quick Monitor
+    ADD_TO_SERVICE: 'add_to_service',            // Add to existing service
+    EDIT: 'edit'                                  // Edit existing monitor
+};
+
+// Modal state
+let currentModalState = {
+    mode: null,
+    serviceId: null,        // For ADD_TO_SERVICE and EDIT modes
+    serviceName: null,      // For display
+    monitorId: null,        // For EDIT mode
+    monitorType: null,      // Selected type or existing type
+    step: 'type_selection'  // 'type_selection' or 'configuration'
+};
+
+/**
+ * Open the unified monitor modal
+ * @param {string} mode - MonitorModalMode value
+ * @param {object} options - { serviceId, serviceName, monitorId, monitor }
+ */
+function openMonitorModal(mode, options = {}) {
+    currentModalState = {
+        mode,
+        serviceId: options.serviceId || null,
+        serviceName: options.serviceName || null,
+        monitorId: options.monitorId || null,
+        monitorType: options.monitor?.monitor_type || null,
+        monitor: options.monitor || null,
+        step: mode === MonitorModalMode.EDIT ? 'configuration' : 'type_selection'
+    };
+
+    // Show modal
+    const modal = document.getElementById('unifiedMonitorModal');
+    modal.classList.remove('hidden');
+
+    // Render appropriate view
+    if (currentModalState.step === 'type_selection') {
+        renderTypeSelection();
+    } else {
+        renderConfiguration();
+    }
+}
+
+/**
+ * Close the unified monitor modal
+ */
+function closeMonitorModal() {
+    document.getElementById('unifiedMonitorModal').classList.add('hidden');
+    resetModalState();
+}
+
+/**
+ * Reset modal state
+ */
+function resetModalState() {
+    currentModalState = {
+        mode: null,
+        serviceId: null,
+        serviceName: null,
+        monitorId: null,
+        monitorType: null,
+        monitor: null,
+        step: 'type_selection'
+    };
+}
+
+/**
+ * Render type selection screen
+ */
+function renderTypeSelection() {
+    const container = document.getElementById('monitorModalContent');
+
+    // Set modal title based on mode
+    const title = currentModalState.mode === MonitorModalMode.CREATE_WITH_SERVICE
+        ? 'Quick Monitor Setup'
+        : `Add Monitor to ${currentModalState.serviceName}`;
+
+    const subtitle = currentModalState.mode === MonitorModalMode.CREATE_WITH_SERVICE
+        ? 'Create a service and monitor in one step'
+        : 'Select the type of monitor to add';
+
+    document.getElementById('monitorModalTitle').textContent = title;
+    document.getElementById('monitorModalSubtitle').textContent = subtitle;
+
+    // Render categorized type cards
+    container.innerHTML = `
+        <div class="monitor-modal-section">
+            <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
+            <div id="typeSelectionGrid">
+                ${window.monitorRegistry.renderCategorizedTypeCards('selectMonitorType')}
+            </div>
+            <button onclick="closeMonitorModal()" class="btn btn-secondary" style="width: 100%; margin-top: 1.5rem;">Cancel</button>
+        </div>
+    `;
+}
+
+/**
+ * Handle monitor type selection
+ */
+function selectMonitorType(type) {
+    currentModalState.monitorType = type;
+    currentModalState.step = 'configuration';
+    renderConfiguration();
+}
+
+/**
+ * Render configuration screen
+ */
+function renderConfiguration() {
+    const container = document.getElementById('monitorModalContent');
+    const monitorPlugin = window.monitorRegistry.get(currentModalState.monitorType);
+
+    if (!monitorPlugin) {
+        console.error('Monitor plugin not found:', currentModalState.monitorType);
+        return;
+    }
+
+    // Set modal title based on mode
+    let title, subtitle;
+    if (currentModalState.mode === MonitorModalMode.CREATE_WITH_SERVICE) {
+        title = `Create ${monitorPlugin.name}`;
+        subtitle = 'Configure your new service and monitor';
+    } else if (currentModalState.mode === MonitorModalMode.ADD_TO_SERVICE) {
+        title = `Add ${monitorPlugin.name}`;
+        subtitle = `Adding to ${currentModalState.serviceName}`;
+    } else {
+        title = `Edit ${monitorPlugin.name}`;
+        subtitle = currentModalState.serviceName;
+    }
+
+    document.getElementById('monitorModalTitle').textContent = title;
+    document.getElementById('monitorModalSubtitle').textContent = subtitle;
+
+    // Generate form
+    const includeServiceName = currentModalState.mode === MonitorModalMode.CREATE_WITH_SERVICE;
+    const formPrefix = 'unified';
+    const formHtml = window.monitorRegistry.renderForm(monitorPlugin, formPrefix, includeServiceName);
+    const intervalHtml = window.monitorRegistry.renderIntervalDropdown(monitorPlugin, formPrefix);
+
+    container.innerHTML = `
+        <div class="monitor-modal-section">
+            ${currentModalState.mode !== MonitorModalMode.EDIT ? `
+                <button onclick="backToTypeSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">
+                    ← Back to Type Selection
+                </button>
+            ` : ''}
+
+            <form id="unifiedMonitorForm" onsubmit="handleMonitorSubmit(event)">
+                ${formHtml}
+                ${intervalHtml}
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        ${currentModalState.mode === MonitorModalMode.EDIT ? 'Update Monitor' : 'Create Monitor'}
+                    </button>
+                    <button type="button" onclick="closeMonitorModal()" class="btn btn-secondary" style="flex: 1;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    // Populate form if editing
+    if (currentModalState.mode === MonitorModalMode.EDIT && currentModalState.monitor) {
+        monitorPlugin.populateForm(formPrefix, currentModalState.monitor.config);
+
+        // Set interval
+        const intervalSelect = document.getElementById(`${formPrefix}Interval`);
+        if (intervalSelect) {
+            intervalSelect.value = currentModalState.monitor.check_interval_minutes;
+        }
+    }
+}
+
+/**
+ * Go back to type selection
+ */
+function backToTypeSelection() {
+    currentModalState.step = 'type_selection';
+    currentModalState.monitorType = null;
+    renderTypeSelection();
+}
+
+/**
+ * Handle form submission
+ */
+async function handleMonitorSubmit(event) {
+    event.preventDefault();
+
+    const monitorPlugin = window.monitorRegistry.get(currentModalState.monitorType);
+    const formPrefix = 'unified';
+
+    try {
+        // Extract configuration
+        const config = monitorPlugin.extractConfig(formPrefix);
+
+        // Validate configuration
+        const validationError = monitorPlugin.validate(config);
+        if (validationError) {
+            showError(validationError);
+            return;
+        }
+
+        // Get interval
+        const intervalSelect = document.getElementById(`${formPrefix}Interval`);
+        const checkInterval = intervalSelect ? parseInt(intervalSelect.value) : monitorPlugin.defaultInterval;
+
+        if (currentModalState.mode === MonitorModalMode.CREATE_WITH_SERVICE) {
+            // Quick Monitor: Create service + monitor
+            const serviceName = document.getElementById(`${formPrefix}ServiceName`).value.trim();
+
+            if (!serviceName) {
+                showError('Service name is required');
+                return;
+            }
+
+            // Create service first
+            const service = await api.createService({
+                name: serviceName,
+                description: `Monitored via ${monitorPlugin.name}`,
+                category: monitorPlugin.category || 'Operations'
+            });
+
+            // Create monitor
+            await api.createMonitor({
+                service_id: service.id,
+                monitor_type: currentModalState.monitorType,
+                config: config,
+                check_interval_minutes: checkInterval
+            });
+
+            showSuccess(`Service "${serviceName}" and ${monitorPlugin.name} created successfully`);
+
+        } else if (currentModalState.mode === MonitorModalMode.ADD_TO_SERVICE) {
+            // Add monitor to existing service
+            await api.createMonitor({
+                service_id: currentModalState.serviceId,
+                monitor_type: currentModalState.monitorType,
+                config: config,
+                check_interval_minutes: checkInterval
+            });
+
+            showSuccess(`${monitorPlugin.name} added to ${currentModalState.serviceName}`);
+
+        } else {
+            // Edit existing monitor
+            await api.updateMonitor(currentModalState.monitorId, {
+                config: config,
+                check_interval_minutes: checkInterval
+            });
+
+            showSuccess(`${monitorPlugin.name} updated successfully`);
+        }
+
+        closeMonitorModal();
+
+        // Reload services list
+        if (typeof loadServices === 'function') {
+            loadServices();
+        }
+
+    } catch (error) {
+        console.error('Monitor operation failed:', error);
+        showError('Operation failed: ' + error.message);
+    }
+}
+
+// Make functions globally available
+window.openMonitorModal = openMonitorModal;
+window.closeMonitorModal = closeMonitorModal;
+window.selectMonitorType = selectMonitorType;
+window.backToTypeSelection = backToTypeSelection;
+window.handleMonitorSubmit = handleMonitorSubmit;
+window.MonitorModalMode = MonitorModalMode;

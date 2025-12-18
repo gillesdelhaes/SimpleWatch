@@ -9,6 +9,7 @@ export default {
     name: 'Metric Threshold',
     description: 'Receive numbers, alert on thresholds',
     icon: 'chart',
+    category: 'Operations',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

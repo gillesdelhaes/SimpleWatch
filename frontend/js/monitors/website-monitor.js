@@ -9,6 +9,7 @@ export default {
     name: 'Website Monitor',
     description: 'Check if a URL responds',
     icon: 'globe',
+    category: 'Web & API',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

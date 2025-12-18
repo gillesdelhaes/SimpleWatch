@@ -9,6 +9,7 @@ export default {
     name: 'Deadman Monitor',
     description: 'Alert if no heartbeat received',
     icon: 'skull',
+    category: 'Operations',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

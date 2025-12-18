@@ -37,36 +37,26 @@ class MonitorRegistry {
         }
 
         try {
-            // Import all monitor plugins
-            const websiteMonitor = await import('./website-monitor.js');
-            this.register(websiteMonitor.default);
+            // List of all monitor plugin files
+            // To add a new monitor: just add its filename (without .js) to this array
+            const monitorFiles = [
+                'website-monitor',
+                'api-monitor',
+                'metric-monitor',
+                'port-monitor',
+                'deadman-monitor',
+                'ssl-cert-monitor',
+                'dns-monitor',
+                'ping-monitor',
+                'seo-monitor',
+                'ollama-monitor'
+            ];
 
-            const apiMonitor = await import('./api-monitor.js');
-            this.register(apiMonitor.default);
-
-            const metricMonitor = await import('./metric-monitor.js');
-            this.register(metricMonitor.default);
-
-            const portMonitor = await import('./port-monitor.js');
-            this.register(portMonitor.default);
-
-            const deadmanMonitor = await import('./deadman-monitor.js');
-            this.register(deadmanMonitor.default);
-
-            const sslCertMonitor = await import('./ssl-cert-monitor.js');
-            this.register(sslCertMonitor.default);
-
-            const dnsMonitor = await import('./dns-monitor.js');
-            this.register(dnsMonitor.default);
-
-            const pingMonitor = await import('./ping-monitor.js');
-            this.register(pingMonitor.default);
-
-            const seoMonitor = await import('./seo-monitor.js');
-            this.register(seoMonitor.default);
-
-            const ollamaMonitor = await import('./ollama-monitor.js');
-            this.register(ollamaMonitor.default);
+            // Import and register each monitor plugin
+            for (const file of monitorFiles) {
+                const module = await import(`./${file}.js`);
+                this.register(module.default);
+            }
 
             this.loaded = true;
         } catch (error) {
@@ -75,24 +65,80 @@ class MonitorRegistry {
         }
     }
 
-    // Generate HTML for type selection cards
-    renderTypeCards(onClickHandler) {
-        return this.getAll().map(monitor => {
-            // Get icon SVG from global icons object (defined in components.js)
-            const iconSvg = window.icons && window.icons[monitor.icon] ? window.icons[monitor.icon] : '';
+    // Generate categorized HTML for type selection cards
+    renderCategorizedTypeCards(onClickHandler) {
+        // Group monitors by category
+        const categories = {
+            'Infrastructure': {
+                icon: 'key',
+                monitors: []
+            },
+            'Web & API': {
+                icon: 'mail',
+                monitors: []
+            },
+            'Operations': {
+                icon: 'clipboardList',
+                monitors: []
+            },
+            'AI & ML': {
+                icon: 'alertCircle',
+                monitors: []
+            }
+        };
 
-            return `
-                <div class="type-card"
-                     onclick="${onClickHandler}('${monitor.type}')"
-                     data-type="${monitor.type.replace(/_/g, '')}">
-                    <div class="type-card-title">
-                        ${iconSvg ? `<span class="icon" style="width: 20px; height: 20px;">${iconSvg}</span>` : ''}
-                        ${monitor.name}
+        // Categorize monitors
+        this.getAll().forEach(monitor => {
+            const category = monitor.category || 'Operations';
+            if (categories[category]) {
+                categories[category].monitors.push(monitor);
+            }
+        });
+
+        // Render categorized view
+        return Object.entries(categories)
+            .filter(([_, data]) => data.monitors.length > 0)
+            .map(([categoryName, data], index) => {
+                const categoryId = categoryName.replace(/\s+/g, '-').toLowerCase();
+                const isFirstCategory = index === 0;
+
+                const monitorsHtml = data.monitors.map(monitor => {
+                    const iconSvg = window.icons && window.icons[monitor.icon] ? window.icons[monitor.icon] : '';
+                    return `
+                        <div class="type-card"
+                             onclick="${onClickHandler}('${monitor.type}')"
+                             data-type="${monitor.type.replace(/_/g, '')}">
+                            <div class="type-card-title">
+                                ${iconSvg ? `<span class="icon" style="width: 20px; height: 20px;">${iconSvg}</span>` : ''}
+                                ${monitor.name}
+                            </div>
+                            <div class="type-card-desc">${monitor.description}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                const iconSvg = window.icons && window.icons[data.icon] ? window.icons[data.icon] : '';
+
+                return `
+                    <div class="monitor-category">
+                        <div class="category-header" onclick="toggleCategory('${categoryId}', event)" ${isFirstCategory ? 'data-expanded="true"' : ''}>
+                            <div class="category-title">
+                                <span class="category-icon">${iconSvg}</span>
+                                <span class="category-name">${categoryName}</span>
+                                <span class="category-count">${data.monitors.length}</span>
+                            </div>
+                            <svg class="category-chevron" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="category-content ${isFirstCategory ? 'expanded' : ''}" id="category-${categoryId}">
+                            <div class="type-grid">
+                                ${monitorsHtml}
+                            </div>
+                        </div>
                     </div>
-                    <div class="type-card-desc">${monitor.description}</div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
     }
 
     // Generate form HTML from monitor schema

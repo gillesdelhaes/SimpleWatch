@@ -18,7 +18,7 @@
             </div>
             <div class="action-buttons">
                 <button onclick="showAddServiceModal()" class="btn btn-secondary">+ Add Service</button>
-                <button onclick="showQuickMonitorModal()" class="btn btn-export" id="quickMonitorBtn">
+                <button onclick="openMonitorModal(MonitorModalMode.CREATE_WITH_SERVICE)" class="btn btn-export" id="quickMonitorBtn">
                     Quick Monitor
                 </button>
             </div>
@@ -134,92 +134,18 @@
         </div>
     </div>
 
-    <!-- Quick Monitor Modal -->
-    <div id="quickMonitorModal" class="modal hidden">
+    <!-- Unified Monitor Modal -->
+    <div id="unifiedMonitorModal" class="modal hidden">
         <div class="modal-content large">
             <div class="modal-header">
                 <div>
-                    <h3 class="modal-title">Quick Monitor Setup</h3>
-                    <p class="modal-subtitle">Create a service and monitor in one step</p>
+                    <h3 class="modal-title" id="monitorModalTitle">Monitor Setup</h3>
+                    <p class="modal-subtitle" id="monitorModalSubtitle"></p>
                 </div>
             </div>
-
-            <!-- Type Selection Screen -->
-            <div id="monitorTypeSelection">
-                <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
-                <div id="quickMonitorTypeGrid" class="type-grid">
-                    <!-- Cards will be injected here by registry -->
-                </div>
-                <button onclick="hideQuickMonitorModal()" class="btn btn-secondary" style="width: 100%;">Cancel</button>
+            <div id="monitorModalContent">
+                <!-- Content will be dynamically rendered by monitor-modal.js -->
             </div>
-
-            <!-- Monitor Configuration Form (dynamically generated) -->
-            <div id="monitorConfigForm" class="hidden">
-                <button onclick="backToMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 id="monitorFormTitle" style="font-weight: 700; margin-bottom: 1rem;"></h4>
-                <form id="quickMonitorForm" onsubmit="handleQuickMonitorSubmit(event)">
-                    <div id="quickMonitorFormFields">
-                        <!-- Fields will be injected here -->
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Monitor</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Monitor to Service Modal -->
-    <div id="addMonitorToServiceModal" class="modal hidden">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <div>
-                    <h3 class="modal-title">Add Monitor to Service</h3>
-                    <p class="modal-subtitle">Service: <span id="targetServiceName"></span></p>
-                </div>
-            </div>
-            <input type="hidden" id="targetServiceId">
-
-            <!-- Type Selection Screen -->
-            <div id="addMonitorTypeSelection">
-                <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
-                <div id="addMonitorTypeGrid" class="type-grid">
-                    <!-- Cards will be injected here by registry -->
-                </div>
-                <button onclick="hideAddMonitorToServiceModal()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Cancel</button>
-            </div>
-
-            <!-- Monitor Configuration Form (dynamically generated) -->
-            <div id="addMonitorConfigForm" class="hidden">
-                <button onclick="backToAddMonitorSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">← Back</button>
-                <h4 id="addMonitorFormTitle" style="font-weight: 700; margin-bottom: 1rem;"></h4>
-                <form id="addMonitorForm" onsubmit="handleAddMonitorSubmit(event)">
-                    <div id="addMonitorFormFields">
-                        <!-- Fields will be injected here -->
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Add Monitor</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Monitor Modal (Generic, plugin-based) -->
-    <div id="editMonitorModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="editMonitorTitle">Edit Monitor</h3>
-            </div>
-            <form id="editMonitorForm" onsubmit="handleEditMonitorSubmit(event)">
-                <input type="hidden" id="editMonitorId">
-                <input type="hidden" id="editMonitorType">
-                <input type="hidden" id="editMonitorServiceId">
-                <input type="hidden" id="editMonitorServiceName">
-                <div id="editMonitorFormFields">
-                    <!-- Fields will be injected here by registry -->
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update</button>
-                    <button type="button" onclick="hideEditMonitorModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -233,29 +159,11 @@
     <script type="module">
         import monitorRegistry from '/static/js/monitors/registry.js';
 
-        // Store current Quick Monitor type globally
-        window.currentQuickMonitorType = null;
-
-        // Make registry available globally
-        window.monitorRegistry = monitorRegistry;
-
         // Initialize plugin system on page load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Load all monitor plugins
                 await monitorRegistry.loadMonitors();
-
-                // Render Quick Monitor type cards
-                const quickMonitorTypeGrid = document.getElementById('quickMonitorTypeGrid');
-                if (quickMonitorTypeGrid) {
-                    quickMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectMonitorType');
-                }
-
-                // Render Add Monitor type cards (if needed later)
-                const addMonitorTypeGrid = document.getElementById('addMonitorTypeGrid');
-                if (addMonitorTypeGrid) {
-                    addMonitorTypeGrid.innerHTML = monitorRegistry.renderTypeCards('selectAddMonitorType');
-                }
 
                 // Dispatch event to signal plugins are ready
                 window.dispatchEvent(new CustomEvent('monitorPluginsLoaded'));
@@ -263,6 +171,32 @@
                 console.error('Failed to initialize monitor plugin system:', error);
             }
         });
+    </script>
+
+    <script>
+        // Toggle category expansion
+        function toggleCategory(categoryId, event) {
+            // Prevent event bubbling to avoid interfering with modal clicks
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const categoryContent = document.getElementById(`category-${categoryId}`);
+            if (!categoryContent) {
+                console.error('Category content not found:', `category-${categoryId}`);
+                return;
+            }
+
+            const categoryHeader = categoryContent.previousElementSibling;
+
+            if (categoryContent.classList.contains('expanded')) {
+                categoryContent.classList.remove('expanded');
+                categoryHeader.removeAttribute('data-expanded');
+            } else {
+                categoryContent.classList.add('expanded');
+                categoryHeader.setAttribute('data-expanded', 'true');
+            }
+        }
     </script>
 
     <script src="/static/js/services.js"></script>

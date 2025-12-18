@@ -9,6 +9,7 @@ export default {
     name: 'API Monitor',
     description: 'Call API endpoint with validation',
     icon: 'api',
+    category: 'Web & API',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {

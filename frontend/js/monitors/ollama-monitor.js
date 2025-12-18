@@ -9,6 +9,7 @@ export default {
     name: 'Ollama/LLM Monitor',
     description: 'Monitor local LLM APIs (Ollama, LM Studio, LocalAI)',
     icon: 'brain',
+    category: 'AI & ML',
 
     // Configuration schema
     schema: {

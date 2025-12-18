@@ -9,6 +9,7 @@ export default {
     name: 'Port Monitor',
     description: 'Test if TCP port is open',
     icon: 'port',
+    category: 'Infrastructure',
 
     // Configuration schema - defines all fields needed for this monitor
     schema: {
