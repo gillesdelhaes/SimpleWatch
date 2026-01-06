@@ -4,6 +4,7 @@ API endpoints for incident tracking.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from database import get_db, Incident, Service, Monitor
 from api.auth import get_current_user
 from datetime import datetime, timedelta
@@ -50,7 +51,14 @@ def list_incidents(
             "90d": timedelta(days=90)
         }
         cutoff = datetime.utcnow() - window_map.get(time_window, timedelta(days=30))
-        query = query.filter(Incident.started_at >= cutoff)
+        # Show incidents that were active during the time window
+        query = query.filter(
+            or_(
+                Incident.started_at >= cutoff,  # Started in window
+                Incident.ended_at >= cutoff,     # Ended in window
+                Incident.ended_at == None        # Still ongoing
+            )
+        )
 
     # Order by newest first
     incidents = query.order_by(Incident.started_at.desc()).all()
@@ -111,7 +119,11 @@ def get_incident_stats(
     # Get all incidents in time window from active services only
     query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(
         Service.is_active == True,
-        Incident.started_at >= cutoff
+        or_(
+            Incident.started_at >= cutoff,  # Started in window
+            Incident.ended_at >= cutoff,     # Ended in window
+            Incident.ended_at == None        # Still ongoing
+        )
     )
 
     # Filter by service if specified
@@ -193,7 +205,11 @@ def get_incident_timeline(
     # Only include incidents from active services
     query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(
         Service.is_active == True,
-        Incident.started_at >= cutoff
+        or_(
+            Incident.started_at >= cutoff,  # Started in window
+            Incident.ended_at >= cutoff,     # Ended in window
+            Incident.ended_at == None        # Still ongoing
+        )
     )
     if service_id:
         query = query.filter(Incident.service_id == service_id)
@@ -249,7 +265,14 @@ def export_incidents_csv(
             "90d": timedelta(days=90)
         }
         cutoff = datetime.utcnow() - window_map.get(time_window, timedelta(days=30))
-        query = query.filter(Incident.started_at >= cutoff)
+        # Show incidents that were active during the time window
+        query = query.filter(
+            or_(
+                Incident.started_at >= cutoff,  # Started in window
+                Incident.ended_at >= cutoff,     # Ended in window
+                Incident.ended_at == None        # Still ongoing
+            )
+        )
 
     # Order by newest first
     incidents_list = query.order_by(Incident.started_at.desc()).all()
