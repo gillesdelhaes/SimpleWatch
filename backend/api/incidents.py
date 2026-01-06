@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from database import get_db, Incident, Service, Monitor
 from api.auth import get_current_user
+from utils.uptime import calculate_service_uptime_window
 from datetime import datetime, timedelta
 import json
 import io
@@ -154,16 +155,19 @@ def get_incident_stats(
     for incident in incidents:
         by_severity[incident.severity] = by_severity.get(incident.severity, 0) + 1
 
-    # Uptime calculation - use cached values (updated every 5 minutes)
+    # Uptime calculation - calculate for the selected time window
     if service_id:
-        # Single service: read cached uptime
-        service = db.query(Service).filter(Service.id == service_id).first()
-        uptime_percentage = service.cached_uptime_percentage if service and service.cached_uptime_percentage is not None else None
+        # Single service: calculate uptime for this specific time window
+        uptime_percentage = calculate_service_uptime_window(db, service_id, cutoff)
     else:
-        # All services: calculate average uptime from cached values
+        # All services: calculate average uptime across all services for this time window
         all_services = db.query(Service).filter(Service.is_active == True).all()
         if all_services:
-            uptimes = [s.cached_uptime_percentage for s in all_services if s.cached_uptime_percentage is not None]
+            uptimes = []
+            for service in all_services:
+                uptime = calculate_service_uptime_window(db, service.id, cutoff)
+                if uptime is not None:
+                    uptimes.append(uptime)
             uptime_percentage = sum(uptimes) / len(uptimes) if uptimes else 100.0
         else:
             uptime_percentage = 100.0
