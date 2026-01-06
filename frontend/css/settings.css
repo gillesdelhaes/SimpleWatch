@@ -146,3 +146,293 @@
 .retention-detail-highlight {
     color: var(--accent-primary);
 }
+
+/* Service Backup & Restore */
+.backup-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.backup-action-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.backup-action-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.backup-action-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.backup-action-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--accent-primary);
+}
+
+.backup-action-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.backup-action-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+}
+
+/* Export/Import Modals */
+.export-modal,
+.import-modal {
+    max-width: 600px;
+}
+
+.modal-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+/* Export Service List */
+.export-service-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-primary);
+}
+
+.export-service-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+}
+
+.export-service-item:last-child {
+    border-bottom: none;
+}
+
+.export-service-item:hover {
+    background: var(--bg-secondary);
+}
+
+.export-service-checkbox {
+    margin-right: 1rem;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.export-service-info {
+    flex: 1;
+}
+
+.export-service-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.export-service-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Import Upload Area */
+.import-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    background: var(--bg-primary);
+}
+
+.import-upload-area:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-secondary);
+}
+
+.import-upload-area.drag-over {
+    border-color: var(--accent-primary);
+    background: var(--bg-secondary);
+    transform: scale(1.02);
+}
+
+.import-upload-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-tertiary);
+    margin: 0 auto 1rem;
+}
+
+.import-upload-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.import-upload-hint {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
+.import-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.import-file-info .icon {
+    color: var(--status-operational);
+    flex-shrink: 0;
+}
+
+.import-file-clear {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.import-file-clear:hover {
+    color: var(--status-down);
+}
+
+/* Import Service List */
+.import-service-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-primary);
+    margin-top: 1rem;
+}
+
+.import-service-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.import-service-item:last-child {
+    border-bottom: none;
+}
+
+.import-service-item.will-skip {
+    opacity: 0.5;
+}
+
+.import-service-checkbox {
+    margin-right: 1rem;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.import-service-info {
+    flex: 1;
+}
+
+.import-service-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.import-service-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.import-service-badge {
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.import-service-badge.badge-new {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--status-operational);
+}
+
+.import-service-badge.badge-skip {
+    background: rgba(156, 163, 175, 0.2);
+    color: var(--text-secondary);
+}
+
+.import-service-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Import Result Summary */
+.import-result-summary {
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.import-result-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.import-result-stat:last-child {
+    border-bottom: none;
+}
+
+.import-result-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.import-result-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.import-result-value.success {
+    color: var(--status-operational);
+}
+
+.import-result-value.warning {
+    color: var(--status-degraded);
+}
+
+.import-result-value.error {
+    color: var(--status-down);
+}

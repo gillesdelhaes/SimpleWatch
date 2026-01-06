@@ -379,6 +379,159 @@ Get status history for a service.
 }
 ```
 
+#### GET /api/v1/services/export
+
+Export selected services and their monitor configurations to JSON format for backup or migration.
+
+**Requires:** JWT authentication
+
+**Parameters:**
+- `service_ids` (query parameter, optional): Comma-separated list of service IDs to export. If not provided, exports all services.
+
+**Response:** JSON file download with `Content-Disposition: attachment` header
+
+**Export Format:**
+```json
+{
+  "export_version": "1.0",
+  "exported_at": "2025-01-15T10:30:00Z",
+  "services": [
+    {
+      "name": "payment_gateway",
+      "description": "Payment processing service",
+      "category": "Infrastructure",
+      "is_active": true,
+      "monitors": [
+        {
+          "type": "website",
+          "config": {
+            "url": "https://api.example.com/health",
+            "timeout_seconds": 10
+          },
+          "check_interval_minutes": 5,
+          "is_active": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+**curl Example:**
+```bash
+# Export all services
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/services/export" \
+  -o simplewatch_export.json
+
+# Export specific services
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/services/export?service_ids=1,3,5" \
+  -o simplewatch_export.json
+```
+
+**Note:** Only exports service configurations and monitor settings. Does not export historical status data or notification settings.
+
+#### POST /api/v1/services/import/validate
+
+Validate an import file and preview what would be imported without making any changes (dry-run).
+
+**Requires:** JWT authentication
+
+**Request:** Multipart form data with JSON file
+
+**Response:**
+```json
+{
+  "valid": true,
+  "summary": {
+    "total_services": 3,
+    "new_services": 2,
+    "new_monitors": 5,
+    "skipped_services": 1
+  },
+  "details": [
+    {
+      "service_name": "payment_gateway",
+      "action": "create",
+      "reason": "New service",
+      "monitors": 2
+    },
+    {
+      "service_name": "existing_service",
+      "action": "skip",
+      "reason": "Service already exists",
+      "monitors": 1
+    }
+  ]
+}
+```
+
+**curl Example:**
+```bash
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@simplewatch_export.json" \
+  "http://localhost:5050/api/v1/services/import/validate"
+```
+
+**Note:** This endpoint performs validation only and does not modify the database. Use it to preview what will be imported before executing the actual import.
+
+#### POST /api/v1/services/import
+
+Import services and monitors from a JSON export file.
+
+**Requires:** JWT authentication
+
+**Request:** Multipart form data with JSON file
+
+**Parameters:**
+- `service_indices` (query parameter, optional): Comma-separated list of service indices (0-based) to import from the file. If not provided, imports all services that don't already exist.
+
+**Response:**
+```json
+{
+  "success": true,
+  "imported": 2,
+  "skipped": 1,
+  "failed": 0,
+  "details": {
+    "imported": [
+      {
+        "service": "payment_gateway",
+        "monitors": 2
+      }
+    ],
+    "skipped": [
+      {
+        "service": "existing_service",
+        "reason": "Service already exists"
+      }
+    ],
+    "failed": []
+  }
+}
+```
+
+**curl Example:**
+```bash
+# Import all services from file
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@simplewatch_export.json" \
+  "http://localhost:5050/api/v1/services/import"
+
+# Import only specific services by index (0-based)
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@simplewatch_export.json" \
+  "http://localhost:5050/api/v1/services/import?service_indices=0,2"
+```
+
+**Behavior:**
+- **Never overwrites:** Existing services are automatically skipped to preserve historical data
+- **Monitor scheduling:** Imported monitors are automatically scheduled to run their first check 1 minute after import
+- **Scope:** Only imports service configurations and monitors. Notification settings must be reconfigured manually.
+
+**Best Practice:** Always run `/import/validate` first to preview what will be imported before executing the actual import.
+
 ---
 
 ### Monitors

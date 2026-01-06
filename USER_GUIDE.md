@@ -8,12 +8,13 @@ Complete guide to using SimpleWatch for monitoring your services.
 2. [Understanding the Dashboard](#understanding-the-dashboard)
 3. [Creating Monitors](#creating-monitors)
 4. [Managing Services](#managing-services)
-5. [Setting Up Notifications](#setting-up-notifications)
-6. [Incident Command Center](#incident-command-center)
-7. [Using the API](#using-the-api)
-8. [User Management](#user-management)
-9. [Best Practices](#best-practices)
-10. [FAQ](#faq)
+5. [Backup & Restore](#backup--restore)
+6. [Setting Up Notifications](#setting-up-notifications)
+7. [Incident Command Center](#incident-command-center)
+8. [Using the API](#using-the-api)
+9. [User Management](#user-management)
+10. [Best Practices](#best-practices)
+11. [FAQ](#faq)
 
 ---
 
@@ -786,6 +787,129 @@ Permanently delete a monitor:
 4. Confirm deletion
 
 **Note:** The service remains with other monitors intact. If you delete all monitors for a service, the service will automatically pause. Historical data for this monitor is permanently deleted via CASCADE delete.
+
+---
+
+## Backup & Restore
+
+SimpleWatch provides export and import functionality to back up your service configurations or migrate them to another instance.
+
+### What's Included in Export/Import
+
+**Included:**
+- Service configurations (name, description, category, active status)
+- Monitor configurations (type, settings, check intervals, active status)
+
+**Not Included:**
+- Historical status update data
+- Notification channel settings
+- Notification configuration per service
+- User accounts
+
+### Exporting Services
+
+Back up your service configurations:
+
+1. Click **Settings** in navigation
+2. Scroll to **Service Backup & Restore** section
+3. Click **Export Configuration**
+4. Select which services to export (all selected by default)
+5. Click **Export Selected**
+6. JSON file downloads automatically
+
+**Tips:**
+- Export filename includes timestamp (e.g., `simplewatch_export_20250115_143022.json`)
+- You can export all services or select specific ones
+- Export before major configuration changes as a backup
+- Store exports securely as they contain service URLs and settings
+
+### Importing Services
+
+Restore or migrate service configurations:
+
+1. Click **Settings** in navigation
+2. Scroll to **Service Backup & Restore** section
+3. Click **Import Configuration**
+4. Upload your JSON export file (click or drag & drop)
+5. Click **Validate File** to preview what will be imported
+6. Review the preview:
+   - **NEW** services will be created
+   - **EXISTS** services will be skipped (never overwritten)
+7. Select which services to import (optional)
+8. Click **Import Selected**
+9. Review import results
+
+**Important Behaviors:**
+- **Never overwrites existing services** - protects your historical data
+- Services with duplicate names are automatically skipped
+- Imported monitors are scheduled to run their first check 1 minute after import
+- If import is interrupted, partial imports may occur (database transactions per service)
+
+### Common Use Cases
+
+**Backup Before Changes:**
+```
+1. Export all services
+2. Make risky configuration changes
+3. If problems occur, delete broken services and re-import
+```
+
+**Migrating to New Instance:**
+```
+1. Export from old SimpleWatch instance
+2. Install SimpleWatch on new server
+3. Import configuration file
+4. Reconfigure notification channels (not included in export)
+5. Verify monitors are running
+```
+
+**Cloning Environments:**
+```
+1. Export production services
+2. Import to staging instance
+3. Modify URLs/endpoints for staging
+4. Test changes in staging before production
+```
+
+**Disaster Recovery:**
+```
+1. Schedule regular exports (manual for now)
+2. Store exports in secure location
+3. If database corruption occurs, restore from export
+4. Note: Historical data is lost, but configurations are preserved
+```
+
+### After Importing
+
+Once import completes:
+
+1. **Check Dashboard** - Verify services appear
+2. **Wait 1-2 minutes** - Monitors begin their first checks
+3. **Verify Status Updates** - Ensure monitors are running
+4. **Reconfigure Notifications** - Set up notification channels and service notification settings
+5. **Test Alerts** - Send test notifications to verify
+
+### Troubleshooting Import Issues
+
+**"Service already exists" for all services:**
+- Export was created from the same instance you're importing to
+- Service names conflict with existing services
+- Either delete conflicting services first or skip them in the import
+
+**Monitors not running after import:**
+- Wait at least 1 minute for scheduler to pick up monitors
+- Check Dashboard for status updates
+- View Docker logs: `docker-compose logs -f simplewatch`
+- Look for scheduler messages about monitor checks
+
+**Import validation fails:**
+- Ensure JSON file is a valid SimpleWatch export
+- Check export_version is "1.0"
+- Verify JSON is not corrupted
+
+**Partial import (some succeed, some fail):**
+- Review import results for error details
+- Failed services can be retried by importing again (succeeded ones will be skipped)
 
 ---
 

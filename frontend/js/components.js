@@ -157,6 +157,11 @@ const icons = {
         <path d="M4 14v2a2 2 0 002 2h8a2 2 0 002-2v-2"/>
     </svg>`,
 
+    upload: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13V3m0 0L6 7m4-4l4 4"/>
+        <path d="M4 14v2a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+    </svg>`,
+
     list: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 5h14M3 10h14M3 15h14"/>
     </svg>`,

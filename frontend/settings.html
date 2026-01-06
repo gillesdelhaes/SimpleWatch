@@ -97,6 +97,41 @@
             </div>
         </div>
 
+        <!-- Service Backup & Restore -->
+        <div class="page-section">
+            <h2 class="section-title">
+                <span class="section-icon" id="backupIcon"></span>
+                Service Backup & Restore
+            </h2>
+            <p class="section-desc">Export your service configurations to JSON for backup or migration. Import configurations to restore or clone services to another instance.</p>
+
+            <div class="backup-actions">
+                <div class="backup-action-card">
+                    <div class="backup-action-header">
+                        <span class="backup-action-icon" id="exportIcon"></span>
+                        <h3 class="backup-action-title">Export Services</h3>
+                    </div>
+                    <p class="backup-action-desc">Download service configurations as JSON</p>
+                    <button onclick="showExportModal()" class="btn btn-primary">
+                        <span class="icon btn-icon" id="downloadBtnIcon"></span>
+                        Export Configuration
+                    </button>
+                </div>
+
+                <div class="backup-action-card">
+                    <div class="backup-action-header">
+                        <span class="backup-action-icon" id="importIcon"></span>
+                        <h3 class="backup-action-title">Import Services</h3>
+                    </div>
+                    <p class="backup-action-desc">Restore services from a JSON backup file</p>
+                    <button onclick="showImportModal()" class="btn btn-secondary">
+                        <span class="icon btn-icon" id="uploadBtnIcon"></span>
+                        Import Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Data Retention Confirmation Modal -->
@@ -133,6 +168,99 @@
             <div class="modal-footer">
                 <button onclick="closeRetentionModal()" class="btn btn-secondary">Cancel</button>
                 <button onclick="confirmRetentionChange()" class="btn btn-danger">Confirm &amp; Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Services Modal -->
+    <div id="exportModal" class="modal-backdrop hidden">
+        <div class="modal-content export-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Export Services</h2>
+                <button onclick="closeExportModal()" class="modal-close">
+                    <span class="icon" id="exportModalCloseIcon"></span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p class="modal-description">Select services to export. Only configuration data will be exported (no historical status data).</p>
+
+                <div class="export-service-list" id="exportServiceList">
+                    <!-- Services will be populated here -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeExportModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="executeExport()" class="btn btn-primary" id="exportBtn">
+                    <span class="icon btn-icon" id="exportBtnIcon"></span>
+                    Export Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Services Modal -->
+    <div id="importModal" class="modal-backdrop hidden">
+        <div class="modal-content import-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Import Services</h2>
+                <button onclick="closeImportModal()" class="modal-close">
+                    <span class="icon" id="importModalCloseIcon"></span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="importUploadSection">
+                    <p class="modal-description">Upload a JSON configuration file exported from SimpleWatch.</p>
+
+                    <div class="import-upload-area" id="importUploadArea">
+                        <span class="icon import-upload-icon" id="uploadAreaIcon"></span>
+                        <p class="import-upload-text">Click to select file or drag and drop</p>
+                        <p class="import-upload-hint">JSON files only</p>
+                        <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;">
+                    </div>
+
+                    <div class="import-file-info hidden" id="importFileInfo">
+                        <span class="icon" id="fileCheckIcon"></span>
+                        <span id="importFileName"></span>
+                        <button onclick="clearImportFile()" class="import-file-clear">
+                            <span class="icon" id="fileClearIcon"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="importPreviewSection" class="hidden">
+                    <div class="alert-box alert-info">
+                        <span class="alert-icon" id="importInfoIcon"></span>
+                        <div class="alert-content">
+                            <p class="alert-title">Import Preview</p>
+                            <p class="alert-text" id="importPreviewSummary"></p>
+                        </div>
+                    </div>
+
+                    <div class="import-service-list" id="importServiceList">
+                        <!-- Services will be populated here -->
+                    </div>
+                </div>
+
+                <div id="importResultSection" class="hidden">
+                    <div class="import-result-summary" id="importResultSummary">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeImportModal()" class="btn btn-secondary" id="importCancelBtn">Cancel</button>
+                <button onclick="validateImportFile()" class="btn btn-primary hidden" id="importValidateBtn">
+                    <span class="icon btn-icon" id="importValidateBtnIcon"></span>
+                    Validate File
+                </button>
+                <button onclick="executeImport()" class="btn btn-primary hidden" id="importExecuteBtn">
+                    <span class="icon btn-icon" id="importExecuteBtnIcon"></span>
+                    Import Selected
+                </button>
             </div>
         </div>
     </div>
