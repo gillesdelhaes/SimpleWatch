@@ -48,6 +48,12 @@ class Service(Base):
     created_by = Column(Integer, ForeignKey("users.id"))
     is_active = Column(Boolean, default=True)
 
+    # Cached uptime data (updated by background job every 5 minutes)
+    cached_uptime_percentage = Column(Integer)  # e.g., 99.5
+    cached_uptime_period_days = Column(Integer)  # e.g., 365
+    cached_uptime_period_label = Column(String(10))  # e.g., "1y" or "90d"
+    cached_uptime_updated_at = Column(TIMESTAMP)  # Last cache update time
+
     owner = relationship("User", back_populates="services")
     status_updates = relationship("StatusUpdate", back_populates="service", cascade="all, delete-orphan")
     monitors = relationship("Monitor", back_populates="service", cascade="all, delete-orphan")

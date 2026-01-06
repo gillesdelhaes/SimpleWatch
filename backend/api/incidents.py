@@ -6,7 +6,6 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_db, Incident, Service, Monitor
 from api.auth import get_current_user
-from utils.uptime import calculate_service_uptime
 from datetime import datetime, timedelta
 import json
 import io
@@ -143,21 +142,16 @@ def get_incident_stats(
     for incident in incidents:
         by_severity[incident.severity] = by_severity.get(incident.severity, 0) + 1
 
-    # Uptime calculation - use same method as dashboard
+    # Uptime calculation - use cached values (updated every 5 minutes)
     if service_id:
-        # Single service: use accurate StatusUpdate-based calculation
-        uptime_data = calculate_service_uptime(db, service_id)
-        # Don't default to 100% for services with no data - return None instead
-        uptime_percentage = uptime_data["percentage"] if uptime_data else None
+        # Single service: read cached uptime
+        service = db.query(Service).filter(Service.id == service_id).first()
+        uptime_percentage = service.cached_uptime_percentage if service and service.cached_uptime_percentage is not None else None
     else:
-        # All services: calculate average uptime across all services
+        # All services: calculate average uptime from cached values
         all_services = db.query(Service).filter(Service.is_active == True).all()
         if all_services:
-            uptimes = []
-            for service in all_services:
-                uptime_data = calculate_service_uptime(db, service.id)
-                if uptime_data:
-                    uptimes.append(uptime_data["percentage"])
+            uptimes = [s.cached_uptime_percentage for s in all_services if s.cached_uptime_percentage is not None]
             uptime_percentage = sum(uptimes) / len(uptimes) if uptimes else 100.0
         else:
             uptime_percentage = 100.0
