@@ -10,6 +10,45 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def update_uptime_cache(db: Session):
+    """
+    Update cached uptime data for all active services.
+    Called by background job every 5 minutes to keep uptime data fresh.
+
+    Args:
+        db: Database session
+    """
+    services = db.query(Service).filter(Service.is_active == True).all()
+
+    if not services:
+        return
+
+    logger.info(f"Updating uptime cache for {len(services)} services")
+
+    for service in services:
+        try:
+            uptime_data = calculate_service_uptime(db, service.id)
+
+            if uptime_data:
+                service.cached_uptime_percentage = uptime_data["percentage"]
+                service.cached_uptime_period_days = uptime_data["period_days"]
+                service.cached_uptime_period_label = uptime_data["period_label"]
+                service.cached_uptime_updated_at = datetime.utcnow()
+            else:
+                # No uptime data available (new service or no status updates)
+                service.cached_uptime_percentage = None
+                service.cached_uptime_period_days = None
+                service.cached_uptime_period_label = None
+                service.cached_uptime_updated_at = datetime.utcnow()
+
+        except Exception as e:
+            logger.error(f"Error updating uptime cache for service {service.id}: {e}")
+            continue
+
+    db.commit()
+    logger.info(f"Uptime cache updated for {len(services)} services")
+
+
 def calculate_service_uptime(db: Session, service_id: int) -> Optional[Dict]:
     """
     Calculate uptime percentage for a service.
@@ -60,43 +99,68 @@ def calculate_service_uptime(db: Session, service_id: int) -> Optional[Dict]:
     if not monitors:
         return None
 
-    # Get status updates for all monitors in the period
+    # Get status updates for all monitors in the period (in one query)
     monitor_ids = [m.id for m in monitors]
-    status_updates = db.query(StatusUpdate).filter(
+    all_status_updates = db.query(StatusUpdate).filter(
         StatusUpdate.service_id == service_id,
+        StatusUpdate.monitor_id.in_(monitor_ids),
         StatusUpdate.timestamp >= cutoff_time
     ).order_by(StatusUpdate.timestamp).all()
 
-    if not status_updates:
+    if not all_status_updates:
         # No status updates in period - service never initialized
         # Return None so frontend can display "N/A" or hide uptime
         logger.info(f"Service {service_id}: No status updates, returning None")
         return None
 
+    # Build timeline of all monitor status changes
+    # Group updates by timestamp for efficient processing
+    timeline = {}
+    for update in all_status_updates:
+        ts = update.timestamp
+        if ts not in timeline:
+            timeline[ts] = {}
+        timeline[ts][update.monitor_id] = update.status
+
+    # Sort timestamps
+    sorted_timestamps = sorted(timeline.keys())
+
+    # Track current status for each monitor
+    monitor_status = {mid: "operational" for mid in monitor_ids}  # Assume operational initially
+
     # Calculate uptime by tracking service status over time
     operational_seconds = 0.0
-
-    # Get initial status at cutoff time (or assume operational)
-    previous_status = "operational"
     previous_time = cutoff_time
+    previous_service_status = "operational"
 
-    for update in status_updates:
-        # Calculate duration since last update
-        duration = (update.timestamp - previous_time).total_seconds()
+    for ts in sorted_timestamps:
+        # Calculate duration since last change
+        duration = (ts - previous_time).total_seconds()
 
-        # Add to operational time if previous status was operational
-        if previous_status == "operational":
+        # Add to operational time if service was operational
+        if previous_service_status == "operational":
             operational_seconds += duration
 
-        # Determine service status at this update
-        # Service is operational only if ALL monitors are operational
-        # We need to check all monitor statuses at this point
-        previous_status = get_service_status_at_time(db, service_id, monitor_ids, update.timestamp)
-        previous_time = update.timestamp
+        # Update monitor statuses with changes at this timestamp
+        for mid, status in timeline[ts].items():
+            monitor_status[mid] = status
+
+        # Calculate service status (operational only if ALL monitors operational)
+        operational_count = sum(1 for s in monitor_status.values() if s == "operational")
+        total_monitors = len(monitor_status)
+
+        if operational_count == total_monitors:
+            previous_service_status = "operational"
+        elif operational_count == 0:
+            previous_service_status = "down"
+        else:
+            previous_service_status = "degraded"
+
+        previous_time = ts
 
     # Add time from last update to now
     final_duration = (datetime.utcnow() - previous_time).total_seconds()
-    if previous_status == "operational":
+    if previous_service_status == "operational":
         operational_seconds += final_duration
 
     # Calculate percentage
@@ -113,45 +177,5 @@ def calculate_service_uptime(db: Session, service_id: int) -> Optional[Dict]:
     }
 
 
-def get_service_status_at_time(db: Session, service_id: int, monitor_ids: list, timestamp: datetime) -> str:
-    """
-    Determine aggregated service status at a specific point in time.
-    Service is operational only if ALL monitors are operational.
-
-    Args:
-        db: Database session
-        service_id: Service ID
-        monitor_ids: List of monitor IDs for this service
-        timestamp: Point in time to check
-
-    Returns:
-        "operational", "degraded", or "down"
-    """
-    # Get the latest status for each monitor before or at the timestamp
-    monitor_statuses = {}
-
-    for monitor_id in monitor_ids:
-        latest = db.query(StatusUpdate).filter(
-            StatusUpdate.monitor_id == monitor_id,
-            StatusUpdate.timestamp <= timestamp
-        ).order_by(StatusUpdate.timestamp.desc()).first()
-
-        if latest:
-            monitor_statuses[monitor_id] = latest.status
-        else:
-            # No status yet, assume operational
-            monitor_statuses[monitor_id] = "operational"
-
-    # Count statuses
-    operational_count = sum(1 for s in monitor_statuses.values() if s == "operational")
-    degraded_count = sum(1 for s in monitor_statuses.values() if s == "degraded")
-    down_count = sum(1 for s in monitor_statuses.values() if s == "down")
-    total_count = len(monitor_statuses)
-
-    # Apply same logic as dashboard status calculation
-    if operational_count == total_count:
-        return "operational"
-    elif down_count == total_count:
-        return "down"
-    else:
-        return "degraded"
+# Removed get_service_status_at_time() function - no longer needed
+# Status calculation is now done efficiently inline using timeline processing

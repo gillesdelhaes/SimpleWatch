@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from database import get_db, StatusUpdate, Service, User
 from models import StatusResponse
 from api.auth import get_current_user
-from utils.uptime import calculate_service_uptime
 from datetime import datetime
 import json
 from typing import List, Optional
@@ -158,8 +157,14 @@ def get_all_status(
                 latest_timestamp = latest_status.timestamp
                 aggregate_response_time = latest_status.response_time_ms
 
-        # Calculate uptime for this service
-        uptime_data = calculate_service_uptime(db, service.id)
+        # Use cached uptime data (updated every 5 minutes by background job)
+        uptime_data = None
+        if service.cached_uptime_percentage is not None:
+            uptime_data = {
+                "percentage": service.cached_uptime_percentage,
+                "period_days": service.cached_uptime_period_days,
+                "period_label": service.cached_uptime_period_label
+            }
 
         # Include service if it has monitors or has been checked
         if monitor_statuses or latest_timestamp:

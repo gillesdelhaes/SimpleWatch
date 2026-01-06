@@ -203,12 +203,12 @@ def cleanup_old_status_updates():
     """
     db = SessionLocal()
     try:
-        # Get retention days from settings (default: 90 days)
+        # Get retention days from settings (default: 365 days)
         retention_setting = db.query(AppSettings).filter(
             AppSettings.key == "retention_days"
         ).first()
 
-        retention_days = int(retention_setting.value) if retention_setting else 90
+        retention_days = int(retention_setting.value) if retention_setting else 365
 
         # Calculate cutoff date
         cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
@@ -225,6 +225,23 @@ def cleanup_old_status_updates():
 
     except Exception as e:
         logger.error(f"Error cleaning up old status updates: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def update_cached_uptime():
+    """
+    Update cached uptime for all services.
+    Runs every 5 minutes to keep uptime data fresh.
+    """
+    from utils.uptime import update_uptime_cache
+
+    db = SessionLocal()
+    try:
+        update_uptime_cache(db)
+    except Exception as e:
+        logger.error(f"Error updating cached uptime: {e}")
         db.rollback()
     finally:
         db.close()
@@ -253,6 +270,14 @@ def start_scheduler():
         trigger=IntervalTrigger(hours=24),
         id='cleanup_scheduler',
         name='Clean up old status updates daily',
+        replace_existing=True
+    )
+
+    scheduler.add_job(
+        func=update_cached_uptime,
+        trigger=IntervalTrigger(minutes=5),
+        id='uptime_cache_scheduler',
+        name='Update cached uptime every 5 minutes',
         replace_existing=True
     )
 
