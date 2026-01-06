@@ -71,12 +71,21 @@ def calculate_service_uptime_window(db: Session, service_id: int, cutoff_time: d
     if not monitors:
         return None
 
+    # Get service to check creation date
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service or not service.created_at:
+        return None
+
+    # If service is younger than the time window, use creation date as cutoff
+    # This prevents counting time before the service existed as "operational"
+    actual_cutoff = max(cutoff_time, service.created_at)
+
     # Get status updates for all monitors in the time window
     monitor_ids = [m.id for m in monitors]
     all_status_updates = db.query(StatusUpdate).filter(
         StatusUpdate.service_id == service_id,
         StatusUpdate.monitor_id.in_(monitor_ids),
-        StatusUpdate.timestamp >= cutoff_time
+        StatusUpdate.timestamp >= actual_cutoff
     ).order_by(StatusUpdate.timestamp).all()
 
     if not all_status_updates:
@@ -93,13 +102,13 @@ def calculate_service_uptime_window(db: Session, service_id: int, cutoff_time: d
     sorted_timestamps = sorted(timeline.keys())
 
     # Track current status for each monitor
-    # Initialize from last known status BEFORE cutoff_time
+    # Initialize from last known status BEFORE actual_cutoff
     monitor_status = {}
     for mid in monitor_ids:
-        # Get last status update before cutoff_time
+        # Get last status update before actual_cutoff
         last_status = db.query(StatusUpdate).filter(
             StatusUpdate.monitor_id == mid,
-            StatusUpdate.timestamp < cutoff_time
+            StatusUpdate.timestamp < actual_cutoff
         ).order_by(StatusUpdate.timestamp.desc()).first()
 
         # If we have a status before cutoff, use it; otherwise assume operational
@@ -118,7 +127,7 @@ def calculate_service_uptime_window(db: Session, service_id: int, cutoff_time: d
 
     # Calculate uptime
     operational_seconds = 0.0
-    previous_time = cutoff_time
+    previous_time = actual_cutoff
 
     for ts in sorted_timestamps:
         duration = (ts - previous_time).total_seconds()
@@ -149,7 +158,7 @@ def calculate_service_uptime_window(db: Session, service_id: int, cutoff_time: d
         operational_seconds += final_duration
 
     # Calculate percentage
-    total_seconds = (datetime.utcnow() - cutoff_time).total_seconds()
+    total_seconds = (datetime.utcnow() - actual_cutoff).total_seconds()
     if total_seconds > 0:
         uptime_percentage = (operational_seconds / total_seconds) * 100
         return round(uptime_percentage, 1)
