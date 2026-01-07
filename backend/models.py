@@ -55,6 +55,7 @@ class ServiceCreate(BaseModel):
     name: str
     description: Optional[str] = None
     category: Optional[str] = None
+    show_on_status_page: bool = False
 
 
 class ServiceResponse(BaseModel):
@@ -64,6 +65,7 @@ class ServiceResponse(BaseModel):
     category: Optional[str]
     created_at: datetime
     is_active: bool
+    show_on_status_page: bool
 
     class Config:
         from_attributes = True

@@ -351,6 +351,7 @@ def update_service(
     service.name = service_update.name
     service.description = service_update.description
     service.category = service_update.category
+    service.show_on_status_page = service_update.show_on_status_page
 
     db.commit()
     db.refresh(service)

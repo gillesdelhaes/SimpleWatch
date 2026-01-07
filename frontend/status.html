@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status - SimpleWatch</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/status.css">
+</head>
+<body>
+    <!-- Public Status Page - No Auth Required -->
+    <div class="status-container">
+        <!-- Header with Overall System Status -->
+        <header class="status-header">
+            <div class="status-brand">
+                <h1 class="status-logo">SimpleWatch</h1>
+                <p class="status-tagline">System Status</p>
+            </div>
+            <div id="overallStatus" class="overall-status">
+                <div class="overall-status-indicator">
+                    <div class="status-pulse"></div>
+                </div>
+                <div class="overall-status-text">
+                    <div class="overall-status-label">Loading...</div>
+                    <div class="overall-status-subtitle">Checking systems</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Services Grid -->
+        <main class="status-main">
+            <div id="servicesContainer" class="services-grid">
+                <!-- Services will be dynamically rendered here -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading status information...</p>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-status hidden">
+                <div class="empty-status-icon">✓</div>
+                <h2>All Systems Operational</h2>
+                <p>No services are currently being monitored publicly.</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="status-footer">
+            <div class="status-updated" id="lastUpdated">
+                Last updated: <span class="mono">--</span>
+            </div>
+            <div class="status-refresh-info">
+                Auto-refreshes every 30 seconds
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/status.js"></script>
+</body>
+</html>

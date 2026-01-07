@@ -47,6 +47,7 @@ class Service(Base):
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
     created_by = Column(Integer, ForeignKey("users.id"))
     is_active = Column(Boolean, default=True)
+    show_on_status_page = Column(Boolean, default=False)
 
     # Cached uptime data (updated by background job every 5 minutes)
     cached_uptime_percentage = Column(Integer)  # e.g., 99.5

@@ -13,7 +13,7 @@ from database import init_db, SessionLocal
 from utils.db import create_default_admin, initialize_encryption_key
 from scheduler import start_scheduler, stop_scheduler
 
-from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings, incidents
+from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings, incidents, public_status
 
 logging.basicConfig(
     level=logging.INFO,
@@ -72,7 +72,9 @@ async def setup_required_middleware(request: Request, call_next):
     public_paths = [
         "/api/v1/setup",
         "/api/v1/setup/status",
+        "/api/v1/status/public",
         "/setup",
+        "/status",
         "/health",
         "/static",
     ]
@@ -112,6 +114,7 @@ async def setup_required_middleware(request: Request, call_next):
 
 app.include_router(setup.router)
 app.include_router(auth.router)
+app.include_router(public_status.router)  # Register BEFORE dashboard to avoid route conflict
 app.include_router(dashboard.router)
 app.include_router(services.router)
 app.include_router(users.router)
@@ -136,6 +139,12 @@ def read_root():
 def health_check():
     """Health check endpoint for Docker."""
     return {"status": "healthy"}
+
+
+@app.get("/status")
+def read_status_page():
+    """Serve the public status page."""
+    return FileResponse(os.path.join(frontend_path, "status.html"))
 
 
 @app.exception_handler(404)

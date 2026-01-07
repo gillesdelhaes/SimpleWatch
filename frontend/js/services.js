@@ -43,7 +43,7 @@ async function loadServices() {
                         </div>
                     </div>
                     <div class="actions">
-                        <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}')">
+                        <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}', ${service.show_on_status_page || false})">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                         </button>
                         ${service.is_active ? `
@@ -219,11 +219,12 @@ function hideAddServiceModal() {
     document.getElementById('addServiceModal').classList.add('hidden');
 }
 
-async function showEditServiceModal(id, name, desc, cat) {
+async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = false) {
     document.getElementById('editServiceId').value = id;
     document.getElementById('editServiceName').value = name;
     document.getElementById('editServiceDescription').value = desc;
     document.getElementById('editServiceCategory').value = cat;
+    document.getElementById('editShowOnStatusPage').checked = showOnStatusPage;
 
     // Load notification settings for this service
     await loadNotificationSettingsForService(id);
@@ -382,7 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
             await api.updateService(id, {
                 name: document.getElementById('editServiceName').value,
                 description: document.getElementById('editServiceDescription').value,
-                category: document.getElementById('editServiceCategory').value
+                category: document.getElementById('editServiceCategory').value,
+                show_on_status_page: document.getElementById('editShowOnStatusPage').checked
             });
 
             // Update notification settings
