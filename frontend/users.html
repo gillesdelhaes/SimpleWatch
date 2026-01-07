@@ -31,12 +31,14 @@
             <form id="addUserForm">
                 <div class="form-group">
                     <label class="form-label">Username</label>
-                    <input type="text" id="newUsername" class="form-input" required minlength="3">
+                    <input type="text" id="newUsername" class="form-input">
+                    <div class="field-error" id="newUsernameError"></div>
                     <p class="form-hint" id="addUserUsernameHint">Minimum 3 characters</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="newPassword" class="form-input" required minlength="8">
+                    <input type="password" id="newPassword" class="form-input">
+                    <div class="field-error" id="newPasswordError"></div>
                     <p class="form-hint" id="addUserPasswordHint">Minimum 8 characters</p>
                 </div>
                 <div class="form-group">
@@ -68,15 +70,18 @@
                 <div id="currentPasswordField" class="form-group hidden">
                     <label class="form-label">Current Password</label>
                     <input type="password" id="currentPassword" class="form-input">
+                    <div class="field-error" id="currentPasswordError"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">New Password</label>
-                    <input type="password" id="changeNewPassword" class="form-input" required minlength="8">
+                    <input type="password" id="changeNewPassword" class="form-input">
+                    <div class="field-error" id="changeNewPasswordError"></div>
                     <p class="form-hint" id="changePasswordHint">Minimum 8 characters</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" class="form-input" required minlength="8">
+                    <input type="password" id="confirmNewPassword" class="form-input">
+                    <div class="field-error" id="confirmNewPasswordError"></div>
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Change Password</button>

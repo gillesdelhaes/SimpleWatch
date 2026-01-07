@@ -1316,6 +1316,40 @@ label {
 }
 
 /* ============================================
+   Form Field Validation Styles
+   ============================================ */
+
+.form-input.invalid,
+.form-group input.invalid {
+  border-color: var(--status-down);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-input.valid,
+.form-group input.valid {
+  border-color: var(--status-operational);
+}
+
+.field-error {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--status-down);
+  font-weight: 600;
+  display: none;
+}
+
+.field-error.visible {
+  display: block;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* ============================================
    Utility Classes
    ============================================ */
 

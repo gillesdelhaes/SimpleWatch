@@ -52,6 +52,16 @@ function validatePassword(password) {
         return { valid: false, error: `Password must be at least ${ValidationRules.password.minLength} characters long` };
     }
 
+    // Check for uppercase letter
+    if (!/[A-Z]/.test(password)) {
+        return { valid: false, error: 'Password must contain at least one uppercase letter' };
+    }
+
+    // Check for special character
+    if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+        return { valid: false, error: 'Password must contain at least one special character' };
+    }
+
     return { valid: true, error: '' };
 }
 
@@ -76,7 +86,7 @@ function validatePasswordMatch(password, confirmPassword) {
  * @returns {string} - Password requirements description
  */
 function getPasswordRequirements() {
-    return `Minimum ${ValidationRules.password.minLength} characters`;
+    return `Minimum ${ValidationRules.password.minLength} characters, one uppercase letter, one special character`;
 }
 
 /**

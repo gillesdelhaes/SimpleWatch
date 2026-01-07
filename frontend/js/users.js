@@ -62,6 +62,7 @@ function showAddUserModal() {
 function hideAddUserModal() {
     document.getElementById('addUserModal').classList.add('hidden');
     document.getElementById('addUserForm').reset();
+    clearAllFieldErrors();
 }
 
 function showChangePasswordModal(userId, username) {
@@ -82,11 +83,13 @@ function showChangePasswordModal(userId, username) {
 function hideChangePasswordModal() {
     document.getElementById('changePasswordModal').classList.add('hidden');
     document.getElementById('changePasswordForm').reset();
+    clearAllFieldErrors();
     changingUserId = null;
 }
 
 document.getElementById('addUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    clearAllFieldErrors();
 
     const username = document.getElementById('newUsername').value.trim();
     const password = document.getElementById('newPassword').value;
@@ -94,13 +97,13 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
     // Client-side validation using centralized rules
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.valid) {
-        showError(usernameValidation.error);
+        showFieldError('newUsername', 'newUsernameError', usernameValidation.error);
         return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
-        showError(passwordValidation.error);
+        showFieldError('newPassword', 'newPasswordError', passwordValidation.error);
         return;
     }
 
@@ -121,6 +124,7 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
 
 document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    clearAllFieldErrors();
 
     const newPassword = document.getElementById('changeNewPassword').value;
     const confirmPassword = document.getElementById('confirmNewPassword').value;
@@ -129,13 +133,13 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
     // Client-side validation using centralized rules
     const passwordValidation = validatePassword(newPassword);
     if (!passwordValidation.valid) {
-        showError(passwordValidation.error);
+        showFieldError('changeNewPassword', 'changeNewPasswordError', passwordValidation.error);
         return;
     }
 
     const passwordMatchValidation = validatePasswordMatch(newPassword, confirmPassword);
     if (!passwordMatchValidation.valid) {
-        showError(passwordMatchValidation.error);
+        showFieldError('confirmNewPassword', 'confirmNewPasswordError', passwordMatchValidation.error);
         return;
     }
 
@@ -169,15 +173,109 @@ async function deleteUser(userId, username) {
     }
 }
 
-// Real-time password match validation for change password form
-document.getElementById('confirmNewPassword').addEventListener('input', (e) => {
-    const password = document.getElementById('changeNewPassword').value;
-    const confirmPassword = e.target.value;
+// Real-time validation for Add User form
+document.getElementById('newUsername').addEventListener('blur', (e) => {
+    const username = e.target.value.trim();
+    if (username) {
+        const validation = validateUsername(username);
+        if (!validation.valid) {
+            showFieldError('newUsername', 'newUsernameError', validation.error);
+        } else {
+            clearFieldError('newUsername', 'newUsernameError');
+            markFieldValid('newUsername');
+        }
+    }
+});
 
-    if (confirmPassword && password !== confirmPassword) {
-        e.target.style.borderColor = 'var(--status-down)';
+document.getElementById('newUsername').addEventListener('input', (e) => {
+    if (e.target.classList.contains('invalid')) {
+        const username = e.target.value.trim();
+        const validation = validateUsername(username);
+        if (validation.valid) {
+            clearFieldError('newUsername', 'newUsernameError');
+            markFieldValid('newUsername');
+        }
+    }
+});
+
+document.getElementById('newPassword').addEventListener('blur', (e) => {
+    const password = e.target.value;
+    if (password) {
+        const validation = validatePassword(password);
+        if (!validation.valid) {
+            showFieldError('newPassword', 'newPasswordError', validation.error);
+        } else {
+            clearFieldError('newPassword', 'newPasswordError');
+            markFieldValid('newPassword');
+        }
+    }
+});
+
+document.getElementById('newPassword').addEventListener('input', (e) => {
+    if (e.target.classList.contains('invalid')) {
+        const password = e.target.value;
+        const validation = validatePassword(password);
+        if (validation.valid) {
+            clearFieldError('newPassword', 'newPasswordError');
+            markFieldValid('newPassword');
+        }
+    }
+});
+
+// Real-time validation for Change Password form
+document.getElementById('changeNewPassword').addEventListener('blur', (e) => {
+    const password = e.target.value;
+    if (password) {
+        const validation = validatePassword(password);
+        if (!validation.valid) {
+            showFieldError('changeNewPassword', 'changeNewPasswordError', validation.error);
+        } else {
+            clearFieldError('changeNewPassword', 'changeNewPasswordError');
+            markFieldValid('changeNewPassword');
+        }
+    }
+});
+
+document.getElementById('changeNewPassword').addEventListener('input', (e) => {
+    if (e.target.classList.contains('invalid')) {
+        const password = e.target.value;
+        const validation = validatePassword(password);
+        if (validation.valid) {
+            clearFieldError('changeNewPassword', 'changeNewPasswordError');
+            markFieldValid('changeNewPassword');
+        }
+    }
+    // Also revalidate confirm password if it has a value
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+    if (confirmPassword) {
+        validateConfirmPasswordField();
+    }
+});
+
+// Real-time password match validation
+function validateConfirmPasswordField() {
+    const password = document.getElementById('changeNewPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+    if (!confirmPassword) {
+        showFieldError('confirmNewPassword', 'confirmNewPasswordError', 'Please confirm your password');
+    } else if (password !== confirmPassword) {
+        showFieldError('confirmNewPassword', 'confirmNewPasswordError', 'Passwords do not match');
     } else {
-        e.target.style.borderColor = 'var(--border-color)';
+        clearFieldError('confirmNewPassword', 'confirmNewPasswordError');
+        markFieldValid('confirmNewPassword');
+    }
+}
+
+document.getElementById('confirmNewPassword').addEventListener('blur', (e) => {
+    if (e.target.value) {
+        validateConfirmPasswordField();
+    }
+});
+
+document.getElementById('confirmNewPassword').addEventListener('input', (e) => {
+    if (e.target.value && e.target.classList.contains('invalid')) {
+        validateConfirmPasswordField();
     }
 });
 

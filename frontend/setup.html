@@ -223,35 +223,6 @@
             line-height: 1.5;
         }
 
-        /* Password requirements */
-        .password-requirements {
-            margin-top: 0.75rem;
-            padding: 1rem;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-        }
-
-        .password-requirements ul {
-            margin: 0.5rem 0 0 0;
-            padding-left: 1.5rem;
-            list-style: none;
-        }
-
-        .password-requirements li {
-            margin-bottom: 0.25rem;
-            position: relative;
-        }
-
-        .password-requirements li::before {
-            content: '•';
-            position: absolute;
-            left: -1rem;
-            color: var(--accent-primary);
-        }
-
         /* Submit button */
         .submit-btn {
             width: 100%;
@@ -325,12 +296,6 @@
             color: var(--status-operational);
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
         /* Theme toggle */
         .corner-theme-toggle {
             position: fixed;
@@ -390,11 +355,10 @@
                     type="text"
                     id="username"
                     name="username"
-                    required
-                    minlength="3"
                     placeholder="Choose admin username"
                     autocomplete="off"
                 >
+                <div class="field-error" id="usernameError"></div>
                 <div class="form-help" id="usernameHint">Minimum 3 characters</div>
             </div>
 
@@ -404,17 +368,11 @@
                     type="password"
                     id="password"
                     name="password"
-                    required
-                    minlength="8"
                     placeholder="Create secure password"
                     autocomplete="new-password"
                 >
-                <div class="password-requirements" id="passwordRequirements">
-                    <strong>Password Requirements:</strong>
-                    <ul>
-                        <li>Minimum 8 characters</li>
-                    </ul>
-                </div>
+                <div class="field-error" id="passwordError"></div>
+                <div class="form-help" id="passwordHint">Minimum 8 characters</div>
             </div>
 
             <div class="form-group">
@@ -423,11 +381,10 @@
                     type="password"
                     id="confirmPassword"
                     name="confirmPassword"
-                    required
-                    minlength="8"
                     placeholder="Re-enter password"
                     autocomplete="new-password"
                 >
+                <div class="field-error" id="confirmPasswordError"></div>
             </div>
 
             <div class="checkbox-group">
@@ -477,12 +434,7 @@
 
         // Set validation hints from centralized rules
         document.getElementById('usernameHint').textContent = getUsernameRequirements();
-        document.getElementById('passwordRequirements').innerHTML = `
-            <strong>Password Requirements:</strong>
-            <ul>
-                <li>${getPasswordRequirements()}</li>
-            </ul>
-        `;
+        document.getElementById('passwordHint').textContent = getPasswordRequirements();
 
         function showMessage(text, type = 'error') {
             messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
@@ -495,6 +447,7 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             clearMessage();
+            clearAllFieldErrors();
 
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
@@ -504,19 +457,19 @@
             // Client-side validation using centralized rules
             const usernameValidation = validateUsername(username);
             if (!usernameValidation.valid) {
-                showMessage(usernameValidation.error);
+                showFieldError('username', 'usernameError', usernameValidation.error);
                 return;
             }
 
             const passwordValidation = validatePassword(password);
             if (!passwordValidation.valid) {
-                showMessage(passwordValidation.error);
+                showFieldError('password', 'passwordError', passwordValidation.error);
                 return;
             }
 
             const passwordMatchValidation = validatePasswordMatch(password, confirmPassword);
             if (!passwordMatchValidation.valid) {
-                showMessage(passwordMatchValidation.error);
+                showFieldError('confirmPassword', 'confirmPasswordError', passwordMatchValidation.error);
                 return;
             }
 
@@ -559,15 +512,89 @@
             }
         });
 
-        // Real-time password match validation
-        document.getElementById('confirmPassword').addEventListener('input', (e) => {
-            const password = document.getElementById('password').value;
-            const confirmPassword = e.target.value;
-
-            if (confirmPassword && password !== confirmPassword) {
-                e.target.style.borderColor = 'var(--status-down)';
+        // Real-time username validation
+        document.getElementById('username').addEventListener('blur', (e) => {
+            const username = e.target.value.trim();
+            if (!username) {
+                showFieldError('username', 'usernameError', 'Username is required');
             } else {
-                e.target.style.borderColor = 'var(--border-color)';
+                const validation = validateUsername(username);
+                if (!validation.valid) {
+                    showFieldError('username', 'usernameError', validation.error);
+                } else {
+                    clearFieldError('username', 'usernameError');
+                    markFieldValid('username');
+                }
+            }
+        });
+
+        document.getElementById('username').addEventListener('input', (e) => {
+            if (e.target.classList.contains('invalid')) {
+                const username = e.target.value.trim();
+                const validation = validateUsername(username);
+                if (validation.valid) {
+                    clearFieldError('username', 'usernameError');
+                    markFieldValid('username');
+                }
+            }
+        });
+
+        // Real-time password validation
+        document.getElementById('password').addEventListener('blur', (e) => {
+            const password = e.target.value;
+            if (!password) {
+                showFieldError('password', 'passwordError', 'Password is required');
+            } else {
+                const validation = validatePassword(password);
+                if (!validation.valid) {
+                    showFieldError('password', 'passwordError', validation.error);
+                } else {
+                    clearFieldError('password', 'passwordError');
+                    markFieldValid('password');
+                }
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            if (e.target.classList.contains('invalid')) {
+                const password = e.target.value;
+                const validation = validatePassword(password);
+                if (validation.valid) {
+                    clearFieldError('password', 'passwordError');
+                    markFieldValid('password');
+                }
+            }
+            // Also revalidate confirm password if it has a value
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (confirmPassword) {
+                validateConfirmPasswordField();
+            }
+        });
+
+        // Real-time password match validation
+        function validateConfirmPasswordField() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!confirmPassword) {
+                showFieldError('confirmPassword', 'confirmPasswordError', 'Please confirm your password');
+            } else if (password !== confirmPassword) {
+                showFieldError('confirmPassword', 'confirmPasswordError', 'Passwords do not match');
+            } else {
+                clearFieldError('confirmPassword', 'confirmPasswordError');
+                markFieldValid('confirmPassword');
+            }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('blur', (e) => {
+            if (e.target.value) {
+                validateConfirmPasswordField();
+            }
+        });
+
+        document.getElementById('confirmPassword').addEventListener('input', (e) => {
+            if (e.target.value && (e.target.classList.contains('invalid') || e.target.value.length >= getPasswordMinLength())) {
+                validateConfirmPasswordField();
             }
         });
     </script>

@@ -69,3 +69,62 @@ function insertThemeToggle(containerId) {
         container.innerHTML = themeManager.createToggleHTML();
     }
 }
+
+// ============================================
+// Form Field Validation UI Helpers
+// ============================================
+
+/**
+ * Show validation error on a field
+ * @param {string} fieldId - ID of the input field
+ * @param {string} errorId - ID of the error message element
+ * @param {string} message - Error message to display
+ */
+function showFieldError(fieldId, errorId, message) {
+    const field = document.getElementById(fieldId);
+    const error = document.getElementById(errorId);
+    if (field && error) {
+        field.classList.add('invalid');
+        field.classList.remove('valid');
+        error.textContent = message;
+        error.classList.add('visible');
+    }
+}
+
+/**
+ * Clear validation error from a field
+ * @param {string} fieldId - ID of the input field
+ * @param {string} errorId - ID of the error message element
+ */
+function clearFieldError(fieldId, errorId) {
+    const field = document.getElementById(fieldId);
+    const error = document.getElementById(errorId);
+    if (field && error) {
+        field.classList.remove('invalid');
+        error.classList.remove('visible');
+    }
+}
+
+/**
+ * Mark a field as valid
+ * @param {string} fieldId - ID of the input field
+ */
+function markFieldValid(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.remove('invalid');
+        field.classList.add('valid');
+    }
+}
+
+/**
+ * Clear all validation states from all form fields
+ */
+function clearAllFieldErrors() {
+    document.querySelectorAll('.form-input, .form-group input').forEach(input => {
+        input.classList.remove('invalid', 'valid');
+    });
+    document.querySelectorAll('.field-error').forEach(error => {
+        error.classList.remove('visible');
+    });
+}
