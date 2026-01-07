@@ -8,42 +8,12 @@ from sqlalchemy.orm import Session
 from database import get_db, StatusUpdate, Service, User
 from models import StatusResponse
 from api.auth import get_current_user
+from utils.service_status import calculate_service_status_from_counts
 from datetime import datetime
 import json
 from typing import List, Optional
 
 router = APIRouter(prefix="/api/v1", tags=["dashboard"])
-
-
-def calculate_service_status_from_counts(operational: int, degraded: int, down: int) -> str:
-    """
-    Calculate overall service status from monitor status counts.
-
-    Rules:
-    - All operational → operational
-    - All down → down
-    - Mixed → degraded
-    - No valid statuses → unknown
-
-    Args:
-        operational: Count of operational monitors
-        degraded: Count of degraded monitors
-        down: Count of down monitors
-
-    Returns:
-        Overall status: 'operational', 'degraded', 'down', or 'unknown'
-    """
-    total_monitors = operational + degraded + down
-
-    if total_monitors == 0:
-        return "unknown"
-    elif operational == total_monitors:
-        return "operational"
-    elif down == total_monitors:
-        return "down"
-    else:
-        # Some monitors failing = degraded
-        return "degraded"
 
 
 # ============================================
