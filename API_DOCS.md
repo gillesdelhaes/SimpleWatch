@@ -988,6 +988,89 @@ Configure notification settings for a service.
 - Email requires SMTP configuration
 - Webhooks require active, tested channels
 
+#### PUT /api/v1/notifications/channels/{channel_id}
+
+Update an existing notification channel.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "label": "Updated Slack",
+  "webhook_url": "https://hooks.slack.com/services/new/url",
+  "secret_token": "optional_secret",
+  "custom_payload_template": "{\"text\": \"{{service_name}} is {{new_status}}\"}"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "label": "Updated Slack",
+  "channel_type": "slack",
+  "is_active": true,
+  "is_tested": false
+}
+```
+
+#### GET /api/v1/notifications/logs
+
+Get notification delivery logs.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `limit` (optional): Number of logs to return (default: 50)
+- `offset` (optional): Offset for pagination (default: 0)
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": 123,
+      "timestamp": "2025-01-06T10:30:00Z",
+      "service_name": "Payment Gateway",
+      "channel": "Team Slack",
+      "status_change": "operational → down",
+      "delivery_status": "success",
+      "error_message": null
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/notifications/logs?limit=100&offset=0"
+```
+
+#### GET /api/v1/notifications/logs/export
+
+Export all notification logs as CSV.
+
+**Requires:** JWT authentication
+
+**Response:** CSV file download
+
+**CSV Columns:**
+- Timestamp
+- Service
+- Channel
+- Status Change
+- Delivery Status
+- Error Message
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:5050/api/v1/notifications/logs/export" \
+  -o notification_logs.csv
+```
+
 ---
 
 ### Incidents
@@ -1221,11 +1304,140 @@ Regenerate API key for current user.
 }
 ```
 
+#### PUT /api/v1/users/{user_id}/password
+
+Change password for a user (admin only).
+
+**Requires:** JWT authentication + admin privileges
+
+**Request:**
+```json
+{
+  "new_password": "new_secure_password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Password updated successfully"
+}
+```
+
+**Notes:**
+- Password must meet minimum requirements (8+ characters)
+- User will need to login with new password
+
 #### DELETE /api/v1/users/{user_id}
 
 Delete a user (admin only).
 
 **Requires:** JWT authentication + admin privileges
+
+---
+
+### Setup
+
+First-run setup endpoints. These endpoints are only available when SimpleWatch has not been set up yet.
+
+#### GET /api/v1/setup/status
+
+Check if system setup has been completed.
+
+**Requires:** No authentication (public endpoint)
+
+**Response:**
+```json
+{
+  "setup_completed": false
+}
+```
+
+**Notes:**
+- Returns `true` if admin account exists and setup is complete
+- Returns `false` if system needs initial setup
+- Used by frontend to redirect to setup page or login page
+
+#### POST /api/v1/setup
+
+Complete first-run setup by creating admin account.
+
+**Requires:** No authentication (public endpoint, only works if setup not completed)
+
+**Request:**
+```json
+{
+  "username": "admin",
+  "password": "secure_password_here",
+  "confirm_password": "secure_password_here",
+  "create_examples": true
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Setup completed successfully",
+  "username": "admin"
+}
+```
+
+**Notes:**
+- This endpoint only works when `setup_completed` is `false`
+- Creates admin user account with provided credentials
+- If `create_examples` is true, creates 4 example monitors (Google Search, Slow API, Disk Usage, Cloudflare DNS)
+- Password must be minimum 8 characters
+- After setup, redirect to login page
+
+---
+
+### Settings
+
+System settings endpoints.
+
+#### GET /api/v1/settings/retention
+
+Get current data retention policy.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "retention_days": 90
+}
+```
+
+#### POST /api/v1/settings/retention
+
+Update data retention policy.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "retention_days": 30
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Retention policy updated to 30 days",
+  "retention_days": 30
+}
+```
+
+**Notes:**
+- Sets how many days of StatusUpdate history to keep
+- Older data is automatically cleaned up daily by scheduler
+- Changes take effect immediately
+- Minimum value: 1 day
+- Common values: 30, 60, 90, 180, 365 days
 
 ---
 
