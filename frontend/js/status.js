@@ -114,11 +114,10 @@ function renderServiceCard(service) {
     const statusClass = service.status || 'unknown';
     const statusText = service.status.charAt(0).toUpperCase() + service.status.slice(1);
 
-    // Recent incidents (last 7 days)
+    // Recent incidents (ongoing or last resolved within 48h)
     const incidents = service.recent_incidents || [];
-    const incidentsHtml = incidents.length > 0
-        ? incidents.map(incident => renderIncident(incident)).join('')
-        : '<div class="no-incidents">No incidents in the last 7 days</div>';
+    const hasOngoing = incidents.some(i => i.status === 'ongoing');
+    const incidentHeader = hasOngoing ? 'Active Incident' : 'Recent Incident';
 
     return `
         <div class="service-card ${statusClass} fade-in">
@@ -143,9 +142,9 @@ function renderServiceCard(service) {
 
             ${incidents.length > 0 ? `
                 <div class="incidents-section">
-                    <div class="incidents-header">Recent Incidents (7 days)</div>
+                    <div class="incidents-header">${incidentHeader}</div>
                     <div class="incident-list">
-                        ${incidentsHtml}
+                        ${incidents.map(incident => renderIncident(incident)).join('')}
                     </div>
                 </div>
             ` : ''}

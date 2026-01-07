@@ -40,19 +40,43 @@ def get_public_status(db: Session = Depends(get_db)):
         if uptime_percentage is None:
             uptime_percentage = 100.0
 
-        # Get recent incidents (last 7 days)
-        recent_incidents = db.query(Incident).filter(
+        # Get incidents for public display:
+        # - Always show ongoing incidents
+        # - Show last resolved incident only if within 48 hours
+        incidents_data = []
+        forty_eight_hours_ago = datetime.utcnow() - timedelta(hours=48)
+
+        # Get ongoing incidents (always show)
+        ongoing_incidents = db.query(Incident).filter(
             Incident.service_id == service.id,
-            Incident.started_at >= seven_days_ago
+            Incident.status == "ongoing"
         ).order_by(Incident.started_at.desc()).all()
 
-        incidents_data = [{
-            "started_at": incident.started_at.isoformat(),
-            "ended_at": incident.ended_at.isoformat() if incident.ended_at else None,
-            "duration_seconds": incident.duration_seconds,
-            "severity": incident.severity,
-            "status": incident.status
-        } for incident in recent_incidents]
+        for incident in ongoing_incidents:
+            incidents_data.append({
+                "started_at": incident.started_at.isoformat(),
+                "ended_at": None,
+                "duration_seconds": None,
+                "severity": incident.severity,
+                "status": "ongoing"
+            })
+
+        # Get last resolved incident if within 48 hours
+        if not ongoing_incidents:
+            last_resolved = db.query(Incident).filter(
+                Incident.service_id == service.id,
+                Incident.status == "resolved",
+                Incident.ended_at >= forty_eight_hours_ago
+            ).order_by(Incident.ended_at.desc()).first()
+
+            if last_resolved:
+                incidents_data.append({
+                    "started_at": last_resolved.started_at.isoformat(),
+                    "ended_at": last_resolved.ended_at.isoformat(),
+                    "duration_seconds": last_resolved.duration_seconds,
+                    "severity": last_resolved.severity,
+                    "status": "resolved"
+                })
 
         result.append({
             "service_name": service.name,
