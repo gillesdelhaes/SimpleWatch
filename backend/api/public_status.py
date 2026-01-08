@@ -78,13 +78,18 @@ def get_public_status(db: Session = Depends(get_db)):
                     "status": "resolved"
                 })
 
+        # Get maintenance info for public display
+        from api.maintenance import get_service_maintenance_info
+        maintenance_info = get_service_maintenance_info(db, service.id)
+
         result.append({
             "service_name": service.name,
             "description": service.description,
             "status": status_data["status"],
             "last_checked": status_data["latest_timestamp"].isoformat() if status_data["latest_timestamp"] else None,
             "uptime_7d": round(uptime_percentage, 2),
-            "recent_incidents": incidents_data
+            "recent_incidents": incidents_data,
+            "maintenance": maintenance_info
         })
 
     return {

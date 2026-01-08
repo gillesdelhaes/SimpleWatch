@@ -119,6 +119,11 @@ function renderServiceCard(service) {
     const hasOngoing = incidents.some(i => i.status === 'ongoing');
     const incidentHeader = hasOngoing ? 'Active Incident' : 'Recent Incident';
 
+    // Maintenance banner
+    const maintenanceBanner = typeof renderStatusMaintenanceBanner === 'function'
+        ? renderStatusMaintenanceBanner(service.maintenance)
+        : '';
+
     return `
         <div class="service-card ${statusClass} fade-in">
             <div class="service-header">
@@ -128,6 +133,8 @@ function renderServiceCard(service) {
                     ${statusText}
                 </div>
             </div>
+
+            ${maintenanceBanner}
 
             <div class="service-metrics">
                 <div class="metric-box">

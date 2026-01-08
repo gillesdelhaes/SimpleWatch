@@ -268,3 +268,52 @@ class ErrorResponse(BaseModel):
     success: bool = False
     error: str
     error_code: str
+
+
+# ============================================
+# Maintenance Window Models
+# ============================================
+
+class MaintenanceWindowBase(BaseModel):
+    service_id: int
+    start_time: datetime
+    end_time: datetime
+    recurrence_type: str = Field(
+        default="none",
+        pattern="^(none|daily|weekly|monthly|monthly_weekday)$"
+    )
+    recurrence_config: Optional[Dict[str, Any]] = None
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class MaintenanceWindowCreate(MaintenanceWindowBase):
+    pass
+
+
+class MaintenanceWindowUpdate(BaseModel):
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    recurrence_type: Optional[str] = Field(
+        default=None,
+        pattern="^(none|daily|weekly|monthly|monthly_weekday)$"
+    )
+    recurrence_config: Optional[Dict[str, Any]] = None
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class MaintenanceWindowResponse(BaseModel):
+    id: int
+    service_id: int
+    service_name: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    recurrence_type: str
+    recurrence_config: Optional[Dict[str, Any]] = None
+    reason: Optional[str] = None
+    status: str
+    created_at: datetime
+    created_by: Optional[int] = None
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

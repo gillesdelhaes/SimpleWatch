@@ -158,12 +158,19 @@ def update_service_incidents(db: Session, service_id: int):
 def should_send_notification(db: Session, service_id: int, new_status: str) -> bool:
     """
     Check if notification should be sent based on:
-    1. Service has notifications enabled
-    2. Status actually changed
-    3. Cooldown period elapsed (except for recovery)
+    1. Service is not in maintenance mode
+    2. Service has notifications enabled
+    3. Status actually changed
+    4. Cooldown period elapsed (except for recovery)
 
     Returns: True if should notify
     """
+    # Check if service is in maintenance - suppress all notifications during maintenance
+    from api.maintenance import is_service_in_maintenance
+    if is_service_in_maintenance(db, service_id):
+        logger.info(f"Skipping notification for service {service_id} - in maintenance window")
+        return False
+
     settings = db.query(ServiceNotificationSettings).filter(
         ServiceNotificationSettings.service_id == service_id
     ).first()

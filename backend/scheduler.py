@@ -8,7 +8,7 @@ import inspect
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings
+from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings, MaintenanceWindow
 from monitors.base import BaseMonitor
 from utils.service_helpers import (
     calculate_service_status, send_service_notification, update_service_incidents
@@ -247,6 +247,209 @@ def update_cached_uptime():
         db.close()
 
 
+def update_maintenance_windows():
+    """
+    Update maintenance window statuses.
+    - Activate scheduled windows when start_time is reached
+    - Complete active windows when end_time is reached
+    - Handle recurring windows by creating next occurrence
+
+    Runs every minute to ensure timely status updates.
+    """
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+
+        # Activate scheduled windows that should now be active
+        scheduled_windows = db.query(MaintenanceWindow).filter(
+            MaintenanceWindow.status == "scheduled",
+            MaintenanceWindow.start_time <= now,
+            MaintenanceWindow.end_time > now
+        ).all()
+
+        for window in scheduled_windows:
+            window.status = "active"
+            logger.info(f"Activated maintenance window {window.id} for service {window.service_id}")
+
+        # Complete active windows that have ended
+        active_windows = db.query(MaintenanceWindow).filter(
+            MaintenanceWindow.status == "active",
+            MaintenanceWindow.end_time <= now
+        ).all()
+
+        for window in active_windows:
+            window.status = "completed"
+            logger.info(f"Completed maintenance window {window.id} for service {window.service_id}")
+
+            # Handle recurring windows - create next occurrence
+            if window.recurrence_type != "none":
+                next_window = create_next_recurring_window(db, window)
+                if next_window:
+                    db.add(next_window)
+                    logger.info(f"Created next recurring maintenance window for service {window.service_id}")
+
+        db.commit()
+
+    except Exception as e:
+        logger.error(f"Error updating maintenance windows: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def create_next_recurring_window(db, window: MaintenanceWindow) -> MaintenanceWindow:
+    """
+    Create the next occurrence of a recurring maintenance window.
+
+    Args:
+        db: Database session
+        window: The completed maintenance window
+
+    Returns:
+        New MaintenanceWindow or None if creation fails
+    """
+    import json
+
+    try:
+        config = json.loads(window.recurrence_config) if window.recurrence_config else {}
+        duration = window.end_time - window.start_time
+
+        if window.recurrence_type == "daily":
+            # Next day, same time
+            next_start = window.start_time + timedelta(days=1)
+
+        elif window.recurrence_type == "weekly":
+            # Find next occurrence based on configured days
+            days = config.get("days", [])  # List of weekdays (0=Monday)
+            if not days:
+                return None
+
+            current_day = window.start_time.weekday()
+            next_start = None
+
+            # Find the next configured day
+            for i in range(1, 8):  # Check up to 7 days ahead
+                check_day = (current_day + i) % 7
+                if check_day in days:
+                    next_start = window.start_time + timedelta(days=i)
+                    break
+
+            if not next_start:
+                return None
+
+        elif window.recurrence_type == "monthly":
+            # Same day of month
+            day_of_month = config.get("day", window.start_time.day)
+
+            # Move to next month
+            if window.start_time.month == 12:
+                next_year = window.start_time.year + 1
+                next_month = 1
+            else:
+                next_year = window.start_time.year
+                next_month = window.start_time.month + 1
+
+            # Handle last day of month
+            if day_of_month == -1:
+                # Last day of next month
+                if next_month == 12:
+                    next_start = datetime(next_year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    next_start = datetime(next_year, next_month + 1, 1) - timedelta(days=1)
+                next_start = next_start.replace(
+                    hour=window.start_time.hour,
+                    minute=window.start_time.minute,
+                    second=window.start_time.second
+                )
+            else:
+                # Specific day of month (handle months with fewer days)
+                import calendar
+                max_day = calendar.monthrange(next_year, next_month)[1]
+                actual_day = min(day_of_month, max_day)
+                next_start = window.start_time.replace(
+                    year=next_year,
+                    month=next_month,
+                    day=actual_day
+                )
+
+        elif window.recurrence_type == "monthly_weekday":
+            # e.g., "2nd Sunday" or "last Friday"
+            week = config.get("week", 1)  # 1-4 or -1 for last
+            day = config.get("day", 0)  # 0=Monday, 6=Sunday
+
+            # Move to next month
+            if window.start_time.month == 12:
+                next_year = window.start_time.year + 1
+                next_month = 1
+            else:
+                next_year = window.start_time.year
+                next_month = window.start_time.month + 1
+
+            next_start = get_nth_weekday_of_month(next_year, next_month, day, week)
+            if next_start:
+                next_start = next_start.replace(
+                    hour=window.start_time.hour,
+                    minute=window.start_time.minute,
+                    second=window.start_time.second
+                )
+            else:
+                return None
+
+        else:
+            return None
+
+        # Create new window
+        return MaintenanceWindow(
+            service_id=window.service_id,
+            start_time=next_start,
+            end_time=next_start + duration,
+            recurrence_type=window.recurrence_type,
+            recurrence_config=window.recurrence_config,
+            reason=window.reason,
+            status="scheduled",
+            created_by=window.created_by
+        )
+
+    except Exception as e:
+        logger.error(f"Error creating next recurring window: {e}")
+        return None
+
+
+def get_nth_weekday_of_month(year: int, month: int, weekday: int, n: int) -> datetime:
+    """
+    Get the nth occurrence of a weekday in a month.
+
+    Args:
+        year: Year
+        month: Month (1-12)
+        weekday: Day of week (0=Monday, 6=Sunday)
+        n: Which occurrence (1-4, or -1 for last)
+
+    Returns:
+        datetime or None if not found
+    """
+    import calendar
+
+    # Get all days in the month
+    cal = calendar.monthcalendar(year, month)
+
+    if n == -1:
+        # Last occurrence
+        for week in reversed(cal):
+            if week[weekday] != 0:
+                return datetime(year, month, week[weekday])
+    else:
+        # Nth occurrence
+        count = 0
+        for week in cal:
+            if week[weekday] != 0:
+                count += 1
+                if count == n:
+                    return datetime(year, month, week[weekday])
+
+    return None
+
+
 def start_scheduler():
     """Start the APScheduler background scheduler."""
     global scheduler
@@ -278,6 +481,14 @@ def start_scheduler():
         trigger=IntervalTrigger(minutes=5),
         id='uptime_cache_scheduler',
         name='Update cached uptime every 5 minutes',
+        replace_existing=True
+    )
+
+    scheduler.add_job(
+        func=update_maintenance_windows,
+        trigger=IntervalTrigger(minutes=1),
+        id='maintenance_window_scheduler',
+        name='Update maintenance window statuses every minute',
         replace_existing=True
     )
 

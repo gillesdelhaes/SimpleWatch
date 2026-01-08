@@ -59,6 +59,7 @@ class Service(Base):
     status_updates = relationship("StatusUpdate", back_populates="service", cascade="all, delete-orphan")
     monitors = relationship("Monitor", back_populates="service", cascade="all, delete-orphan")
     incidents = relationship("Incident", back_populates="service", cascade="all, delete-orphan")
+    maintenance_windows = relationship("MaintenanceWindow", back_populates="service", cascade="all, delete-orphan")
 
 
 class StatusUpdate(Base):
@@ -194,6 +195,41 @@ class Incident(Base):
 
     # Relationships
     service = relationship("Service", back_populates="incidents")
+
+
+class MaintenanceWindow(Base):
+    __tablename__ = "maintenance_windows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey("services.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Time window
+    start_time = Column(TIMESTAMP, nullable=False, index=True)
+    end_time = Column(TIMESTAMP, nullable=False)
+
+    # Recurrence settings
+    # Types: 'none', 'daily', 'weekly', 'monthly', 'monthly_weekday'
+    recurrence_type = Column(String(50), nullable=False, default="none")
+    # JSON config for recurrence details:
+    # - weekly: {"days": [0, 2, 4]} (Mon, Wed, Fri - 0=Monday)
+    # - monthly: {"day": 15} or {"day": -1} for last day
+    # - monthly_weekday: {"week": 2, "day": 6} (2nd Sunday - week 1-4 or -1 for last, day 0-6)
+    recurrence_config = Column(Text)
+
+    # Optional description
+    reason = Column(String(500))
+
+    # Status: 'scheduled', 'active', 'completed', 'cancelled'
+    status = Column(String(50), nullable=False, default="scheduled", index=True)
+
+    # Metadata
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    service = relationship("Service", back_populates="maintenance_windows")
+    creator = relationship("User")
 
 
 class EncryptionKey(Base):

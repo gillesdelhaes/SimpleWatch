@@ -56,8 +56,14 @@ function createStatusWidget(service) {
         ? getMonitorSummary(service.monitors)
         : '';
 
+    const inMaintenance = service.maintenance && service.maintenance.in_maintenance;
+    const maintenanceBadge = typeof renderMaintenanceBadge === 'function'
+        ? renderMaintenanceBadge(service.maintenance)
+        : '';
+
     return `
-        <div class="service-card" onclick="openMonitorModal(${service.service_id})">
+        <div class="service-card${inMaintenance ? ' in-maintenance' : ''}" onclick="openMonitorModal(${service.service_id})">
+            ${maintenanceBadge}
             <div class="service-header">
                 <div class="service-name">${service.service}</div>
                 <div class="service-status-dot ${getStatusClass(service.status)}"></div>

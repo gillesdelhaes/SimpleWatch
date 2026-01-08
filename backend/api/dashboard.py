@@ -136,6 +136,10 @@ def get_all_status(
                 "period_label": service.cached_uptime_period_label
             }
 
+        # Get maintenance info
+        from api.maintenance import get_service_maintenance_info
+        maintenance_info = get_service_maintenance_info(db, service.id)
+
         # Include service if it has monitors or has been checked
         if monitor_statuses or latest_timestamp:
             result.append({
@@ -146,7 +150,8 @@ def get_all_status(
                 "response_time_ms": aggregate_response_time,
                 "monitor_count": len(monitors),
                 "monitors": monitor_statuses,
-                "uptime": uptime_data
+                "uptime": uptime_data,
+                "maintenance": maintenance_info
             })
 
     return {"services": result}

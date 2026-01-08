@@ -1,0 +1,565 @@
+/**
+ * Maintenance Windows Styles
+ * Violet accents for maintenance indicators only
+ */
+
+/* ============================================
+   Color Variables
+   ============================================ */
+
+:root {
+  --maintenance-primary: #8b5cf6;
+  --maintenance-secondary: #7c3aed;
+  --maintenance-bg: rgba(139, 92, 246, 0.08);
+  --maintenance-border: rgba(139, 92, 246, 0.3);
+  --maintenance-glow: rgba(139, 92, 246, 0.25);
+}
+
+[data-theme="dark"] {
+  --maintenance-primary: #a78bfa;
+  --maintenance-secondary: #8b5cf6;
+  --maintenance-bg: rgba(167, 139, 250, 0.12);
+  --maintenance-border: rgba(167, 139, 250, 0.4);
+  --maintenance-glow: rgba(167, 139, 250, 0.3);
+}
+
+/* ============================================
+   Maintenance Badge (Dashboard)
+   ============================================ */
+
+.maintenance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.maintenance-badge-active {
+  background: var(--maintenance-bg);
+  color: var(--maintenance-primary);
+  border: 1px solid var(--maintenance-border);
+  box-shadow: 0 0 12px var(--maintenance-glow);
+  animation: maintenancePulse 3s ease-in-out infinite;
+}
+
+.maintenance-badge-scheduled {
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .maintenance-badge-scheduled {
+  background: rgba(96, 165, 250, 0.1);
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.maintenance-badge .icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: inherit;
+}
+
+@keyframes maintenancePulse {
+  0%, 100% { box-shadow: 0 0 12px var(--maintenance-glow); }
+  50% { box-shadow: 0 0 20px var(--maintenance-glow), 0 0 30px var(--maintenance-glow); }
+}
+
+/* ============================================
+   Dashboard Card Maintenance Overlay
+   ============================================ */
+
+.service-card.in-maintenance {
+  position: relative;
+}
+
+.service-card.in-maintenance::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--maintenance-primary), var(--maintenance-secondary));
+  border-radius: 1rem 1rem 0 0;
+  animation: maintenanceStripe 2s linear infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes maintenanceStripe {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.maintenance-badge-container {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+}
+
+.service-card.in-maintenance .service-status-dot {
+  display: none;
+}
+
+/* ============================================
+   Public Status Page Banner
+   ============================================ */
+
+.status-maintenance-banner {
+  background: linear-gradient(135deg, var(--maintenance-bg) 0%, transparent 100%);
+  border: 1px solid var(--maintenance-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  animation: bannerGlow 4s ease-in-out infinite;
+}
+
+.status-maintenance-banner.scheduled {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, transparent 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  animation: none;
+}
+
+[data-theme="dark"] .status-maintenance-banner.scheduled {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, transparent 100%);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+@keyframes bannerGlow {
+  0%, 100% { box-shadow: 0 0 0 transparent; }
+  50% { box-shadow: 0 0 20px var(--maintenance-glow); }
+}
+
+.maintenance-banner-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--maintenance-primary);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-maintenance-banner.scheduled .maintenance-banner-icon {
+  background: #3b82f6;
+}
+
+[data-theme="dark"] .status-maintenance-banner.scheduled .maintenance-banner-icon {
+  background: #60a5fa;
+}
+
+.maintenance-banner-icon .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #fff;
+}
+
+.maintenance-banner-content {
+  flex: 1;
+}
+
+.maintenance-banner-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--maintenance-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.status-maintenance-banner.scheduled .maintenance-banner-title {
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .status-maintenance-banner.scheduled .maintenance-banner-title {
+  color: #60a5fa;
+}
+
+.maintenance-banner-reason {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.maintenance-banner-time {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.maintenance-banner-time .icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* ============================================
+   Modal (Standard Styling)
+   ============================================ */
+
+.maintenance-modal {
+  max-width: 700px;
+}
+
+.maintenance-modal .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.maintenance-modal .modal-title .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Maintenance List (in Modal)
+   ============================================ */
+
+.maintenance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.maintenance-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.maintenance-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--border-color);
+}
+
+.maintenance-item:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.maintenance-item.active {
+  border-color: var(--border-hover);
+  background: var(--bg-secondary);
+}
+
+.maintenance-item.active::before {
+  background: var(--accent-primary);
+}
+
+.maintenance-item.scheduled::before {
+  background: var(--text-tertiary);
+}
+
+.maintenance-item.completed {
+  opacity: 0.6;
+}
+
+.maintenance-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.maintenance-item-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.maintenance-status-active {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+.maintenance-status-scheduled {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.maintenance-status-completed {
+  background: var(--status-operational-bg);
+  color: var(--status-operational);
+  border: 1px solid var(--status-operational);
+}
+
+.maintenance-status-cancelled {
+  background: var(--status-down-bg);
+  color: var(--status-down);
+  border: 1px solid var(--status-down);
+}
+
+.maintenance-item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.maintenance-item-time {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.maintenance-time-block {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.maintenance-time-block .icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-tertiary);
+}
+
+.maintenance-time-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-right: 0.25rem;
+}
+
+.maintenance-time-value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.maintenance-item-reason {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border-color);
+  margin-top: 0.75rem;
+}
+
+.maintenance-item-recurrence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 0.25rem;
+}
+
+.maintenance-item-recurrence .icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Empty State */
+.maintenance-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-tertiary);
+}
+
+.maintenance-empty .icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.maintenance-empty h4 {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   Schedule Form (in Modal)
+   ============================================ */
+
+.maintenance-form {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 1rem;
+}
+
+.maintenance-form-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.maintenance-form-title .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--accent-primary);
+}
+
+.datetime-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Style datetime-local calendar picker icon */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-normal);
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+[data-theme="light"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}
+
+.recurrence-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.recurrence-option {
+  position: relative;
+}
+
+.recurrence-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.recurrence-option label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.recurrence-option label:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-secondary);
+}
+
+.recurrence-option input:checked + label {
+  background: var(--accent-glow);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.weekly-days {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.day-toggle {
+  position: relative;
+}
+
+.day-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.day-toggle label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.day-toggle input:checked + label {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 640px) {
+  .datetime-row {
+    grid-template-columns: 1fr;
+  }
+
+  .maintenance-item-time {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .recurrence-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .weekly-days {
+    justify-content: center;
+  }
+}
