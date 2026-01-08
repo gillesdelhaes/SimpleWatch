@@ -10,6 +10,7 @@
 </head>
 <body>
     <!-- Public Status Page - No Auth Required -->
+
     <div class="status-container">
         <!-- Header with Overall System Status -->
         <header class="status-header">
@@ -17,13 +18,16 @@
                 <h1 class="status-logo">SimpleWatch</h1>
                 <p class="status-tagline">System Status</p>
             </div>
-            <div id="overallStatus" class="overall-status">
-                <div class="overall-status-indicator">
-                    <div class="status-pulse"></div>
-                </div>
-                <div class="overall-status-text">
-                    <div class="overall-status-label">Loading...</div>
-                    <div class="overall-status-subtitle">Checking systems</div>
+            <div class="status-header-controls">
+                <div id="themeToggleContainer"></div>
+                <div id="overallStatus" class="overall-status">
+                    <div class="overall-status-indicator">
+                        <div class="status-pulse"></div>
+                    </div>
+                    <div class="overall-status-text">
+                        <div class="overall-status-label">Loading...</div>
+                        <div class="overall-status-subtitle">Checking systems</div>
+                    </div>
                 </div>
             </div>
         </header>

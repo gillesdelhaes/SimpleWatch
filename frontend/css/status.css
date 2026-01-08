@@ -26,6 +26,13 @@
   min-width: 250px;
 }
 
+/* Header controls container - holds theme toggle and overall status */
+.status-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .status-logo {
   font-family: var(--font-display);
   font-size: 3rem;
@@ -463,6 +470,13 @@
   .status-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .status-header-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
   }
 
   .status-logo {

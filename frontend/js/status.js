@@ -231,6 +231,9 @@ async function fetchStatus() {
 
 // Initialize page
 function init() {
+    // Insert theme toggle
+    insertThemeToggle('themeToggleContainer');
+
     // Fetch status immediately
     fetchStatus();
 
