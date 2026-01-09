@@ -142,6 +142,65 @@ Get current status for all services with aggregated monitor status.
 - `down` - All monitors are down
 - `unknown` - No status data available
 
+#### GET /api/v1/status/public
+
+Get current status for all public services (no authentication required).
+
+This endpoint powers the public status page at `/status`. Services must have "Show on status page" enabled to appear here.
+
+**Requires:** No authentication
+
+**Response:**
+```json
+{
+  "services": [
+    {
+      "service_name": "API Server",
+      "description": "Main API endpoint",
+      "status": "operational",
+      "last_checked": "2026-01-08T20:30:00Z",
+      "uptime_7d": 99.95,
+      "recent_incidents": [
+        {
+          "started_at": "2026-01-07T15:30:00Z",
+          "ended_at": "2026-01-07T15:45:00Z",
+          "duration_seconds": 900,
+          "severity": "degraded",
+          "status": "resolved"
+        }
+      ],
+      "maintenance": {
+        "in_maintenance": false,
+        "active_maintenance": null,
+        "upcoming_maintenance": {
+          "id": 5,
+          "start_time": "2026-01-10T02:00:00Z",
+          "end_time": "2026-01-10T04:00:00Z",
+          "reason": "Database optimization"
+        }
+      }
+    }
+  ],
+  "updated_at": "2026-01-08T20:30:00Z"
+}
+```
+
+**Maintenance information:**
+- `in_maintenance` - True if service is currently in maintenance
+- `active_maintenance` - Details of current maintenance window (if active)
+- `upcoming_maintenance` - Next maintenance within 24 hours (if scheduled)
+
+**Incident display:**
+- Shows ongoing incidents (always)
+- Shows last resolved incident if within 48 hours (otherwise hidden)
+
+**curl Example:**
+```bash
+curl http://localhost:5050/api/v1/status/public
+```
+
+---
+
 #### POST /api/v1/metric/{service_name}/{monitor_name}
 
 Ultra-simple metric update API. Automatically determines status based on thresholds.
@@ -782,6 +841,220 @@ Resume a paused monitor (sets is_active to True).
 ```
 
 **Note:** If the service was paused, it will automatically be resumed when you resume a monitor.
+
+---
+
+### Maintenance Windows
+
+Maintenance windows allow you to schedule planned maintenance periods during which notifications are suppressed.
+
+#### GET /api/v1/maintenance/
+
+List all maintenance windows (optionally filtered by service).
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `service_id` (optional): Filter by service ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "maintenance_windows": [
+    {
+      "id": 1,
+      "service_id": 5,
+      "service_name": "API Server",
+      "start_time": "2026-01-10T02:00:00Z",
+      "end_time": "2026-01-10T04:00:00Z",
+      "recurrence_type": "weekly",
+      "recurrence_config": {
+        "days": [2, 4]
+      },
+      "reason": "Weekly database optimization",
+      "status": "scheduled",
+      "created_at": "2026-01-08T15:30:00Z",
+      "created_by": 1,
+      "updated_at": "2026-01-08T15:30:00Z"
+    }
+  ]
+}
+```
+
+**Status values:**
+- `scheduled` - Window is scheduled for the future
+- `active` - Maintenance is currently in progress
+- `completed` - Maintenance has finished
+- `cancelled` - Maintenance was cancelled before it started
+
+**curl Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     "http://localhost:5050/api/v1/maintenance/?service_id=5"
+```
+
+---
+
+#### POST /api/v1/maintenance/
+
+Create a new maintenance window.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "service_id": 5,
+  "start_time": "2026-01-10T02:00:00Z",
+  "end_time": "2026-01-10T04:00:00Z",
+  "recurrence_type": "weekly",
+  "recurrence_config": {
+    "days": [2, 4]
+  },
+  "reason": "Weekly database optimization"
+}
+```
+
+**Recurrence types:**
+- `none` - One-time maintenance
+- `daily` - Repeat every day at the same time
+- `weekly` - Repeat on specific days of the week (Monday=0, Sunday=6)
+- `monthly` - Repeat on the same day of each month
+
+**Recurrence config:**
+- For `weekly`: `{"days": [0, 2, 4]}` (Monday, Wednesday, Friday)
+- For `monthly`: `{"day": 15}` (15th of each month) or `{"day": -1}` (last day)
+- For `none` and `daily`: No config needed
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Maintenance window created",
+  "maintenance_window": {
+    "id": 1,
+    "service_id": 5,
+    "service_name": "API Server",
+    "start_time": "2026-01-10T02:00:00Z",
+    "end_time": "2026-01-10T04:00:00Z",
+    "recurrence_type": "weekly",
+    "recurrence_config": {
+      "days": [2, 4]
+    },
+    "reason": "Weekly database optimization",
+    "status": "scheduled",
+    "created_at": "2026-01-08T20:15:30Z",
+    "created_by": 1,
+    "updated_at": "2026-01-08T20:15:30Z"
+  }
+}
+```
+
+**curl Example:**
+```bash
+curl -X POST \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "service_id": 5,
+       "start_time": "2026-01-10T02:00:00Z",
+       "end_time": "2026-01-10T04:00:00Z",
+       "recurrence_type": "none",
+       "reason": "Database migration"
+     }' \
+     http://localhost:5050/api/v1/maintenance/
+```
+
+---
+
+#### DELETE /api/v1/maintenance/{window_id}
+
+Delete a scheduled maintenance window.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Maintenance window deleted"
+}
+```
+
+**Note:** Only scheduled windows can be deleted. Use cancel endpoint for active windows.
+
+**curl Example:**
+```bash
+curl -X DELETE \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:5050/api/v1/maintenance/1
+```
+
+---
+
+#### POST /api/v1/maintenance/{window_id}/cancel
+
+Cancel an active maintenance window early.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Maintenance window cancelled",
+  "maintenance_window": {
+    "id": 1,
+    "status": "cancelled",
+    "end_time": "2026-01-10T03:15:00Z"
+  }
+}
+```
+
+**curl Example:**
+```bash
+curl -X POST \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:5050/api/v1/maintenance/1/cancel
+```
+
+---
+
+#### GET /api/v1/maintenance/service/{service_id}/active
+
+Check if a service is currently in an active maintenance window.
+
+**Requires:** JWT authentication
+
+**Response (in maintenance):**
+```json
+{
+  "success": true,
+  "in_maintenance": true,
+  "maintenance_window": {
+    "id": 1,
+    "start_time": "2026-01-10T02:00:00Z",
+    "end_time": "2026-01-10T04:00:00Z",
+    "reason": "Database migration"
+  }
+}
+```
+
+**Response (not in maintenance):**
+```json
+{
+  "success": true,
+  "in_maintenance": false,
+  "maintenance_window": null
+}
+```
+
+**curl Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:5050/api/v1/maintenance/service/5/active
+```
 
 ---
 

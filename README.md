@@ -36,6 +36,8 @@ Those tools exist and work very well for large and complex environments.
 - Send alerts only on meaningful status changes
 - Track incidents automatically
 - Show uptime and recovery metrics
+- Share status with customers (public status pages)
+- Schedule maintenance windows to suppress alerts
 - Stay quiet when everything is fine
 
 Everything is configured through the web interface.

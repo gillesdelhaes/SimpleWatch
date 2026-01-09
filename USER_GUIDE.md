@@ -8,13 +8,15 @@ Complete guide to using SimpleWatch for monitoring your services.
 2. [Understanding the Dashboard](#understanding-the-dashboard)
 3. [Creating Monitors](#creating-monitors)
 4. [Managing Services](#managing-services)
-5. [Backup & Restore](#backup--restore)
-6. [Setting Up Notifications](#setting-up-notifications)
-7. [Incident Command Center](#incident-command-center)
-8. [Using the API](#using-the-api)
-9. [User Management](#user-management)
-10. [Best Practices](#best-practices)
-11. [FAQ](#faq)
+5. [Maintenance Windows](#maintenance-windows)
+6. [Public Status Page](#public-status-page)
+7. [Backup & Restore](#backup--restore)
+8. [Setting Up Notifications](#setting-up-notifications)
+9. [Incident Command Center](#incident-command-center)
+10. [Using the API](#using-the-api)
+11. [User Management](#user-management)
+12. [Best Practices](#best-practices)
+13. [FAQ](#faq)
 
 ---
 
@@ -787,6 +789,283 @@ Permanently delete a monitor:
 4. Confirm deletion
 
 **Note:** The service remains with other monitors intact. If you delete all monitors for a service, the service will automatically pause. Historical data for this monitor is permanently deleted via CASCADE delete.
+
+---
+
+## Maintenance Windows
+
+Maintenance windows allow you to schedule planned maintenance periods during which notifications are suppressed. This prevents false alerts while you perform updates, migrations, or other scheduled work.
+
+### What Happens During Maintenance
+
+When a service is in an active maintenance window:
+
+- **Notifications are suppressed** - No alerts sent even if monitors fail
+- **Monitoring continues** - Monitors still run and record status
+- **Dashboard shows maintenance badge** - Violet "IN MAINTENANCE" badge displayed
+- **Public status page shows banner** - Customers see maintenance message
+- **Incidents still tracked** - Outages during maintenance are recorded
+
+### Scheduling Maintenance
+
+To schedule maintenance for a service:
+
+1. Click **Services** in the navigation
+2. Find your service
+3. Click the **wrench icon** (Schedule maintenance button)
+4. In the maintenance modal:
+   - **Start Time:** When maintenance begins
+   - **End Time:** When maintenance ends
+   - **Recurrence:** Choose maintenance pattern:
+     - **One-time:** Single maintenance window
+     - **Daily:** Repeat every day at the same time
+     - **Weekly:** Repeat on specific days (check days: Mon, Tue, Wed, etc.)
+     - **Monthly:** Repeat on the same day each month
+   - **Reason:** Optional description (e.g., "Database migration")
+5. Click **Schedule Maintenance**
+
+**Example:** Schedule weekly maintenance every Wednesday at 2 AM for 2 hours:
+- Start: 2026-01-15 02:00
+- End: 2026-01-15 04:00
+- Recurrence: Weekly
+- Days: Wednesday ☑
+- Reason: "Weekly database optimization"
+
+### Viewing Scheduled Maintenance
+
+After scheduling, the maintenance window appears in the modal:
+
+- **Status badges:**
+  - `Scheduled` - Maintenance is planned for the future
+  - `In Progress` - Maintenance is currently active
+  - `Completed` - Maintenance has finished
+  - `Cancelled` - Maintenance was cancelled early
+
+- **Window details:**
+  - Start and end times (displayed in your local timezone)
+  - Recurrence pattern (if applicable)
+  - Reason/description
+
+### Cancelling Active Maintenance
+
+If maintenance finishes early:
+
+1. Open the maintenance modal
+2. Find the active maintenance window
+3. Click **End Early** button
+4. The window status changes to `Cancelled` and notifications resume
+
+### Deleting Scheduled Maintenance
+
+To delete a future maintenance window:
+
+1. Open the maintenance modal
+2. Find the scheduled window
+3. Click **Delete** button (trash icon)
+4. Confirm deletion
+
+**Note:** Only scheduled (future) windows can be deleted. Active windows must be cancelled instead.
+
+### Recurring Maintenance
+
+Recurring maintenance automatically creates new windows when the current one completes:
+
+**Daily Recurrence:**
+- Creates new window for next day at same time
+- Continues indefinitely until you delete the pattern
+
+**Weekly Recurrence:**
+- Creates windows for selected days only
+- Example: Monday + Thursday creates two windows per week
+
+**Monthly Recurrence:**
+- Repeats on same day of month (e.g., 15th of each month)
+- Use day `-1` for last day of month
+
+**Managing Recurring Windows:**
+- Deleting a scheduled window only removes that occurrence
+- Future occurrences continue as scheduled
+- To stop recurrence, delete all future windows
+
+### Maintenance on Dashboard
+
+When a service is in maintenance:
+
+- **Violet badge** displays at top-right of service card
+- Badge shows "IN MAINTENANCE" or "SCHEDULED"
+- Hover for details (end time, reason)
+- **Violet top border** on service card indicates active maintenance
+
+### Maintenance on Public Status Page
+
+Customers visiting `/status` see maintenance information:
+
+**Active maintenance:**
+- Violet banner: "🔧 Service under maintenance"
+- Shows: "Maintenance expected to complete: [time]"
+- Optional reason displayed
+
+**Upcoming maintenance (within 24 hours):**
+- Blue banner: "ℹ️ Scheduled maintenance"
+- Shows: "Starting: [time]"
+- Optional reason displayed
+
+### Best Practices
+
+**Schedule maintenance in advance:**
+- Create windows before starting work
+- Gives team visibility into maintenance schedule
+- Prevents confusion from expected downtime
+
+**Use descriptive reasons:**
+- "Database migration to PostgreSQL 15"
+- "SSL certificate renewal"
+- "Network infrastructure upgrade"
+
+**Test before maintenance:**
+- Verify monitors detect the outage correctly
+- Confirm maintenance suppresses notifications
+- Check public status page display
+
+**Coordinate with team:**
+- Schedule during low-traffic periods
+- Notify stakeholders in advance
+- Keep maintenance windows realistic
+
+**Monitor completion:**
+- Cancel maintenance early if finishing ahead of schedule
+- Allows notifications to resume sooner
+- Improves alert responsiveness
+
+---
+
+## Public Status Page
+
+The public status page allows you to share service status with customers and stakeholders without requiring login. It provides transparency during outages and scheduled maintenance.
+
+### Accessing the Status Page
+
+The public status page is available at:
+
+```
+http://your-simplewatch-url:5050/status
+```
+
+**Example:** `http://monitor.yourcompany.com:5050/status`
+
+**No authentication required** - Anyone with the URL can view it.
+
+### Enabling Services on Status Page
+
+By default, services are **not shown** on the public status page. To enable:
+
+1. Click **Services** in navigation
+2. Click **Edit** (pencil icon) next to the service
+3. Check **"Show on status page"**
+4. Click **Save Changes**
+
+The service now appears on the public status page.
+
+### What's Displayed
+
+The status page shows:
+
+**Header:**
+- **SimpleWatch** branding
+- **Overall system status** with pulse indicator:
+  - Green pulse: All systems operational
+  - Amber pulse: Partial outage (some services degraded)
+  - Red pulse: System outage (services down)
+- **Theme toggle** - Switch between light and dark mode
+
+**Service Cards:**
+Each service shows:
+- **Service name** and description
+- **Current status badge** (Operational/Degraded/Down)
+- **7-day uptime percentage**
+- **Maintenance banners** (if in maintenance or upcoming)
+- **Recent incidents** (ongoing or last resolved within 48h)
+
+**Incident Information:**
+- **Active incident:** Shows "Active Incident" header with start time and duration
+- **Recent incident:** Shows "Recent Incident" if resolved within 48 hours
+- If no incidents in 48 hours: Section hidden
+
+**Maintenance Banners:**
+- **Active maintenance:** Violet banner with expected completion time
+- **Upcoming maintenance:** Blue banner with start time (if within 24 hours)
+
+**Footer:**
+- **Last updated timestamp**
+- **Auto-refresh notice** (refreshes every 30 seconds)
+
+### Customizing Status Page
+
+**Theme:**
+- Users can toggle between light and dark mode
+- Preference saved in browser
+- Applies to entire status page
+
+**Service Ordering:**
+- Services appear in the order they were created
+- Customize by editing service order in database (advanced)
+
+**Status Page Privacy:**
+- Status page is public by default
+- To restrict access, use reverse proxy with authentication
+- Or deploy SimpleWatch behind VPN
+
+### Sharing the Status Page
+
+**With customers:**
+- Add link to your main website footer
+- Include in service documentation
+- Share in incident communications
+
+**Best practices:**
+- Use memorable URL (e.g., status.yourcompany.com)
+- Keep service names customer-friendly
+- Write clear incident descriptions
+- Update maintenance reasons to be informative
+
+**Example HTML snippet for your site:**
+```html
+<a href="http://status.yourcompany.com:5050/status" target="_blank">
+  System Status
+</a>
+```
+
+### Status Page Use Cases
+
+**During Incidents:**
+- Reduces support ticket volume
+- Provides real-time status updates
+- Shows affected services clearly
+- Displays incident duration
+
+**During Maintenance:**
+- Informs customers of planned work
+- Sets expectations for completion
+- Reduces confusion from expected downtime
+
+**Business As Usual:**
+- Builds customer trust with transparency
+- Demonstrates system reliability (high uptime)
+- Shows proactive monitoring
+
+### Mobile Access
+
+The status page is fully responsive:
+- Works on phones and tablets
+- Readable without zooming
+- Touch-friendly buttons
+- Auto-refreshes on mobile
+
+### Auto-Refresh
+
+The page automatically refreshes every 30 seconds to show current status without manual reload.
+
+**Note:** If actively viewing during an incident, the page updates in real-time as services recover.
 
 ---
 
