@@ -1,5 +1,5 @@
 // API Monitor Plugin
-// This is a self-contained module that defines everything needed for the API monitor
+// Monitor API endpoints with custom methods, headers, and request bodies
 
 export default {
     // Unique identifier (must match backend monitor_type)
@@ -7,7 +7,7 @@ export default {
 
     // Display information
     name: 'API Monitor',
-    description: 'Call API endpoint with validation',
+    description: 'Monitor API endpoints with custom payloads and validation',
     icon: 'api',
     category: 'Web & API',
 
@@ -25,7 +25,10 @@ export default {
             label: 'HTTP Method',
             options: [
                 { value: 'GET', label: 'GET' },
-                { value: 'POST', label: 'POST' }
+                { value: 'POST', label: 'POST' },
+                { value: 'PUT', label: 'PUT' },
+                { value: 'PATCH', label: 'PATCH' },
+                { value: 'DELETE', label: 'DELETE' }
             ],
             default: 'GET',
             required: true
@@ -37,6 +40,29 @@ export default {
             required: true,
             min: 100,
             max: 599
+        },
+        timeout_seconds: {
+            type: 'number',
+            label: 'Timeout (seconds)',
+            default: 10,
+            required: false,
+            min: 1,
+            max: 60,
+            hint: 'How long to wait for response'
+        },
+        headers: {
+            type: 'textarea',
+            label: 'Headers (Optional)',
+            placeholder: '{\n  "Authorization": "Bearer token",\n  "Content-Type": "application/json"\n}',
+            required: false,
+            hint: 'JSON object with custom headers'
+        },
+        request_body: {
+            type: 'textarea',
+            label: 'Request Body (Optional)',
+            placeholder: '{\n  "key": "value"\n}',
+            required: false,
+            hint: 'JSON payload for POST/PUT/PATCH requests'
         }
     },
 
@@ -53,7 +79,6 @@ export default {
     ],
 
     // Validate configuration before submission
-    // Returns error message string if invalid, null if valid
     validate(config) {
         if (!config.url.startsWith('http://') && !config.url.startsWith('https://')) {
             return 'URL must start with http:// or https://';
@@ -61,29 +86,65 @@ export default {
         if (config.expected_status_code < 100 || config.expected_status_code > 599) {
             return 'Status code must be between 100 and 599';
         }
+        // Headers validation happens in extractConfig (JSON.parse)
+        // If we get here with headers as an object, it's already valid
         return null; // Valid
     },
 
     // Extract configuration from form fields
-    // formPrefix: 'api' for Quick Monitor, 'addApi' for Add to Service, 'editApi' for Edit
     extractConfig(formPrefix) {
-        return {
+        const config = {
             url: document.getElementById(`${formPrefix}Url`).value,
             method: document.getElementById(`${formPrefix}Method`).value,
-            expected_status_code: parseInt(document.getElementById(`${formPrefix}ExpectedStatusCode`).value)
+            expected_status_code: parseInt(document.getElementById(`${formPrefix}ExpectedStatusCode`).value),
+            timeout_seconds: parseInt(document.getElementById(`${formPrefix}TimeoutSeconds`)?.value || 10)
         };
+
+        // Optional: headers
+        const headersEl = document.getElementById(`${formPrefix}Headers`);
+        if (headersEl && headersEl.value.trim()) {
+            try {
+                config.headers = JSON.parse(headersEl.value.trim());
+            } catch (e) {
+                // Keep as empty object if invalid
+                config.headers = {};
+            }
+        }
+
+        // Optional: request body
+        const bodyEl = document.getElementById(`${formPrefix}RequestBody`);
+        if (bodyEl && bodyEl.value.trim()) {
+            config.request_body = bodyEl.value.trim();
+        }
+
+        return config;
     },
 
     // Populate form fields with existing configuration
-    // Used when editing a monitor
     populateForm(formPrefix, config) {
-        document.getElementById(`${formPrefix}Url`).value = config.url;
-        document.getElementById(`${formPrefix}Method`).value = config.method;
-        document.getElementById(`${formPrefix}ExpectedStatusCode`).value = config.expected_status_code;
+        document.getElementById(`${formPrefix}Url`).value = config.url || '';
+        document.getElementById(`${formPrefix}Method`).value = config.method || 'GET';
+        document.getElementById(`${formPrefix}ExpectedStatusCode`).value = config.expected_status_code || 200;
+
+        const timeoutEl = document.getElementById(`${formPrefix}TimeoutSeconds`);
+        if (timeoutEl) {
+            timeoutEl.value = config.timeout_seconds || 10;
+        }
+
+        const headersEl = document.getElementById(`${formPrefix}Headers`);
+        if (headersEl && config.headers) {
+            headersEl.value = typeof config.headers === 'string'
+                ? config.headers
+                : JSON.stringify(config.headers, null, 2);
+        }
+
+        const bodyEl = document.getElementById(`${formPrefix}RequestBody`);
+        if (bodyEl && config.request_body) {
+            bodyEl.value = config.request_body;
+        }
     },
 
-    // Optional: Custom rendering logic for monitor status display
-    // This is used on the dashboard or services page
+    // Custom rendering logic for monitor status display
     renderStatus(monitor) {
         if (monitor.response_time_ms) {
             return `${monitor.response_time_ms}ms`;
@@ -94,6 +155,37 @@ export default {
     // Get description text for services page
     getDescription(config) {
         if (!config) return '';
-        return `${config.method || 'GET'} ${config.url}`;
+        let desc = `${config.method || 'GET'} ${config.url}`;
+        if (config.request_body) {
+            desc += ' (with body)';
+        }
+        return desc;
+    },
+
+    // Render detailed metrics for modal view
+    renderDetailMetrics(monitor) {
+        let html = '';
+
+        // Show response time
+        if (monitor.response_time_ms !== null && monitor.response_time_ms !== undefined) {
+            html += `
+                <div class="monitor-metric">
+                    <div class="monitor-metric-label">Response Time</div>
+                    <div class="monitor-metric-value">${monitor.response_time_ms}ms</div>
+                </div>
+            `;
+        }
+
+        // Show status code
+        if (monitor.metadata && monitor.metadata.status_code) {
+            html += `
+                <div class="monitor-metric">
+                    <div class="monitor-metric-label">Status Code</div>
+                    <div class="monitor-metric-value">${monitor.metadata.status_code}</div>
+                </div>
+            `;
+        }
+
+        return html;
     }
 };

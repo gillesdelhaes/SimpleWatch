@@ -16,6 +16,7 @@ class APIMonitor(BaseMonitor):
         url = self.config.get("url")
         method = self.config.get("method", "GET")
         headers = self.config.get("headers", {})
+        request_body = self.config.get("request_body", "")
         expected_status_code = self.config.get("expected_status_code", 200)
         timeout = self.config.get("timeout_seconds", 10)
         json_path_validations = self.config.get("json_path_validations")
@@ -30,7 +31,62 @@ class APIMonitor(BaseMonitor):
                     timeout=timeout
                 )
             elif method.upper() == "POST":
+                # Handle request body - try JSON first, fall back to raw data
+                json_data = None
+                data = None
+
+                if request_body and request_body.strip():
+                    try:
+                        json_data = json.loads(request_body)
+                    except json.JSONDecodeError:
+                        # Not valid JSON, send as raw data
+                        data = request_body
+
                 response = requests.post(
+                    url,
+                    headers=headers,
+                    json=json_data,
+                    data=data,
+                    timeout=timeout
+                )
+            elif method.upper() == "PUT":
+                # Handle request body for PUT
+                json_data = None
+                data = None
+
+                if request_body and request_body.strip():
+                    try:
+                        json_data = json.loads(request_body)
+                    except json.JSONDecodeError:
+                        data = request_body
+
+                response = requests.put(
+                    url,
+                    headers=headers,
+                    json=json_data,
+                    data=data,
+                    timeout=timeout
+                )
+            elif method.upper() == "PATCH":
+                # Handle request body for PATCH
+                json_data = None
+                data = None
+
+                if request_body and request_body.strip():
+                    try:
+                        json_data = json.loads(request_body)
+                    except json.JSONDecodeError:
+                        data = request_body
+
+                response = requests.patch(
+                    url,
+                    headers=headers,
+                    json=json_data,
+                    data=data,
+                    timeout=timeout
+                )
+            elif method.upper() == "DELETE":
+                response = requests.delete(
                     url,
                     headers=headers,
                     timeout=timeout

@@ -194,6 +194,21 @@ class MonitorRegistry {
                 `;
             }
 
+            if (field.type === 'textarea') {
+                return `
+                    <div class="form-group">
+                        <label class="form-label">${field.label}</label>
+                        <textarea id="${fieldId}"
+                                  class="form-input"
+                                  rows="4"
+                                  style="font-family: monospace; resize: vertical;"
+                                  ${field.placeholder ? `placeholder="${field.placeholder}"` : ''}
+                                  ${field.required ? 'required' : ''}>${field.default || ''}</textarea>
+                        ${field.hint ? `<p class="form-hint">${field.hint}</p>` : ''}
+                    </div>
+                `;
+            }
+
             return `
                 <div class="form-group">
                     <label class="form-label">${field.label}</label>
