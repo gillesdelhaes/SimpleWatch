@@ -50,7 +50,8 @@ class MonitorRegistry {
                 'ping-monitor',
                 'seo-monitor',
                 'ollama-monitor',
-                'github-actions-monitor'
+                'github-actions-monitor',
+                'expiration-monitor'
             ];
 
             // Import and register each monitor plugin

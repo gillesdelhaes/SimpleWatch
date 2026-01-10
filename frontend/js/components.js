@@ -192,6 +192,12 @@ const icons = {
 
     code: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6 6l-4 4 4 4M14 6l4 4-4 4M11 3l-2 14"/>
+    </svg>`,
+
+    // Operations icons
+    calendar: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="14" height="14" rx="2"/>
+        <path d="M3 8h14M7 2v4M13 2v4"/>
     </svg>`
 };
 
