@@ -151,7 +151,7 @@ The fastest way to create a monitor:
 
 ### Monitor Type 2: API Monitor
 
-**Use Case:** Check if an API endpoint responds correctly
+**Use Case:** Monitor API endpoints and webhooks with custom payloads
 
 **Setup Time:** 2 minutes
 
@@ -159,22 +159,51 @@ The fastest way to create a monitor:
 1. Select "API Monitor"
 2. Enter service name (e.g., "Payment API")
 3. Enter API URL
-4. Choose method (GET or POST)
-5. Set expected status code (usually 200)
-6. Choose check interval
-7. Create
+4. Choose HTTP method (GET, POST, PUT, PATCH, DELETE)
+5. Set expected status code (usually 200, or 204 for webhooks)
+6. Optionally set timeout (default: 10 seconds)
+7. Optionally add custom headers (JSON format)
+8. Optionally add request body (JSON or raw text)
+9. Choose check interval
+10. Create
 
 **How It Works:**
-- Calls your API endpoint
+- Calls your API endpoint with specified method
+- Sends custom headers and request body if configured
 - Validates response status code
 - Measures response time
 - Can validate JSON response structure (advanced)
+
+**Custom Headers Example:**
+```json
+{
+  "Authorization": "Bearer your-token",
+  "Content-Type": "application/json"
+}
+```
+
+**Request Body Example (JSON):**
+```json
+{
+  "key": "value",
+  "message": "test"
+}
+```
 
 **Example Uses:**
 - Monitor payment gateway health
 - Check third-party API integrations
 - Watch microservice endpoints
 - Track authentication services
+- **Test webhook integrations** (Discord, Slack, custom webhooks)
+- Monitor REST API CRUD operations (POST/PUT/PATCH/DELETE)
+
+**Webhook Testing:**
+The API monitor can test webhooks by sending POST requests with custom payloads. For example, to test a Discord webhook:
+- Method: POST
+- Expected Status: 204
+- Headers: `{"Content-Type": "application/json"}`
+- Body: `{"content": "SimpleWatch test message"}`
 
 ### Monitor Type 3: Metric Threshold Monitor
 
