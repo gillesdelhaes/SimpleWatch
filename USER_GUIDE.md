@@ -665,6 +665,91 @@ When SimpleWatch runs in Docker and you want to monitor LLM services on your hos
 - First monitoring tool specifically for local LLMs
 - Perfect for privacy-focused AI deployments
 
+### Monitor Type 11: GitHub Actions CI/CD Monitor
+
+**Use Case:** Monitor CI/CD workflow status for GitHub repositories
+
+**Setup Time:** 60 seconds
+
+**Steps:**
+1. Select "GitHub Actions"
+2. Enter service name (e.g., "Main Repository CI")
+3. Enter repository owner (GitHub username or organization, e.g., "vercel")
+4. Enter repository name (e.g., "next.js")
+5. Optionally specify workflow file (e.g., "ci.yml") - leave blank to monitor all workflows
+6. Optionally specify branch (e.g., "main") - leave blank to monitor all branches
+7. Optionally enter GitHub token for higher rate limits (5000/hr vs 60/hr unauthenticated)
+8. Set success threshold percentage (default: 80%) - marks degraded if success rate falls below
+9. Set timeout (default: 10 seconds)
+10. Choose check interval (default: 30 minutes, recommended to avoid rate limits)
+11. Create
+
+**How It Works:**
+- Queries GitHub Actions API for workflow runs
+- Analyzes last 20 runs to calculate success rate
+- Tracks latest build status (success/failure/running)
+- Calculates average build duration
+- Monitors API rate limit consumption
+- Determines status:
+  - Latest build passed and success rate ≥ threshold: Operational
+  - Latest build failed or success rate below threshold: Degraded
+  - API error, repo not found, or rate limited: Down
+
+**Example Uses:**
+- Monitor main branch build health
+- Track deployment pipeline success
+- Alert on failing CI/CD workflows
+- Monitor open-source project builds
+- Ensure test suites are passing
+- Track build performance trends
+
+**Practical Example - Production CI Pipeline:**
+
+Create a GitHub Actions monitor with:
+- Owner: yourcompany
+- Repo: backend-api
+- Workflow: deploy.yml
+- Branch: main
+- Success threshold: 90%
+- Check interval: 30 minutes
+
+The monitor will:
+- Check main branch deploy.yml workflow every 30 minutes
+- Calculate success rate from last 20 runs
+- Alert if success rate drops below 90%
+- Show latest build status and link to run
+- Display average build time
+
+**Rate Limits:**
+- **Without token:** 60 requests/hour (sufficient for 4-5 repos at 30-min intervals)
+- **With token:** 5000 requests/hour (monitor hundreds of repos)
+
+**Status Logic:**
+- ✅ **Operational:** Latest build succeeded, success rate ≥ threshold
+- ⚠️ **Degraded:** Latest build failed OR success rate below threshold
+- ❌ **Down:** Repository not found, API error, or rate limited
+
+**Displayed Metrics (in modal):**
+- Response Time (GitHub API response time)
+- Success Rate (percentage of successful builds)
+- Latest Build (success/failure/running with run number and link)
+- Avg Build Time (average duration across recent runs)
+- API Rate Limit (remaining requests)
+
+**Testing with Public Repositories:**
+You can test the monitor with popular public repos:
+- vercel/next.js (large active project)
+- facebook/react (stable builds)
+- rust-lang/rust (comprehensive CI)
+
+**Benefits:**
+- Monitor CI/CD health without Jenkins/CircleCI dashboards
+- Track build success rates over time
+- Get alerts when pipelines break
+- No GitHub Actions setup required (read-only)
+- Works with public and private repos (with token)
+- Perfect for DevOps teams tracking deployment health
+
 ---
 
 ## Managing Services
