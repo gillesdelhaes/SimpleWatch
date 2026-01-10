@@ -180,6 +180,18 @@ const icons = {
         <path d="M5 10a2 2 0 012-2h0a2 2 0 012-2h0a2 2 0 012 2h0a2 2 0 012 2h0a2 2 0 01-2 2h0a2 2 0 01-2 2h0a2 2 0 01-2-2h0a2 2 0 01-2-2z"/>
         <path d="M7 6V5a2 2 0 012-2h2a2 2 0 012 2v1"/>
         <path d="M7 14v1a2 2 0 002 2h2a2 2 0 002-2v-1"/>
+    </svg>`,
+
+    // Developer Tools icons
+    gitBranch: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5" cy="5" r="2"/>
+        <circle cx="5" cy="15" r="2"/>
+        <circle cx="15" cy="10" r="2"/>
+        <path d="M5 7v6M13 10H7.5a2.5 2.5 0 01-2.5-2.5V5"/>
+    </svg>`,
+
+    code: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 6l-4 4 4 4M14 6l4 4-4 4M11 3l-2 14"/>
     </svg>`
 };
 

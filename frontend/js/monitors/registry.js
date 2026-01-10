@@ -49,7 +49,8 @@ class MonitorRegistry {
                 'dns-monitor',
                 'ping-monitor',
                 'seo-monitor',
-                'ollama-monitor'
+                'ollama-monitor',
+                'github-actions-monitor'
             ];
 
             // Import and register each monitor plugin
@@ -79,6 +80,10 @@ class MonitorRegistry {
             },
             'Operations': {
                 icon: 'clipboardList',
+                monitors: []
+            },
+            'Developer Tools': {
+                icon: 'code',
                 monitors: []
             },
             'AI & ML': {
