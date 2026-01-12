@@ -80,6 +80,84 @@
     font-family: var(--font-mono);
     letter-spacing: 0.05em;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+/* SLA Badge */
+.sla-badge {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    cursor: help;
+    transition: all var(--transition-fast);
+}
+
+.sla-badge .icon {
+    transition: transform var(--transition-fast);
+}
+
+.sla-badge:hover .icon {
+    transform: scale(1.15);
+}
+
+/* SLA Badge Tooltip */
+.sla-badge[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    white-space: pre-line;
+    line-height: 1.5;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+    z-index: 1000;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+    min-width: 200px;
+}
+
+.sla-badge[data-tooltip]::after {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.95);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+    z-index: 1001;
+}
+
+.sla-badge:hover[data-tooltip]::before,
+.sla-badge:hover[data-tooltip]::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Status-specific glow effects */
+.sla-badge.sla-at_risk:hover .icon {
+    filter: drop-shadow(0 0 4px var(--status-degraded));
+}
+
+.sla-badge.sla-breached:hover .icon {
+    filter: drop-shadow(0 0 6px var(--status-down));
 }
 
 .service-status-dot {

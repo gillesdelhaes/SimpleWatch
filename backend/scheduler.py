@@ -247,6 +247,23 @@ def update_cached_uptime():
         db.close()
 
 
+def update_cached_sla():
+    """
+    Update cached SLA metrics for all services with SLA configured.
+    Runs every 5 minutes to keep SLA data fresh.
+    """
+    from utils.sla import update_sla_cache
+
+    db = SessionLocal()
+    try:
+        update_sla_cache(db)
+    except Exception as e:
+        logger.error(f"Error updating cached SLA: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def update_maintenance_windows():
     """
     Update maintenance window statuses.
@@ -481,6 +498,14 @@ def start_scheduler():
         trigger=IntervalTrigger(minutes=5),
         id='uptime_cache_scheduler',
         name='Update cached uptime every 5 minutes',
+        replace_existing=True
+    )
+
+    scheduler.add_job(
+        func=update_cached_sla,
+        trigger=IntervalTrigger(minutes=5),
+        id='sla_cache_scheduler',
+        name='Update cached SLA metrics every 5 minutes',
         replace_existing=True
     )
 

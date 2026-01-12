@@ -44,7 +44,10 @@ def create_service(
         description=service.description,
         category=service.category,
         created_by=current_user.id,
-        is_active=True
+        is_active=True,
+        show_on_status_page=service.show_on_status_page,
+        sla_target=service.sla_target,
+        sla_timeframe_days=service.sla_timeframe_days
     )
     db.add(new_service)
     db.commit()
@@ -352,6 +355,8 @@ def update_service(
     service.description = service_update.description
     service.category = service_update.category
     service.show_on_status_page = service_update.show_on_status_page
+    service.sla_target = service_update.sla_target
+    service.sla_timeframe_days = service_update.sla_timeframe_days
 
     db.commit()
     db.refresh(service)

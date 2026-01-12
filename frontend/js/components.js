@@ -198,6 +198,11 @@ const icons = {
     calendar: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="4" width="14" height="14" rx="2"/>
         <path d="M3 8h14M7 2v4M13 2v4"/>
+    </svg>`,
+
+    sla: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="10" cy="10" r="7" opacity="0.3"/>
+        <path d="M 10 3 A 7 7 0 0 1 17 10" stroke-width="2" stroke-linecap="round"/>
     </svg>`
 };
 

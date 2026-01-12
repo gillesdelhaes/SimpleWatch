@@ -136,6 +136,17 @@ def get_all_status(
                 "period_label": service.cached_uptime_period_label
             }
 
+        # Use cached SLA data (updated every 5 minutes by background job)
+        sla_data = None
+        if service.sla_target is not None and service.cached_sla_percentage is not None:
+            sla_data = {
+                "target": service.sla_target,
+                "timeframe_days": service.sla_timeframe_days,
+                "percentage": service.cached_sla_percentage,
+                "status": service.cached_sla_status,
+                "error_budget_seconds": service.cached_sla_error_budget_seconds
+            }
+
         # Get maintenance info
         from api.maintenance import get_service_maintenance_info
         maintenance_info = get_service_maintenance_info(db, service.id)
@@ -151,6 +162,7 @@ def get_all_status(
                 "monitor_count": len(monitors),
                 "monitors": monitor_statuses,
                 "uptime": uptime_data,
+                "sla": sla_data,
                 "maintenance": maintenance_info
             })
 

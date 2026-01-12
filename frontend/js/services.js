@@ -46,7 +46,7 @@ async function loadServices() {
                         <button class="icon-btn" onclick="openMaintenanceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')" title="Schedule maintenance">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.5 10a4.5 4.5 0 004.284-5.882c-.105-.324-.51-.391-.752-.15L15.34 6.66a.454.454 0 01-.493.11 3.01 3.01 0 01-1.618-1.616.455.455 0 01.11-.494l2.694-2.692c.24-.241.174-.647-.15-.752a4.5 4.5 0 00-5.873 4.575c.055.873-.128 1.808-.8 2.368l-7.23 6.024a2.724 2.724 0 103.837 3.837l6.024-7.23c.56-.672 1.495-.855 2.368-.8.096.007.193.01.29.01zM5 16a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"></path></svg>
                         </button>
-                        <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}', ${service.show_on_status_page || false})">
+                        <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}', ${service.show_on_status_page || false}, ${service.sla_target || 'null'}, ${service.sla_timeframe_days || 'null'})">
                             <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                         </button>
                         ${service.is_active ? `
@@ -222,12 +222,16 @@ function hideAddServiceModal() {
     document.getElementById('addServiceModal').classList.add('hidden');
 }
 
-async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = false) {
+async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = false, slaTarget = null, slaTimeframeDays = null) {
     document.getElementById('editServiceId').value = id;
     document.getElementById('editServiceName').value = name;
     document.getElementById('editServiceDescription').value = desc;
     document.getElementById('editServiceCategory').value = cat;
     document.getElementById('editShowOnStatusPage').checked = showOnStatusPage;
+
+    // Set SLA fields
+    document.getElementById('editSlaTarget').value = slaTarget || '';
+    document.getElementById('editSlaTimeframe').value = slaTimeframeDays || '';
 
     // Load notification settings for this service
     await loadNotificationSettingsForService(id);
@@ -363,10 +367,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
+            const slaTarget = document.getElementById('serviceSlaTarget').value;
+            const slaTimeframe = document.getElementById('serviceSlaTimeframe').value;
+
             await api.createService({
                 name: document.getElementById('serviceName').value,
                 description: document.getElementById('serviceDescription').value,
-                category: document.getElementById('serviceCategory').value
+                category: document.getElementById('serviceCategory').value,
+                sla_target: slaTarget ? parseFloat(slaTarget) : null,
+                sla_timeframe_days: slaTimeframe ? parseInt(slaTimeframe) : null
             });
             hideAddServiceModal();
             e.target.reset();
@@ -383,11 +392,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = document.getElementById('editServiceId').value;
 
             // Update service details
+            const slaTarget = document.getElementById('editSlaTarget').value;
+            const slaTimeframe = document.getElementById('editSlaTimeframe').value;
+
             await api.updateService(id, {
                 name: document.getElementById('editServiceName').value,
                 description: document.getElementById('editServiceDescription').value,
                 category: document.getElementById('editServiceCategory').value,
-                show_on_status_page: document.getElementById('editShowOnStatusPage').checked
+                show_on_status_page: document.getElementById('editShowOnStatusPage').checked,
+                sla_target: slaTarget ? parseFloat(slaTarget) : null,
+                sla_timeframe_days: slaTimeframe ? parseInt(slaTimeframe) : null
             });
 
             // Update notification settings

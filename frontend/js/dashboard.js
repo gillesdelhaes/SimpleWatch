@@ -36,6 +36,41 @@ function formatTimestamp(timestamp) {
     return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function formatErrorBudget(seconds) {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+    return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
+}
+
+function renderSlaBadge(sla) {
+    if (!sla || !sla.target || !sla.status) return '';
+
+    const statusColors = {
+        'ok': 'var(--status-operational)',
+        'at_risk': 'var(--status-degraded)',
+        'breached': 'var(--status-down)'
+    };
+
+    const statusLabels = {
+        'ok': 'OK',
+        'at_risk': 'At Risk',
+        'breached': 'Breached'
+    };
+
+    const color = statusColors[sla.status] || 'var(--text-tertiary)';
+    const label = statusLabels[sla.status] || 'Unknown';
+
+    // Determine opacity based on status (subtle when ok, prominent when at-risk/breached)
+    const opacity = sla.status === 'ok' ? '0.7' : '1';
+
+    return `
+        <span class="sla-badge sla-${sla.status}" data-tooltip="SLA ${label}&#10;Target: ${sla.target}% (${sla.timeframe_days}d)&#10;Actual: ${sla.percentage}%&#10;Error budget: ${formatErrorBudget(sla.error_budget_seconds || 0)}">
+            <span class="icon" style="width: 16px; height: 16px; color: ${color}; opacity: ${opacity};">${icons.sla}</span>
+        </span>
+    `;
+}
+
 function getMonitorSummary(monitors) {
     const operational = monitors.filter(m => m.status === 'operational').length;
     const degraded = monitors.filter(m => m.status === 'degraded').length;
@@ -72,7 +107,7 @@ function createStatusWidget(service) {
                 ${service.monitor_count > 0 && monitorSummary ?
                     `<div class="service-monitor-summary">
                         <span class="monitors-info">${monitorSummary}</span>
-                        ${service.uptime ? `<span class="service-uptime">${service.uptime.percentage}% (${service.uptime.period_label})</span>` : ''}
+                        ${service.uptime ? `<span class="service-uptime">${service.uptime.percentage}% (${service.uptime.period_label})${renderSlaBadge(service.sla)}</span>` : ''}
                     </div>` : ''}
                 <div class="metric-row">
                     <span class="metric-label">Status</span>

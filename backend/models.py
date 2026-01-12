@@ -56,6 +56,8 @@ class ServiceCreate(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     show_on_status_page: bool = False
+    sla_target: Optional[float] = None
+    sla_timeframe_days: Optional[int] = None
 
 
 class ServiceResponse(BaseModel):
@@ -66,6 +68,12 @@ class ServiceResponse(BaseModel):
     created_at: datetime
     is_active: bool
     show_on_status_page: bool
+    sla_target: Optional[float]
+    sla_timeframe_days: Optional[int]
+    cached_sla_percentage: Optional[float]
+    cached_sla_status: Optional[str]
+    cached_sla_error_budget_seconds: Optional[int]
+    cached_sla_updated_at: Optional[datetime]
 
     class Config:
         from_attributes = True

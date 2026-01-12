@@ -2,7 +2,7 @@
 Database initialization and configuration for SimpleWatch.
 """
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, TIMESTAMP, ForeignKey, JSON
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, TIMESTAMP, ForeignKey, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -54,6 +54,14 @@ class Service(Base):
     cached_uptime_period_days = Column(Integer)  # e.g., 365
     cached_uptime_period_label = Column(String(10))  # e.g., "1y" or "90d"
     cached_uptime_updated_at = Column(TIMESTAMP)  # Last cache update time
+
+    # SLA configuration and cached metrics
+    sla_target = Column(Float)  # e.g., 99.9 (nullable - only set if SLA configured)
+    sla_timeframe_days = Column(Integer)  # e.g., 30 (nullable - only set if SLA configured)
+    cached_sla_percentage = Column(Float)  # Actual uptime for SLA period
+    cached_sla_status = Column(String(20))  # 'ok', 'at_risk', 'breached'
+    cached_sla_error_budget_seconds = Column(Integer)  # Remaining error budget
+    cached_sla_updated_at = Column(TIMESTAMP)  # Last cache update time
 
     owner = relationship("User", back_populates="services")
     status_updates = relationship("StatusUpdate", back_populates="service", cascade="all, delete-orphan")
