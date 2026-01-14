@@ -256,6 +256,90 @@ class AppSettings(Base):
     value = Column(String(255), nullable=True)
 
 
+class AISettings(Base):
+    """AI SRE Companion configuration"""
+    __tablename__ = "ai_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    enabled = Column(Boolean, default=False)
+
+    # LLM Provider
+    provider = Column(String(50))  # 'local', 'openai', 'anthropic'
+    endpoint = Column(String(500))  # For local models (Ollama URL)
+    model_name = Column(String(100))  # 'gpt-4o', 'claude-sonnet-4-20250514', 'llama3.2'
+    api_key_encrypted = Column(Text)  # Encrypted API key
+
+    # Behavior settings - SAFE BY DEFAULT
+    auto_analyze_incidents = Column(Boolean, default=True)  # Auto-analyze when incidents occur (default: ON)
+    require_approval = Column(Boolean, default=True)  # Always require human approval (default: ON)
+    auto_execute_enabled = Column(Boolean, default=False)  # Skip approval for high-confidence (default: OFF)
+    auto_execute_confidence_threshold = Column(Float, default=0.95)  # Very high threshold when enabled
+    prompt_via_notifications = Column(Boolean, default=True)  # Send prompts to notification channels
+
+    # Status tracking (for indicator)
+    last_query_success = Column(Boolean)  # True if last LLM query succeeded
+    last_query_at = Column(TIMESTAMP)  # When last query was made
+    last_error = Column(Text)  # Last error message if failed
+
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ActionLog(Base):
+    """Audit log for AI-suggested and executed actions"""
+    __tablename__ = "action_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey('services.id', ondelete="CASCADE"), index=True)
+    incident_id = Column(Integer, ForeignKey('incidents.id', ondelete="SET NULL"), nullable=True)
+
+    # Action details
+    action_type = Column(String(50))  # 'webhook', 'suggestion', 'postmortem'
+    action_description = Column(Text)  # Human-readable description
+    action_config = Column(JSON)  # Webhook URL, payload, etc.
+
+    # AI decision
+    ai_reasoning = Column(Text)  # Why AI suggested this action
+    confidence_score = Column(Float)
+
+    # Execution status
+    status = Column(String(50), default='pending')  # 'pending', 'approved', 'rejected', 'executed', 'failed', 'expired'
+    executed_at = Column(TIMESTAMP, nullable=True)
+    executed_by = Column(String(100))  # 'auto', 'user:{id}', 'timeout'
+    result = Column(JSON, nullable=True)  # Webhook response, etc.
+
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+
+    # Relationships
+    service = relationship("Service")
+    incident = relationship("Incident")
+
+
+class ServiceAIConfig(Base):
+    """Per-service AI configuration and remediation webhooks"""
+    __tablename__ = "service_ai_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey('services.id', ondelete="CASCADE"), unique=True, index=True)
+
+    # Remediation webhooks for this service
+    # Format: [{"name": "Restart", "url": "...", "method": "POST", "payload": {...}}]
+    remediation_webhooks = Column(JSON)
+
+    # Context for AI to understand the service better
+    service_context = Column(Text)  # "This is a Node.js API running on AWS ECS..."
+    known_issues = Column(Text)  # "Sometimes needs restart after memory spike"
+
+    # Behavior overrides (null = use global settings)
+    auto_execute_enabled = Column(Boolean, nullable=True)
+
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    service = relationship("Service")
+
+
 def init_db():
     """Initialize database and create all tables."""
     Base.metadata.create_all(bind=engine)

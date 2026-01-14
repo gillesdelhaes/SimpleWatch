@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/maintenance.css">
+    <link rel="stylesheet" href="/static/css/ai-sre.css">
 </head>
 <body>
     <div id="navigation" data-page="dashboard"></div>
@@ -53,11 +54,23 @@
                     </div>
                     <div id="modalMonitorSummary" style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.5rem; font-family: var(--font-mono);"></div>
                 </div>
+                <div id="modalAiAnalyzeContainer"></div>
             </div>
 
             <div style="margin-bottom: 1rem;">
                 <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem;">Monitor Details</h3>
                 <div id="monitorDetailsList" class="monitor-details-list"></div>
+            </div>
+
+            <!-- AI SRE Suggestions (shown when there are pending actions for this service) -->
+            <div id="modalAiSuggestions" class="modal-ai-section hidden">
+                <h3 class="modal-ai-title">
+                    <svg class="modal-ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    AI Analysis
+                </h3>
+                <div id="modalAiSuggestionsList"></div>
             </div>
         </div>
     </div>

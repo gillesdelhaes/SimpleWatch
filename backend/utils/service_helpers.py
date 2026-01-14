@@ -5,7 +5,8 @@ Consolidates all service-related operations in one place.
 from sqlalchemy.orm import Session
 from database import (
     Service, Monitor, StatusUpdate, Incident,
-    SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog
+    SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog,
+    AISettings
 )
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
@@ -15,8 +16,65 @@ from datetime import datetime, timedelta
 from typing import List
 import json
 import logging
+import asyncio
+import threading
 
 logger = logging.getLogger(__name__)
+
+
+def trigger_ai_analysis_background(db_url: str, incident_id: int):
+    """
+    Trigger AI analysis in a background thread with its own event loop.
+    This allows the synchronous scheduler to trigger async AI analysis.
+    """
+    def run_analysis():
+        try:
+            # Create new database session for this thread
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+
+            engine = create_engine(db_url, connect_args={"check_same_thread": False})
+            SessionLocal = sessionmaker(bind=engine)
+            db = SessionLocal()
+
+            try:
+                # Check if AI is enabled and auto-analyze is on
+                settings = db.query(AISettings).first()
+                if not settings or not settings.enabled:
+                    logger.debug("AI SRE not enabled, skipping analysis")
+                    return
+
+                # Check if auto-analyze is enabled (default True for backwards compatibility)
+                if settings.auto_analyze_incidents is False:
+                    logger.debug("Auto-analyze disabled, skipping automatic analysis")
+                    return
+
+                # Run async analysis in new event loop
+                from ai.sre_companion import SRECompanion
+
+                async def analyze():
+                    companion = SRECompanion(db)
+                    result = await companion.analyze_incident(incident_id)
+                    if result:
+                        logger.info(f"AI analysis completed for incident {incident_id}")
+                    return result
+
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(analyze())
+                finally:
+                    loop.close()
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            logger.error(f"Error in AI analysis background task: {e}")
+
+    # Start in background thread
+    thread = threading.Thread(target=run_analysis, daemon=True)
+    thread.start()
 
 
 # ============================================
@@ -127,6 +185,10 @@ def update_service_incidents(db: Session, service_id: int):
                 db.add(incident)
                 db.commit()
                 logger.info(f"Created incident for service {service_id} (severity: {current_status})")
+
+                # Trigger AI analysis in background
+                from database import SQLALCHEMY_DATABASE_URL
+                trigger_ai_analysis_background(SQLALCHEMY_DATABASE_URL, incident.id)
             elif ongoing.severity != current_status:
                 # Severity changed (e.g., degraded -> down or down -> degraded)
                 ongoing.severity = current_status

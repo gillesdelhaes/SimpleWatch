@@ -16,6 +16,7 @@ function createNavigation(activePage) {
                     <a href="/static/notifications.html" class="nav-link ${activePage === 'notifications' ? 'active' : ''}">Notifications</a>
                     <a href="/static/settings.html" class="nav-link ${activePage === 'settings' ? 'active' : ''}">Settings</a>
                     ${userInfo.isAdmin ? `<a href="/static/users.html" class="nav-link ${activePage === 'users' ? 'active' : ''}">Users</a>` : ''}
+                    <div id="aiStatusIndicator" title="AI SRE Companion" style="cursor: pointer; display: none;"></div>
                     <div id="navThemeToggle"></div>
                     <span style="color: var(--text-tertiary); font-family: var(--font-mono); font-size: 0.875rem;">${userInfo.username}</span>
                     <button onclick="logout()" style="color: var(--status-down); background: none; border: none; font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;">Logout</button>
@@ -54,6 +55,173 @@ function createNavigation(activePage) {
     return nav;
 }
 
+/**
+ * Update AI status indicator in navigation
+ */
+function updateAIStatusIndicator() {
+    const indicator = document.getElementById('aiStatusIndicator');
+    if (!indicator) return;
+
+    try {
+        const statusStr = localStorage.getItem('ai_status');
+        if (!statusStr) {
+            indicator.style.display = 'none';
+            return;
+        }
+
+        const status = JSON.parse(statusStr);
+
+        if (!status.enabled) {
+            indicator.style.display = 'none';
+            return;
+        }
+
+        // Show indicator
+        indicator.style.display = 'flex';
+        indicator.style.alignItems = 'center';
+        indicator.style.gap = '0.375rem';
+        indicator.style.position = 'relative';
+
+        // Determine color based on connection status
+        let color;
+        if (status.connected === true) {
+            color = 'var(--status-operational)';
+        } else if (status.connected === false) {
+            color = 'var(--status-down)';
+        } else {
+            color = 'var(--status-degraded)';
+        }
+
+        indicator.innerHTML = `
+            <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 2C6 2 3 5.5 3 9c0 2 .5 3.5 2 5 .5.5 1 1.5 1 2.5V17a1 1 0 001 1h6a1 1 0 001-1v-.5c0-1 .5-2 1-2.5 1.5-1.5 2-3 2-5 0-3.5-3-7-7-7z"/>
+                <path d="M8 17v1a2 2 0 004 0v-1"/>
+                <path d="M10 2V1"/>
+                <circle cx="10" cy="9" r="2" fill="${color}" stroke="none" opacity="0.7"/>
+            </svg>
+        `;
+
+        // Click to toggle popup
+        indicator.onclick = (e) => {
+            e.stopPropagation();
+            toggleAIStatusPopup(status);
+        };
+
+    } catch (error) {
+        console.error('Error updating AI status indicator:', error);
+        indicator.style.display = 'none';
+    }
+}
+
+/**
+ * Toggle AI status popup
+ */
+function toggleAIStatusPopup(status) {
+    // Remove existing popup if any
+    const existingPopup = document.getElementById('aiStatusPopup');
+    if (existingPopup) {
+        existingPopup.remove();
+        return;
+    }
+
+    const indicator = document.getElementById('aiStatusIndicator');
+    if (!indicator) return;
+
+    // Determine status info
+    let statusText, statusColor, statusDot;
+    if (status.connected === true) {
+        statusText = 'Connected';
+        statusColor = 'var(--status-operational)';
+        statusDot = 'ai-status-connected';
+    } else if (status.connected === false) {
+        statusText = 'Disconnected';
+        statusColor = 'var(--status-down)';
+        statusDot = 'ai-status-disconnected';
+    } else {
+        statusText = 'Unknown';
+        statusColor = 'var(--status-degraded)';
+        statusDot = 'ai-status-unknown';
+    }
+
+    // Format last query time
+    let lastQueryText = 'Never';
+    if (status.lastQueryAt) {
+        const lastQuery = new Date(status.lastQueryAt);
+        lastQueryText = formatRelativeTime(lastQuery);
+    }
+
+    // Create popup
+    const popup = document.createElement('div');
+    popup.id = 'aiStatusPopup';
+    popup.className = 'ai-status-popup';
+    popup.innerHTML = `
+        <div class="ai-status-popup-header">
+            <span class="ai-status-popup-title">AI SRE Companion</span>
+            <span class="ai-status-dot ${statusDot}"></span>
+        </div>
+        <div class="ai-status-popup-content">
+            <div class="ai-status-row">
+                <span class="ai-status-label">Status</span>
+                <span class="ai-status-value" style="color: ${statusColor}">${statusText}</span>
+            </div>
+            ${status.provider ? `
+            <div class="ai-status-row">
+                <span class="ai-status-label">Provider</span>
+                <span class="ai-status-value">${status.provider}</span>
+            </div>
+            ` : ''}
+            ${status.model ? `
+            <div class="ai-status-row">
+                <span class="ai-status-label">Model</span>
+                <span class="ai-status-value">${status.model}</span>
+            </div>
+            ` : ''}
+            <div class="ai-status-row">
+                <span class="ai-status-label">Last Query</span>
+                <span class="ai-status-value">${lastQueryText}</span>
+            </div>
+        </div>
+        <a href="/static/settings.html" class="ai-status-popup-link">Configure Settings</a>
+    `;
+
+    indicator.appendChild(popup);
+
+    // Close popup when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', closeAIStatusPopupOnOutsideClick);
+    }, 0);
+}
+
+/**
+ * Close popup when clicking outside
+ */
+function closeAIStatusPopupOnOutsideClick(e) {
+    const popup = document.getElementById('aiStatusPopup');
+    const indicator = document.getElementById('aiStatusIndicator');
+    if (popup && indicator && !indicator.contains(e.target)) {
+        popup.remove();
+        document.removeEventListener('click', closeAIStatusPopupOnOutsideClick);
+    }
+}
+
+/**
+ * Format relative time (e.g., "2 minutes ago")
+ */
+function formatRelativeTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (diffSec < 60) return 'Just now';
+    if (diffMin < 60) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
+    if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+    if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
+}
+
 // Insert navigation on page load
 document.addEventListener('DOMContentLoaded', () => {
     const navPlaceholder = document.getElementById('navigation');
@@ -63,5 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof insertThemeToggle === 'function') {
             insertThemeToggle('navThemeToggle');
         }
+        // Update AI status indicator
+        updateAIStatusIndicator();
     }
 });
+
+// Export for use by other scripts
+window.updateAIStatusIndicator = updateAIStatusIndicator;

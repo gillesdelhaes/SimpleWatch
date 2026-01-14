@@ -325,3 +325,95 @@ class MaintenanceWindowResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================
+# AI SRE Companion Models
+# ============================================
+
+class AISettingsRequest(BaseModel):
+    """Request model for updating AI settings."""
+    enabled: bool
+    provider: Optional[str] = None  # 'local', 'openai', 'anthropic'
+    endpoint: Optional[str] = None  # For local models (Ollama URL)
+    model_name: Optional[str] = None
+    api_key: Optional[str] = None  # Only sent when updating, not returned
+    auto_analyze_incidents: bool = True
+    require_approval: bool = True
+    auto_execute_enabled: bool = False
+    auto_execute_confidence_threshold: float = 0.95
+    prompt_via_notifications: bool = True
+
+
+class AISettingsResponse(BaseModel):
+    """Response model for AI settings."""
+    enabled: bool
+    provider: Optional[str] = None
+    endpoint: Optional[str] = None
+    model_name: Optional[str] = None
+    has_api_key: bool = False
+    auto_analyze_incidents: bool = True
+    require_approval: bool = True
+    auto_execute_enabled: bool = False
+    auto_execute_confidence_threshold: float = 0.95
+    prompt_via_notifications: bool = True
+    last_query_success: Optional[bool] = None
+    last_query_at: Optional[datetime] = None
+    last_error: Optional[str] = None
+
+
+class AIStatusResponse(BaseModel):
+    """Response model for AI status indicator."""
+    enabled: bool
+    connected: Optional[bool] = None
+    last_query_at: Optional[datetime] = None
+    provider: Optional[str] = None
+    model_name: Optional[str] = None
+
+
+class AIActionResponse(BaseModel):
+    """Response model for AI action/suggestion."""
+    id: int
+    service_id: int
+    service_name: str
+    incident_id: Optional[int]
+    action_type: str
+    description: str
+    reasoning: str
+    confidence: float
+    config: Optional[dict]
+    created_at: Optional[str]
+
+
+class AIActionApproveRequest(BaseModel):
+    """Request model for approving an AI action."""
+    pass  # No body needed
+
+
+class AIActionRejectRequest(BaseModel):
+    """Request model for rejecting an AI action."""
+    reason: Optional[str] = None
+
+
+class ServiceAIConfigRequest(BaseModel):
+    """Request model for per-service AI configuration."""
+    remediation_webhooks: Optional[List[dict]] = None
+    service_context: Optional[str] = None
+    known_issues: Optional[str] = None
+    auto_execute_enabled: Optional[bool] = None
+
+
+class ServiceAIConfigResponse(BaseModel):
+    """Response model for per-service AI configuration."""
+    service_id: int
+    remediation_webhooks: Optional[List[dict]] = None
+    service_context: Optional[str] = None
+    known_issues: Optional[str] = None
+    auto_execute_enabled: Optional[bool] = None
+
+
+class PostmortemRequest(BaseModel):
+    """Request model for generating a post-mortem report."""
+    service_id: int
+    start_date: str  # ISO format date
+    end_date: str  # ISO format date

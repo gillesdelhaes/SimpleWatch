@@ -1,0 +1,503 @@
+/**
+ * AI SRE Companion Styles
+ * Modal-based AI suggestions and service card button
+ */
+
+/* ============================================
+   Modal AI Section
+   ============================================ */
+
+.modal-ai-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+.modal-ai-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    margin-bottom: 1rem;
+}
+
+.modal-ai-icon {
+    width: 20px;
+    height: 20px;
+    color: rgb(139, 92, 246);
+}
+
+/* ============================================
+   Modal AI Card
+   ============================================ */
+
+.modal-ai-card {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.modal-ai-card:last-child {
+    margin-bottom: 0;
+}
+
+.modal-ai-card.modal-ai-processing {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.modal-ai-card.modal-ai-approved {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--status-operational);
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+.modal-ai-card.modal-ai-dismissed {
+    transform: translateX(-20px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal-ai-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.modal-ai-badge {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgb(139, 92, 246);
+    background: rgba(139, 92, 246, 0.15);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.modal-ai-time {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+}
+
+.modal-ai-description {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.modal-ai-reasoning {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Confidence Bar
+   ============================================ */
+
+.ai-confidence {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.ai-confidence-label {
+    font-size: 0.6875rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 65px;
+}
+
+.ai-confidence-bar {
+    flex: 1;
+    height: 5px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ai-confidence-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.ai-confidence-value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    min-width: 35px;
+    text-align: right;
+}
+
+/* ============================================
+   Alternatives
+   ============================================ */
+
+.modal-ai-alternatives {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.modal-ai-alternatives summary {
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.modal-ai-alternatives summary:hover {
+    color: var(--text-secondary);
+}
+
+.modal-ai-alternatives ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.25rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    padding: 0.75rem 0.75rem 0.75rem 2rem;
+}
+
+.modal-ai-alternatives li {
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+}
+
+.modal-ai-alternatives li:last-child {
+    margin-bottom: 0;
+}
+
+/* ============================================
+   Modal AI Action Buttons
+   ============================================ */
+
+.modal-ai-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.modal-ai-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-display);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.modal-ai-btn-approve {
+    background: linear-gradient(135deg, rgb(99, 102, 241), rgb(139, 92, 246));
+    color: white;
+}
+
+.modal-ai-btn-approve:hover {
+    background: linear-gradient(135deg, rgb(79, 82, 221), rgb(119, 72, 226));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35);
+}
+
+.modal-ai-btn-dismiss {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+}
+
+.modal-ai-btn-dismiss:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--status-down);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================
+   Analyze Button on Service Cards
+   ============================================ */
+
+.ai-analyze-btn,
+.modal-ai-analyze-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: 6px;
+    color: rgb(139, 92, 246);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-display);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ai-analyze-btn:hover:not(:disabled),
+.modal-ai-analyze-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25));
+    border-color: rgba(99, 102, 241, 0.6);
+    transform: translateY(-1px);
+}
+
+.ai-analyze-btn:disabled,
+.modal-ai-analyze-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.ai-analyze-btn svg,
+.modal-ai-analyze-btn svg {
+    flex-shrink: 0;
+}
+
+/* Modal-specific analyze button overrides */
+.modal-ai-analyze-btn {
+    width: auto;
+    margin-top: 0;
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+}
+
+.ai-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   AI Status Popup (Nav)
+   ============================================ */
+
+.ai-status-popup {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    min-width: 220px;
+    z-index: 1000;
+    animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ai-status-popup::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 16px;
+    width: 12px;
+    height: 12px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-primary);
+    border-top: 1px solid var(--border-primary);
+    transform: rotate(45deg);
+}
+
+.ai-status-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+    border-radius: 10px 10px 0 0;
+}
+
+.ai-status-popup-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-display);
+}
+
+.ai-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.ai-status-dot.ai-status-connected {
+    background: var(--status-operational);
+    box-shadow: 0 0 8px var(--status-operational);
+}
+
+.ai-status-dot.ai-status-disconnected {
+    background: var(--status-down);
+    box-shadow: 0 0 8px var(--status-down);
+    animation: none;
+}
+
+.ai-status-dot.ai-status-unknown {
+    background: var(--status-degraded);
+    box-shadow: 0 0 8px var(--status-degraded);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.ai-status-popup-content {
+    padding: 0.75rem 1rem;
+}
+
+.ai-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.375rem 0;
+}
+
+.ai-status-row:not(:last-child) {
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.ai-status-label {
+    font-size: 0.6875rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ai-status-value {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.ai-status-popup-link {
+    display: block;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-primary);
+    color: rgb(139, 92, 246);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.ai-status-popup-link:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: rgb(159, 112, 255);
+}
+
+/* ============================================
+   Analysis Pending Indicator
+   ============================================ */
+
+.ai-analysis-available {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px dashed rgba(139, 92, 246, 0.4);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: var(--font-display);
+}
+
+.ai-analysis-available svg {
+    color: rgb(139, 92, 246);
+    flex-shrink: 0;
+}
+
+.modal-ai-analysis-available {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px dashed rgba(139, 92, 246, 0.4);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    font-family: var(--font-display);
+}
+
+.modal-ai-analysis-available svg {
+    color: rgb(139, 92, 246);
+    flex-shrink: 0;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 640px) {
+    .modal-ai-card {
+        padding: 0.875rem;
+    }
+
+    .modal-ai-actions {
+        flex-direction: column;
+    }
+
+    .modal-ai-btn {
+        justify-content: center;
+    }
+
+    .ai-confidence {
+        flex-wrap: wrap;
+    }
+
+    .ai-confidence-label {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+
+    .ai-status-popup {
+        right: -50px;
+        min-width: 200px;
+    }
+}
