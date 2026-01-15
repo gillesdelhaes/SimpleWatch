@@ -11,7 +11,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from api.auth import get_current_user
-from database import get_db, User, AISettings, ActionLog, ServiceAIConfig, Service
+from database import get_db, User, AISettings, ActionLog, ServiceAIConfig, Service, Incident
 from ai import get_llm, test_llm_connection, encrypt_api_key
 from ai.sre_companion import SRECompanion
 from models import (
@@ -220,15 +220,33 @@ async def generate_postmortem(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Generate a post-mortem report for a time period."""
+    """Generate a post-mortem report for an incident or time period."""
     companion = SRECompanion(db)
 
     if not companion.is_enabled():
         raise HTTPException(status_code=400, detail="AI SRE not enabled")
 
+    # Single incident mode
+    if request.incident_id:
+        incident = db.query(Incident).filter(Incident.id == request.incident_id).first()
+        if not incident:
+            raise HTTPException(status_code=404, detail="Incident not found")
+
+        report = await companion.generate_single_incident_postmortem(incident)
+        if not report:
+            raise HTTPException(status_code=500, detail="Failed to generate post-mortem")
+        return {"success": True, "report": report}
+
+    # Date range mode
+    if not request.service_id or not request.start_date or not request.end_date:
+        raise HTTPException(status_code=400, detail="Either incident_id or service_id with date range required")
+
     try:
         start_date = datetime.fromisoformat(request.start_date)
         end_date = datetime.fromisoformat(request.end_date)
+        # If end_date is just a date (no time), make it end of day
+        if end_date.hour == 0 and end_date.minute == 0 and end_date.second == 0:
+            end_date = end_date.replace(hour=23, minute=59, second=59)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format (YYYY-MM-DD)")
 

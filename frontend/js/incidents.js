@@ -2,12 +2,53 @@
 
 let timelineChart = null;
 let serviceChart = null;
+let aiEnabled = false;
 
 // Require authentication
 requireAuth();
 
+// Check AI status and setup UI
+async function checkAiStatus() {
+    try {
+        const response = await api.get('/ai/status');
+        aiEnabled = response.enabled && response.connected;
+
+        if (aiEnabled) {
+            // Show header button
+            const headerBtn = document.getElementById('generateReportHeaderBtn');
+            if (headerBtn) headerBtn.style.display = 'flex';
+
+            // Populate report modal service dropdown
+            const select = document.getElementById('reportServiceSelect');
+            if (select) {
+                const services = await api.listServices();
+                (Array.isArray(services) ? services : services.services || [])
+                    .filter(s => s.is_active)
+                    .forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.name;
+                        select.appendChild(opt);
+                    });
+            }
+
+            // Set default dates (last 30 days)
+            const end = new Date();
+            const start = new Date();
+            start.setDate(start.getDate() - 30);
+            const endInput = document.getElementById('reportEndDate');
+            const startInput = document.getElementById('reportStartDate');
+            if (endInput) endInput.value = end.toISOString().split('T')[0];
+            if (startInput) startInput.value = start.toISOString().split('T')[0];
+        }
+    } catch (error) {
+        aiEnabled = false;
+    }
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
+    await checkAiStatus();
     await loadServices();
     await loadIncidents();
     await loadStats();
@@ -201,6 +242,7 @@ function renderIncidentsTable(incidents) {
                     <th>Severity</th>
                     <th>Status</th>
                     <th>Affected Monitors</th>
+                    ${aiEnabled ? '<th>Report</th>' : ''}
                 </tr>
             </thead>
             <tbody>
@@ -231,6 +273,19 @@ function renderIncidentsTable(incidents) {
                                 `).join('')}
                             </div>
                         </td>
+                        ${aiEnabled ? `
+                        <td>
+                            <button class="btn-postmortem" onclick="generateIncidentPostmortem(${incident.id})" title="Generate Post-Mortem">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                            </button>
+                        </td>
+                        ` : ''}
                     </tr>
                 `).join('')}
             </tbody>
@@ -297,7 +352,177 @@ function formatChartLabel(isoString) {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+// ============================================
+// Post-Mortem Generation
+// ============================================
+
+async function generateIncidentPostmortem(incidentId) {
+    const btn = event.target.closest('.btn-postmortem');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="ai-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"/></svg>`;
+    }
+
+    try {
+        const response = await fetch('/api/v1/ai/postmortem', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                incident_id: incidentId
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to generate report');
+        }
+
+        const result = await response.json();
+        showPostmortemModal(result.report);
+
+    } catch (error) {
+        showError(error.message || 'Failed to generate post-mortem');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+        }
+    }
+}
+
+function openReportGeneratorModal() {
+    document.getElementById('reportGeneratorModal').classList.remove('hidden');
+}
+
+function closeReportGeneratorModal() {
+    document.getElementById('reportGeneratorModal').classList.add('hidden');
+}
+
+async function generateServiceReport() {
+    const serviceId = document.getElementById('reportServiceSelect').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!serviceId || !startDate || !endDate) {
+        showError('Please select a service and date range');
+        return;
+    }
+
+    const btn = document.getElementById('generateReportBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="ai-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"/></svg> Generating...`;
+
+    try {
+        const response = await fetch('/api/v1/ai/postmortem', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                service_id: parseInt(serviceId),
+                start_date: startDate,
+                end_date: endDate
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to generate report');
+        }
+
+        const result = await response.json();
+        closeReportGeneratorModal();
+        showPostmortemModal(result.report);
+
+    } catch (error) {
+        showError(error.message || 'Failed to generate post-mortem');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Generate Report';
+    }
+}
+
+function showPostmortemModal(markdown) {
+    const modal = document.getElementById('postmortemModal');
+    const content = document.getElementById('postmortemContent');
+
+    // Store raw markdown for download/copy
+    modal.dataset.markdown = markdown;
+
+    // Render markdown (basic conversion)
+    content.innerHTML = renderMarkdown(markdown);
+    modal.classList.remove('hidden');
+}
+
+function closePostmortemModal() {
+    document.getElementById('postmortemModal').classList.add('hidden');
+}
+
+function renderMarkdown(md) {
+    // Basic markdown to HTML conversion
+    return md
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^- (.*$)/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(.+)$/gm, function(match) {
+            if (match.startsWith('<')) return match;
+            return `<p>${match}</p>`;
+        })
+        .replace(/<p><\/p>/g, '')
+        .replace(/<p>(<h[123]>)/g, '$1')
+        .replace(/(<\/h[123]>)<\/p>/g, '$1')
+        .replace(/<p>(<ul>)/g, '$1')
+        .replace(/(<\/ul>)<\/p>/g, '$1')
+        .replace(/<p>(<li>)/g, '$1')
+        .replace(/(<\/li>)<\/p>/g, '$1');
+}
+
+function downloadPostmortem() {
+    const modal = document.getElementById('postmortemModal');
+    const markdown = modal.dataset.markdown;
+
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `postmortem_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showSuccess('Post-mortem downloaded');
+}
+
+function copyPostmortem() {
+    const modal = document.getElementById('postmortemModal');
+    const markdown = modal.dataset.markdown;
+
+    navigator.clipboard.writeText(markdown).then(() => {
+        showSuccess('Post-mortem copied to clipboard');
+    }).catch(() => {
+        showError('Failed to copy to clipboard');
+    });
+}
+
 // Export functions for global access
 window.loadIncidents = loadIncidents;
 window.loadStats = loadStats;
 window.exportIncidentsCSV = exportIncidentsCSV;
+window.generateIncidentPostmortem = generateIncidentPostmortem;
+window.openReportGeneratorModal = openReportGeneratorModal;
+window.closeReportGeneratorModal = closeReportGeneratorModal;
+window.generateServiceReport = generateServiceReport;
+window.showPostmortemModal = showPostmortemModal;
+window.closePostmortemModal = closePostmortemModal;
+window.downloadPostmortem = downloadPostmortem;
+window.copyPostmortem = copyPostmortem;

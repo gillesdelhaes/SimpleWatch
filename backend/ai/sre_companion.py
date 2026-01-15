@@ -407,7 +407,7 @@ class SRECompanion:
         # Build timeline
         timeline_entries = []
         for incident in incidents:
-            # Get status updates during this incident
+            # Get status updates during this incident (with monitor info)
             updates = self.db.query(StatusUpdate).filter(
                 StatusUpdate.service_id == service_id,
                 StatusUpdate.timestamp >= incident.started_at,
@@ -417,22 +417,55 @@ class SRECompanion:
             timeline_entries.append(f"### Incident started: {incident.started_at.isoformat()}")
             timeline_entries.append(f"- Severity: {incident.severity}")
 
-            for update in updates[:10]:  # Limit to 10 updates per incident
+            # Include affected monitors info
+            if incident.affected_monitors_json:
+                try:
+                    affected_ids = json.loads(incident.affected_monitors_json)
+                    monitor_names = []
+                    for mid in affected_ids:
+                        monitor = self.db.query(Monitor).filter(Monitor.id == mid).first()
+                        if monitor:
+                            config = json.loads(monitor.config_json) if monitor.config_json else {}
+                            name = config.get("name", "")
+                            monitor_names.append(f"{monitor.monitor_type}" + (f":{name}" if name else ""))
+                    if monitor_names:
+                        timeline_entries.append(f"- Affected monitors: {', '.join(monitor_names)}")
+                except json.JSONDecodeError:
+                    pass
+
+            for update in updates[:15]:  # Limit to 15 updates per incident
                 metadata = {}
                 if update.metadata_json:
                     try:
                         metadata = json.loads(update.metadata_json)
                     except json.JSONDecodeError:
                         pass
+
+                # Get monitor info
+                monitor_info = ""
+                if update.monitor:
+                    monitor_type = update.monitor.monitor_type
+                    try:
+                        config = json.loads(update.monitor.config_json) if update.monitor.config_json else {}
+                        monitor_name = config.get("name", "")
+                        monitor_info = f"[{monitor_type}" + (f":{monitor_name}]" if monitor_name else "]")
+                    except json.JSONDecodeError:
+                        monitor_info = f"[{monitor_type}]"
+
+                # Build detailed entry
                 reason = metadata.get("reason", "")
+                response_time = f" ({update.response_time_ms}ms)" if update.response_time_ms else ""
+
                 timeline_entries.append(
-                    f"- {update.timestamp.strftime('%H:%M:%S')}: {update.status}"
+                    f"- {update.timestamp.strftime('%H:%M:%S')} {monitor_info}: {update.status}{response_time}"
                     f"{f' - {reason}' if reason else ''}"
                 )
 
             if incident.ended_at:
                 timeline_entries.append(f"### Incident resolved: {incident.ended_at.isoformat()}")
-                timeline_entries.append(f"- Duration: {incident.duration_seconds}s")
+                duration_mins = incident.duration_seconds // 60 if incident.duration_seconds else 0
+                duration_secs = incident.duration_seconds % 60 if incident.duration_seconds else 0
+                timeline_entries.append(f"- Duration: {duration_mins}m {duration_secs}s")
 
         # Format context for LLM
         context = {
@@ -460,4 +493,107 @@ class SRECompanion:
 
         except Exception as e:
             logger.error(f"Error generating postmortem: {e}")
+            return None
+
+    async def generate_single_incident_postmortem(self, incident: Incident) -> Optional[str]:
+        """Generate a post-mortem report for a single specific incident."""
+        if not self.is_enabled():
+            return None
+
+        service = self.db.query(Service).filter(Service.id == incident.service_id).first()
+        if not service:
+            return None
+
+        # Build timeline for this single incident
+        timeline_entries = []
+
+        timeline_entries.append(f"### Incident started: {incident.started_at.isoformat()}")
+        timeline_entries.append(f"- Severity: {incident.severity}")
+        timeline_entries.append(f"- Status: {incident.status}")
+
+        # Include affected monitors info
+        if incident.affected_monitors_json:
+            try:
+                affected_ids = json.loads(incident.affected_monitors_json)
+                monitor_names = []
+                for mid in affected_ids:
+                    monitor = self.db.query(Monitor).filter(Monitor.id == mid).first()
+                    if monitor:
+                        config = json.loads(monitor.config_json) if monitor.config_json else {}
+                        name = config.get("name", "")
+                        monitor_names.append(f"{monitor.monitor_type}" + (f":{name}" if name else ""))
+                if monitor_names:
+                    timeline_entries.append(f"- Affected monitors: {', '.join(monitor_names)}")
+            except json.JSONDecodeError:
+                pass
+
+        # Get status updates during this incident
+        end_time = incident.ended_at or datetime.utcnow()
+        updates = self.db.query(StatusUpdate).filter(
+            StatusUpdate.service_id == incident.service_id,
+            StatusUpdate.timestamp >= incident.started_at,
+            StatusUpdate.timestamp <= end_time
+        ).order_by(StatusUpdate.timestamp).all()
+
+        for update in updates[:20]:  # More updates for single incident
+            metadata = {}
+            if update.metadata_json:
+                try:
+                    metadata = json.loads(update.metadata_json)
+                except json.JSONDecodeError:
+                    pass
+
+            # Get monitor info
+            monitor_info = ""
+            if update.monitor:
+                monitor_type = update.monitor.monitor_type
+                try:
+                    config = json.loads(update.monitor.config_json) if update.monitor.config_json else {}
+                    monitor_name = config.get("name", "")
+                    monitor_info = f"[{monitor_type}" + (f":{monitor_name}]" if monitor_name else "]")
+                except json.JSONDecodeError:
+                    monitor_info = f"[{monitor_type}]"
+
+            reason = metadata.get("reason", "")
+            response_time = f" ({update.response_time_ms}ms)" if update.response_time_ms else ""
+
+            timeline_entries.append(
+                f"- {update.timestamp.strftime('%H:%M:%S')} {monitor_info}: {update.status}{response_time}"
+                f"{f' - {reason}' if reason else ''}"
+            )
+
+        if incident.ended_at:
+            timeline_entries.append(f"### Incident resolved: {incident.ended_at.isoformat()}")
+            duration_mins = incident.duration_seconds // 60 if incident.duration_seconds else 0
+            duration_secs = incident.duration_seconds % 60 if incident.duration_seconds else 0
+            timeline_entries.append(f"- Duration: {duration_mins}m {duration_secs}s")
+        else:
+            timeline_entries.append("### Incident ONGOING")
+
+        # Format context for LLM
+        context = {
+            "service_name": service.name,
+            "start_date": incident.started_at.strftime("%Y-%m-%d %H:%M"),
+            "end_date": incident.ended_at.strftime("%Y-%m-%d %H:%M") if incident.ended_at else "ONGOING",
+            "incident_count": 1,
+            "timeline": "\n".join(timeline_entries)
+        }
+
+        try:
+            llm = get_llm(self.settings)
+            if not llm:
+                return None
+
+            prompt = POSTMORTEM_PROMPT.format(**context)
+
+            if hasattr(llm, 'invoke'):
+                response = llm.invoke(prompt)
+                if hasattr(response, 'content'):
+                    return response.content
+                return str(response)
+            else:
+                return llm(prompt)
+
+        except Exception as e:
+            logger.error(f"Error generating single incident postmortem: {e}")
             return None

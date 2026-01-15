@@ -19,12 +19,23 @@
                 <h1 class="page-title">Incident Command Center</h1>
                 <p style="color: var(--text-secondary); margin-top: 0.5rem;">Track outages, analyze trends, and measure reliability</p>
             </div>
-            <button onclick="exportIncidentsCSV()" class="btn btn-export">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Export CSV
-            </button>
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="generateReportHeaderBtn" onclick="openReportGeneratorModal()" class="btn btn-ai-report" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Generate Report
+                </button>
+                <button onclick="exportIncidentsCSV()" class="btn btn-export">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Export CSV
+                </button>
+            </div>
         </div>
 
         <!-- Filters -->
@@ -85,6 +96,78 @@
                 Incident Log
             </h2>
             <div id="incidentsTable"></div>
+        </div>
+    </div>
+
+    <!-- Report Generator Modal -->
+    <div id="reportGeneratorModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Generate Report</h2>
+                    <p class="modal-subtitle">Create an AI post-mortem for a service</p>
+                </div>
+                <button class="modal-close" onclick="closeReportGeneratorModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Service</label>
+                    <select id="reportServiceSelect" class="form-input">
+                        <option value="">Select a service...</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" id="reportStartDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date</label>
+                        <input type="date" id="reportEndDate" class="form-input">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeReportGeneratorModal()" class="btn btn-secondary">Cancel</button>
+                <button id="generateReportBtn" onclick="generateServiceReport()" class="btn btn-primary">Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Postmortem Display Modal -->
+    <div id="postmortemModal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Post-Mortem Report</h2>
+                    <p class="modal-subtitle">AI-generated incident analysis</p>
+                </div>
+                <button class="modal-close" onclick="closePostmortemModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="postmortemContent" class="postmortem-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="copyPostmortem()" class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    Copy
+                </button>
+                <button onclick="downloadPostmortem()" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download
+                </button>
+            </div>
         </div>
     </div>
 

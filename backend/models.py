@@ -414,6 +414,7 @@ class ServiceAIConfigResponse(BaseModel):
 
 class PostmortemRequest(BaseModel):
     """Request model for generating a post-mortem report."""
-    service_id: int
-    start_date: str  # ISO format date
-    end_date: str  # ISO format date
+    service_id: Optional[int] = None
+    incident_id: Optional[int] = None  # For single-incident reports
+    start_date: Optional[str] = None  # ISO format date (for date range reports)
+    end_date: Optional[str] = None  # ISO format date (for date range reports)
