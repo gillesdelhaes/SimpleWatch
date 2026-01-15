@@ -49,13 +49,13 @@ async function loadAISettings() {
         }
 
         if (settings.model_name) {
-            // Set model based on provider
+            // Set model based on provider (handles custom models)
             if (settings.provider === 'local') {
                 document.getElementById('localModel').value = settings.model_name;
             } else if (settings.provider === 'openai') {
-                document.getElementById('openaiModel').value = settings.model_name;
+                setModelName('openai', settings.model_name);
             } else if (settings.provider === 'anthropic') {
-                document.getElementById('anthropicModel').value = settings.model_name;
+                setModelName('anthropic', settings.model_name);
             }
         }
 
@@ -131,6 +131,54 @@ function updateAutoExecuteVisibility() {
 }
 
 /**
+ * Toggle custom model input visibility
+ */
+function toggleCustomModelInput(provider) {
+    const select = document.getElementById(provider + 'Model');
+    const customInput = document.getElementById(provider + 'CustomModel');
+
+    if (select.value === 'custom') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+        customInput.value = '';
+    }
+}
+
+/**
+ * Get model name for a provider (handles custom model input)
+ */
+function getModelName(provider) {
+    const select = document.getElementById(provider + 'Model');
+    if (select.value === 'custom') {
+        return document.getElementById(provider + 'CustomModel').value;
+    }
+    return select.value;
+}
+
+/**
+ * Set model name for a provider (handles custom model input)
+ */
+function setModelName(provider, modelName) {
+    const select = document.getElementById(provider + 'Model');
+    const customInput = document.getElementById(provider + 'CustomModel');
+
+    // Check if the model is in the dropdown options
+    const options = Array.from(select.options).map(o => o.value);
+    if (options.includes(modelName) && modelName !== 'custom') {
+        select.value = modelName;
+        customInput.style.display = 'none';
+        customInput.value = '';
+    } else {
+        // Custom model
+        select.value = 'custom';
+        customInput.style.display = 'block';
+        customInput.value = modelName;
+    }
+}
+
+/**
  * Save AI settings
  */
 async function saveAISettings() {
@@ -145,11 +193,11 @@ async function saveAISettings() {
         endpoint = document.getElementById('localEndpoint').value;
         modelName = document.getElementById('localModel').value;
     } else if (provider === 'openai') {
-        modelName = document.getElementById('openaiModel').value;
+        modelName = getModelName('openai');
         const keyInput = document.getElementById('openaiKey').value;
         if (keyInput) apiKey = keyInput;
     } else if (provider === 'anthropic') {
-        modelName = document.getElementById('anthropicModel').value;
+        modelName = getModelName('anthropic');
         const keyInput = document.getElementById('anthropicKey').value;
         if (keyInput) apiKey = keyInput;
     }
@@ -186,7 +234,7 @@ async function saveAISettings() {
             throw new Error(error.detail || 'Failed to save settings');
         }
 
-        showAIStatus('Settings saved successfully', 'success');
+        showSuccess('Settings saved successfully');
 
         // Clear API key inputs after successful save
         document.getElementById('openaiKey').value = '';
@@ -196,7 +244,7 @@ async function saveAISettings() {
         await loadAISettings();
 
     } catch (error) {
-        showAIStatus(`Error: ${error.message}`, 'error');
+        showError(error.message);
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Settings';
@@ -222,7 +270,7 @@ async function testAIConnection() {
         const result = await response.json();
 
         if (result.success) {
-            showAIStatus(`Connected: ${result.message}`, 'success');
+            showSuccess(`Connection successful: ${result.message}`);
             // Update status indicator
             const currentStatus = JSON.parse(localStorage.getItem('ai_status') || '{}');
             localStorage.setItem('ai_status', JSON.stringify({
@@ -231,7 +279,7 @@ async function testAIConnection() {
                 timestamp: new Date().toISOString()
             }));
         } else {
-            showAIStatus(`Connection failed: ${result.error}`, 'error');
+            showError(`Connection failed: ${result.error}`);
             const currentStatus = JSON.parse(localStorage.getItem('ai_status') || '{}');
             localStorage.setItem('ai_status', JSON.stringify({
                 ...currentStatus,
@@ -247,7 +295,7 @@ async function testAIConnection() {
         }
 
     } catch (error) {
-        showAIStatus(`Error: ${error.message}`, 'error');
+        showError(error.message);
         const currentStatus = JSON.parse(localStorage.getItem('ai_status') || '{}');
         localStorage.setItem('ai_status', JSON.stringify({
             ...currentStatus,
@@ -264,30 +312,6 @@ async function testAIConnection() {
         testBtn.disabled = false;
         testBtn.textContent = 'Test Connection';
     }
-}
-
-/**
- * Show AI status message
- */
-function showAIStatus(message, type) {
-    const display = document.getElementById('aiStatusDisplay');
-    display.style.display = 'block';
-    display.textContent = message;
-
-    if (type === 'success') {
-        display.style.background = 'rgba(34, 197, 94, 0.1)';
-        display.style.color = 'var(--status-operational)';
-        display.style.border = '1px solid rgba(34, 197, 94, 0.3)';
-    } else if (type === 'error') {
-        display.style.background = 'rgba(239, 68, 68, 0.1)';
-        display.style.color = 'var(--status-down)';
-        display.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-    }
-
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        display.style.display = 'none';
-    }, 5000);
 }
 
 /**

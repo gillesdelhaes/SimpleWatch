@@ -192,10 +192,14 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Model</label>
-                        <select id="openaiModel" class="form-input">
+                        <select id="openaiModel" class="form-input" onchange="toggleCustomModelInput('openai')">
                             <option value="gpt-4o">GPT-4o</option>
                             <option value="gpt-4o-mini">GPT-4o Mini</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="gpt-4.1">GPT-4.1</option>
+                            <option value="custom">Custom model...</option>
                         </select>
+                        <input type="text" id="openaiCustomModel" class="form-input" placeholder="Enter model ID (e.g., gpt-4-0125-preview)" style="display: none; margin-top: 0.5rem;">
                     </div>
                 </div>
 
@@ -208,10 +212,14 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Model</label>
-                        <select id="anthropicModel" class="form-input">
+                        <select id="anthropicModel" class="form-input" onchange="toggleCustomModelInput('anthropic')">
                             <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                            <option value="claude-opus-4-20250514">Claude Opus 4</option>
                             <option value="claude-haiku-4-20250514">Claude Haiku 4</option>
+                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                            <option value="custom">Custom model...</option>
                         </select>
+                        <input type="text" id="anthropicCustomModel" class="form-input" placeholder="Enter model ID (e.g., claude-3-opus-20240229)" style="display: none; margin-top: 0.5rem;">
                     </div>
                 </div>
 
@@ -319,10 +327,6 @@
                 <button onclick="saveAISettings()" class="btn btn-primary" id="saveAIBtn">
                     Save Settings
                 </button>
-            </div>
-
-            <!-- Status display -->
-            <div id="aiStatusDisplay" style="display: none; margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;">
             </div>
         </div>
 
