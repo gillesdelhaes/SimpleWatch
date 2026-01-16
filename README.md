@@ -1,6 +1,6 @@
 # SimpleWatch
 
-Monitoring for teams who just want to know when something breaks.
+AI-powered monitoring for teams who just want to know when something breaks.
 
 Most monitoring tools are designed for large infrastructures and dedicated ops teams.
 They are powerful, flexible, and far more complex than what many small teams actually need.
@@ -13,6 +13,12 @@ It is a self-hosted monitoring dashboard built for small businesses and small te
 - Get notified without noise
 - Understand uptime and incidents over time
 - Move on with their day
+
+```bash
+docker pull gdelhaes/simplewatch
+docker run -d -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
+# Open http://localhost:5050
+```
 
 ---
 
@@ -96,6 +102,27 @@ You can:
 - Export incident logs
 
 This provides reliability insight without becoming an incident management platform.
+
+---
+
+## AI SRE Companion
+
+SimpleWatch includes an optional AI assistant that helps you respond to incidents faster.
+
+When something breaks, the AI can:
+
+- Analyze incidents automatically and suggest remediation actions
+- Generate post-mortem reports with a single click
+- Learn from your service context and known issues
+- Execute approved actions via configurable webhooks
+
+The AI works with:
+
+- **Ollama** - Run models locally, no data leaves your server
+- **OpenAI** - GPT-4o and other models
+- **Anthropic** - Claude models
+
+All AI actions require human approval by default. You stay in control.
 
 ---
 
