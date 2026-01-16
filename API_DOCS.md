@@ -1714,6 +1714,397 @@ Update data retention policy.
 
 ---
 
+### AI SRE Companion
+
+AI-powered incident analysis, remediation suggestions, and post-mortem generation.
+
+#### GET /api/v1/ai/settings
+
+Get current AI SRE Companion configuration.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "provider": "openai",
+  "endpoint": null,
+  "model_name": "gpt-4o",
+  "has_api_key": true,
+  "auto_analyze_incidents": true,
+  "require_approval": true,
+  "auto_execute_enabled": false,
+  "auto_execute_confidence_threshold": 0.95,
+  "last_query_success": true,
+  "last_query_at": "2026-01-15T10:30:00Z",
+  "last_error": null
+}
+```
+
+**Notes:**
+- `has_api_key` indicates if an API key is stored (never returns the actual key)
+- `provider` options: `local`, `openai`, `anthropic`
+- `endpoint` is used for local providers (Ollama URL)
+
+#### PUT /api/v1/ai/settings
+
+Update AI SRE Companion configuration (admin only).
+
+**Requires:** JWT authentication + admin privileges
+
+**Request:**
+```json
+{
+  "enabled": true,
+  "provider": "openai",
+  "endpoint": null,
+  "model_name": "gpt-4o",
+  "api_key": "sk-...",
+  "auto_analyze_incidents": true,
+  "require_approval": true,
+  "auto_execute_enabled": false,
+  "auto_execute_confidence_threshold": 0.95
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "AI settings updated"
+}
+```
+
+**Notes:**
+- `api_key` is encrypted before storage
+- Only include `api_key` when updating it
+- For local (Ollama), no API key required
+
+#### GET /api/v1/ai/status
+
+Get AI connection status for dashboard indicator.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "enabled": true,
+  "connected": true,
+  "last_query_at": "2026-01-15T10:30:00Z",
+  "provider": "openai",
+  "model_name": "gpt-4o"
+}
+```
+
+#### POST /api/v1/ai/test
+
+Test connection to configured AI provider.
+
+**Requires:** JWT authentication
+
+**Response (success):**
+```json
+{
+  "success": true,
+  "message": "Connected to gpt-4o",
+  "response_time_ms": 523
+}
+```
+
+**Response (failure):**
+```json
+{
+  "success": false,
+  "error": "Connection refused"
+}
+```
+
+#### GET /api/v1/ai/actions
+
+Get pending AI action suggestions.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `service_id` (optional): Filter by service ID
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "service_id": 5,
+    "service_name": "Payment API",
+    "incident_id": 12,
+    "action_type": "webhook",
+    "description": "Restart the payment service container",
+    "reasoning": "The service has been unresponsive for 10 minutes. Based on known issues, a restart typically resolves this.",
+    "confidence": 0.87,
+    "config": {
+      "webhook_name": "Restart Service",
+      "webhook_url": "https://api.example.com/restart",
+      "webhook_method": "POST"
+    },
+    "created_at": "2026-01-15T10:30:00Z"
+  }
+]
+```
+
+#### GET /api/v1/ai/actions/history
+
+Get AI action history with filtering and pagination.
+
+**Requires:** JWT authentication
+
+**Query Parameters:**
+- `service_id` (optional): Filter by service ID
+- `status` (optional): Filter by status (`pending`, `executed`, `failed`, `rejected`)
+- `limit` (optional): Number of items (default: 100)
+- `offset` (optional): Pagination offset (default: 0)
+
+**Response:**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "service_id": 5,
+      "service_name": "Payment API",
+      "incident_id": 12,
+      "action_type": "webhook",
+      "description": "Restart the payment service container",
+      "reasoning": "Service unresponsive, restart recommended",
+      "confidence": 0.87,
+      "config": {},
+      "status": "executed",
+      "created_at": "2026-01-15T10:30:00Z",
+      "executed_at": "2026-01-15T10:32:00Z",
+      "executed_by": "user:1",
+      "result": {
+        "status_code": 200,
+        "success": true
+      }
+    }
+  ],
+  "total": 45,
+  "limit": 100,
+  "offset": 0
+}
+```
+
+**Status Values:**
+- `pending` - Awaiting approval
+- `executed` - Successfully executed
+- `failed` - Execution failed
+- `rejected` - Dismissed by user
+
+#### POST /api/v1/ai/actions/{action_id}/approve
+
+Approve and execute a pending AI action.
+
+**Requires:** JWT authentication
+
+**Response (success):**
+```json
+{
+  "success": true,
+  "message": "Action executed successfully",
+  "result": {
+    "status_code": 200,
+    "response": {}
+  }
+}
+```
+
+**Response (webhook failure):**
+```json
+{
+  "success": false,
+  "error": "Webhook returned 500",
+  "result": {
+    "status_code": 500,
+    "error": "Internal server error"
+  }
+}
+```
+
+**Notes:**
+- Action must be in `pending` status
+- Executes configured webhook if present
+- Logs action with `executed_by: user:{id}`
+
+#### POST /api/v1/ai/actions/{action_id}/reject
+
+Reject/dismiss a pending AI action.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "reason": "Not applicable to this situation"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Action rejected"
+}
+```
+
+**Notes:**
+- Optional `reason` for audit trail
+- Action status changes to `rejected`
+
+#### POST /api/v1/ai/analyze/{incident_id}
+
+Manually trigger AI analysis for an incident.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "success": true,
+  "action_log_id": 15,
+  "recommendation": {
+    "action": "Restart Service",
+    "reasoning": "Based on the error pattern and service context...",
+    "confidence": 0.82,
+    "webhook": {
+      "name": "Restart Service",
+      "url": "https://api.example.com/restart"
+    }
+  }
+}
+```
+
+**Notes:**
+- Creates a new ActionLog entry
+- Returns the AI's recommendation
+- Use when auto-analyze is disabled
+
+#### GET /api/v1/ai/services/{service_id}/config
+
+Get AI configuration for a specific service.
+
+**Requires:** JWT authentication
+
+**Response:**
+```json
+{
+  "service_id": 5,
+  "remediation_webhooks": [
+    {
+      "name": "Restart Service",
+      "url": "https://api.example.com/restart",
+      "method": "POST",
+      "payload": {"force": true},
+      "headers": {"Authorization": "Bearer token"}
+    }
+  ],
+  "service_context": "Node.js API on AWS ECS, connects to PostgreSQL",
+  "known_issues": "Memory spikes require restart after 2GB threshold",
+  "auto_execute_enabled": null
+}
+```
+
+#### PUT /api/v1/ai/services/{service_id}/config
+
+Update AI configuration for a specific service.
+
+**Requires:** JWT authentication
+
+**Request:**
+```json
+{
+  "remediation_webhooks": [
+    {
+      "name": "Restart Service",
+      "url": "https://api.example.com/restart",
+      "method": "POST",
+      "payload": {"force": true},
+      "headers": {"Authorization": "Bearer token"}
+    },
+    {
+      "name": "Clear Cache",
+      "url": "https://api.example.com/cache/clear",
+      "method": "DELETE"
+    }
+  ],
+  "service_context": "Node.js API on AWS ECS, port 3000",
+  "known_issues": "Memory spikes require restart",
+  "auto_execute_enabled": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Service AI config updated"
+}
+```
+
+**Webhook Format:**
+```json
+{
+  "name": "Action Name",
+  "url": "https://webhook.url",
+  "method": "POST",
+  "payload": {},
+  "headers": {}
+}
+```
+
+#### POST /api/v1/ai/postmortem
+
+Generate an AI post-mortem report.
+
+**Requires:** JWT authentication
+
+**Request (Single Incident):**
+```json
+{
+  "incident_id": 12
+}
+```
+
+**Request (Date Range):**
+```json
+{
+  "service_id": 5,
+  "start_date": "2026-01-01",
+  "end_date": "2026-01-15"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "report": "# Post-Mortem Report\n\n## Incident Summary\n\n..."
+}
+```
+
+**Report Contents:**
+- Incident summary and timeline
+- Affected services and duration
+- Observations (factual, not assumed)
+- Recommended investigation areas
+- Unknown factors section
+
+**Notes:**
+- Either `incident_id` OR `service_id` + date range required
+- Report is markdown formatted
+- Uses configured AI provider
+
+---
+
 ## Error Responses
 
 All errors follow this format:

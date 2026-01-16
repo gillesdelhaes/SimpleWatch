@@ -13,10 +13,11 @@ Complete guide to using SimpleWatch for monitoring your services.
 7. [Backup & Restore](#backup--restore)
 8. [Setting Up Notifications](#setting-up-notifications)
 9. [Incident Command Center](#incident-command-center)
-10. [Using the API](#using-the-api)
-11. [User Management](#user-management)
-12. [Best Practices](#best-practices)
-13. [FAQ](#faq)
+10. [AI SRE Companion](#ai-sre-companion)
+11. [Using the API](#using-the-api)
+12. [User Management](#user-management)
+13. [Best Practices](#best-practices)
+14. [FAQ](#faq)
 
 ---
 
@@ -1704,6 +1705,221 @@ The uptime percentage uses the same accurate StatusUpdate-based calculation as t
 - Generate monthly reliability reports from exported data
 - Include MTTR and uptime trends in team meetings
 - Use incident breakdown by service to prioritize infrastructure improvements
+
+---
+
+## AI SRE Companion
+
+The AI SRE Companion provides intelligent incident analysis, remediation suggestions, and automated post-mortem report generation. It integrates with local LLMs (Ollama) or cloud providers (OpenAI, Anthropic) to analyze incidents and suggest actions.
+
+### Overview
+
+The AI SRE Companion helps you:
+- **Analyze incidents automatically** - AI reviews incidents as they occur
+- **Get remediation suggestions** - Receive AI-generated recommendations with confidence scores
+- **Execute webhooks** - Trigger configured remediation actions with approval workflow
+- **Generate post-mortems** - Create comprehensive incident reports with one click
+- **Track AI decisions** - Full audit log of all AI suggestions and actions
+
+### Setting Up AI Provider
+
+#### Step 1: Enable AI SRE
+
+1. Click **Settings** in navigation
+2. Scroll to **AI SRE Companion** section
+3. Toggle **Enable AI SRE Companion** to ON
+
+#### Step 2: Configure Provider
+
+Choose from three provider options:
+
+**Local (Ollama) - Recommended for Privacy:**
+1. Select "Local (Ollama)" as provider
+2. Enter endpoint URL (default: `http://localhost:11434`)
+3. Enter model name (e.g., `llama3.2`, `mistral`, `codellama`)
+4. No API key required
+
+**OpenAI:**
+1. Select "OpenAI" as provider
+2. Enter your OpenAI API key
+3. Enter model name (e.g., `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`)
+
+**Anthropic:**
+1. Select "Anthropic" as provider
+2. Enter your Anthropic API key
+3. Enter model name (e.g., `claude-sonnet-4-20250514`, `claude-3-haiku-20240307`)
+
+#### Step 3: Test Connection
+
+1. Click **Test Connection**
+2. Verify success message appears
+3. The AI status indicator in the navigation will turn green
+
+### AI Status Indicator
+
+A small AI indicator appears in the navigation bar showing:
+- **Green dot** - AI connected and working
+- **Red dot** - AI connection failed
+- **Gray dot** - AI not enabled
+
+Click the indicator to see:
+- Connection status
+- Provider and model being used
+- Last successful query time
+
+### Automatic vs Manual Analysis
+
+Configure how AI analyzes incidents:
+
+**Auto-Analyze Incidents (Recommended):**
+- Toggle ON in AI settings
+- AI automatically analyzes incidents when they occur
+- No manual action needed
+- Uses tokens for each incident
+
+**Manual Analysis Only:**
+- Toggle OFF to disable automatic analysis
+- Click "Analyze with AI" on service cards to trigger analysis
+- Saves tokens but requires manual intervention
+
+### Using AI Suggestions
+
+When an incident occurs and AI is enabled:
+
+1. **View Suggestions**: Click on a service card to open the service detail modal
+2. **Review Analysis**: AI suggestions appear inside the modal with:
+   - Description of recommended action
+   - Reasoning for the suggestion
+   - Confidence score (0-100%)
+   - Webhook details (if configured)
+3. **Approve or Dismiss**:
+   - Click **Approve** to execute the suggested action
+   - Click **Dismiss** to reject the suggestion
+
+### Configuring Per-Service AI
+
+Customize AI behavior for each service:
+
+1. Click **Services** in navigation
+2. Click **Edit** (pencil icon) on a service
+3. Scroll to **AI Configuration** section (visible when AI is enabled)
+
+**Service Context:**
+- Describe what the service does
+- Include deployment information
+- Example: "Node.js API running on AWS ECS, port 3000, connects to PostgreSQL"
+
+**Known Issues:**
+- Document common problems and solutions
+- AI uses this context for better recommendations
+- Example: "Sometimes needs restart after memory exceeds 2GB"
+
+**Remediation Webhooks:**
+Configure actions AI can suggest:
+
+1. Click **+ Add Webhook**
+2. Enter:
+   - **Action Name**: "Restart Service", "Clear Cache", etc.
+   - **Method**: POST, GET, PUT, DELETE
+   - **URL**: Webhook endpoint
+   - **Payload** (optional): JSON body
+   - **Headers** (optional): Custom headers including auth tokens
+3. Click **Save Webhook**
+
+AI will suggest these webhooks when relevant to the incident.
+
+### Post-Mortem Reports
+
+Generate AI-written incident reports:
+
+#### Single Incident Report:
+1. Go to **Incidents** page
+2. Find the incident in the log
+3. Click the **Report** button in the Report column
+4. AI generates a comprehensive post-mortem
+
+#### Date Range Report:
+1. Go to **Incidents** page
+2. Click **Generate Report** header button
+3. Select service and date range
+4. Click **Generate**
+
+**Report Contents:**
+- Incident summary and timeline
+- Affected services and monitors
+- Duration and impact analysis
+- Observations (not assumptions)
+- Recommended investigation areas
+- Unknown factors (what data is missing)
+
+**Report Actions:**
+- **Download**: Save as .md file
+- **Copy**: Copy to clipboard
+- View in modal with markdown rendering
+
+### Action History & Audit Log
+
+Track all AI decisions:
+
+1. Go to **Incidents** page
+2. Expand the **AI Action History** section (collapsible)
+3. View history table showing:
+   - Timestamp
+   - Service name
+   - Action description
+   - Confidence score
+   - Status (pending/executed/failed/rejected)
+   - Executed by (user or "auto")
+
+**Filtering:**
+- Filter by service
+- Filter by status (pending, executed, failed, rejected)
+
+**Export:**
+- Click **Export CSV** to download audit log
+- Use for compliance and reporting
+
+### Auto-Execute (Advanced)
+
+For high-confidence actions, enable automatic execution:
+
+1. Go to **Settings** → **AI SRE Companion**
+2. Toggle **Auto-Execute High Confidence Actions** to ON
+3. Set confidence threshold (default: 95%)
+
+**Safety Notes:**
+- Only actions with confidence above threshold execute automatically
+- Require Approval setting must also be considered
+- Auto-executed actions logged with `executed_by: auto`
+- Use with caution - start with high thresholds
+
+### Best Practices
+
+**Model Selection:**
+- Use capable models (GPT-4, Claude, Llama 3.2+) for best results
+- Smaller models may give less accurate suggestions
+- Local models (Ollama) work well for privacy-sensitive environments
+
+**Service Context:**
+- Write detailed service context for better AI recommendations
+- Include architecture, dependencies, and common patterns
+- Update context when services change
+
+**Webhooks:**
+- Start with safe actions (notifications, cache clears)
+- Test webhooks manually before AI uses them
+- Use approval workflow until confident in AI suggestions
+
+**Token Management:**
+- Disable auto-analyze for low-priority services
+- Use manual analysis when needed to conserve tokens
+- Monitor usage via provider dashboards
+
+**Security:**
+- API keys are encrypted at rest
+- Webhook credentials stored securely
+- Audit log tracks all AI actions
+- Human-in-the-loop by default
 
 ---
 
