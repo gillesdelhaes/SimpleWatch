@@ -3,6 +3,9 @@
 let timelineChart = null;
 let serviceChart = null;
 let aiEnabled = false;
+let actionHistoryData = null;
+let incidentLogExpanded = false;
+let actionHistoryExpanded = false;
 
 // Require authentication
 requireAuth();
@@ -17,6 +20,10 @@ async function checkAiStatus() {
             // Show header button
             const headerBtn = document.getElementById('generateReportHeaderBtn');
             if (headerBtn) headerBtn.style.display = 'flex';
+
+            // Show action history section
+            const historySection = document.getElementById('aiActionHistorySection');
+            if (historySection) historySection.style.display = 'block';
 
             // Populate report modal service dropdown
             const select = document.getElementById('reportServiceSelect');
@@ -52,6 +59,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadServices();
     await loadIncidents();
     await loadStats();
+
+    // Expand incident log by default
+    toggleIncidentLog();
 });
 
 async function loadServices() {
@@ -514,6 +524,212 @@ function copyPostmortem() {
     });
 }
 
+// ============================================
+// AI Action History
+// ============================================
+
+async function loadActionHistory(offset = 0) {
+    try {
+        const serviceId = document.getElementById('serviceFilter').value;
+        const status = document.getElementById('actionStatusFilter').value;
+
+        const params = { limit: 50, offset: offset };
+        if (serviceId) params.service_id = serviceId;
+        if (status) params.status = status;
+
+        const response = await api.get('/ai/actions/history', params);
+        actionHistoryData = response;
+
+        renderActionHistoryTable(response.items);
+        renderActionHistoryPagination(response.total, response.limit, response.offset);
+    } catch (error) {
+        console.error('Failed to load action history:', error);
+    }
+}
+
+function renderActionHistoryTable(actions) {
+    const container = document.getElementById('actionHistoryTable');
+
+    if (!actions || actions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 2rem;">
+                <div class="empty-state-title">No AI actions recorded</div>
+                <div class="empty-state-text">AI suggestions and their outcomes will appear here</div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="incidents-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Service</th>
+                    <th>Action</th>
+                    <th>Confidence</th>
+                    <th>Status</th>
+                    <th>Executed By</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${actions.map(action => `
+                    <tr>
+                        <td>
+                            <div class="incident-time">${formatTimestamp(action.created_at)}</div>
+                            ${action.executed_at ? `<div class="incident-time" style="font-size: 0.75rem;">Resolved: ${formatTimestamp(action.executed_at)}</div>` : ''}
+                        </td>
+                        <td>
+                            <div class="incident-service">${action.service_name}</div>
+                        </td>
+                        <td>
+                            <div style="max-width: 300px;">
+                                <div style="font-weight: 500;">${action.description || 'N/A'}</div>
+                                ${action.config?.webhook ? `
+                                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+                                        ${action.config.webhook.name || 'Webhook'}: ${action.config.webhook.method} ${truncateUrl(action.config.webhook.url)}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="confidence-display">
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: ${(action.confidence * 100).toFixed(0)}%;"></div>
+                                </div>
+                                <span>${(action.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge action-status-${action.status}">${action.status}</span>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                                ${formatExecutedBy(action.executed_by)}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderActionHistoryPagination(total, limit, offset) {
+    const container = document.getElementById('actionHistoryPagination');
+
+    if (total <= limit) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+    const currentPage = Math.floor(offset / limit) + 1;
+    const totalPages = Math.ceil(total / limit);
+
+    container.innerHTML = `
+        <button class="btn btn-secondary btn-sm" ${offset === 0 ? 'disabled' : ''} onclick="loadActionHistory(${offset - limit})">
+            Previous
+        </button>
+        <span style="color: var(--text-secondary); font-size: 0.875rem;">
+            Page ${currentPage} of ${totalPages} (${total} items)
+        </span>
+        <button class="btn btn-secondary btn-sm" ${offset + limit >= total ? 'disabled' : ''} onclick="loadActionHistory(${offset + limit})">
+            Next
+        </button>
+    `;
+}
+
+function truncateUrl(url) {
+    if (!url) return '';
+    if (url.length <= 40) return url;
+    return url.substring(0, 37) + '...';
+}
+
+function formatExecutedBy(executedBy) {
+    if (!executedBy) return '-';
+    if (executedBy === 'auto') return 'Auto-execute';
+    if (executedBy.startsWith('user:')) return 'User';
+    return executedBy;
+}
+
+// ============================================
+// Collapsible Section Toggles
+// ============================================
+
+function toggleIncidentLog() {
+    const section = document.getElementById('incidentLogSection');
+    incidentLogExpanded = !incidentLogExpanded;
+
+    if (incidentLogExpanded) {
+        section.classList.add('expanded');
+    } else {
+        section.classList.remove('expanded');
+    }
+}
+
+function toggleActionHistory() {
+    const section = document.getElementById('aiActionHistorySection');
+    actionHistoryExpanded = !actionHistoryExpanded;
+
+    if (actionHistoryExpanded) {
+        section.classList.add('expanded');
+        loadActionHistory();
+    } else {
+        section.classList.remove('expanded');
+    }
+}
+
+async function exportActionHistoryCSV() {
+    try {
+        const serviceId = document.getElementById('serviceFilter').value;
+        const status = document.getElementById('actionStatusFilter').value;
+
+        // Fetch all actions (no pagination for export)
+        const params = { limit: 10000, offset: 0 };
+        if (serviceId) params.service_id = serviceId;
+        if (status) params.status = status;
+
+        const response = await api.get('/ai/actions/history', params);
+        const actions = response.items;
+
+        if (actions.length === 0) {
+            showError('No actions to export');
+            return;
+        }
+
+        // Build CSV
+        const headers = ['Timestamp', 'Service', 'Action', 'Confidence', 'Status', 'Executed By', 'Executed At', 'Reasoning'];
+        const rows = actions.map(a => [
+            a.created_at,
+            a.service_name,
+            `"${(a.description || '').replace(/"/g, '""')}"`,
+            (a.confidence * 100).toFixed(0) + '%',
+            a.status,
+            formatExecutedBy(a.executed_by),
+            a.executed_at || '',
+            `"${(a.reasoning || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ai_action_history_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showSuccess('Action history exported');
+    } catch (error) {
+        showError('Failed to export action history: ' + error.message);
+    }
+}
+
 // Export functions for global access
 window.loadIncidents = loadIncidents;
 window.loadStats = loadStats;
@@ -526,3 +742,7 @@ window.showPostmortemModal = showPostmortemModal;
 window.closePostmortemModal = closePostmortemModal;
 window.downloadPostmortem = downloadPostmortem;
 window.copyPostmortem = copyPostmortem;
+window.loadActionHistory = loadActionHistory;
+window.exportActionHistoryCSV = exportActionHistoryCSV;
+window.toggleIncidentLog = toggleIncidentLog;
+window.toggleActionHistory = toggleActionHistory;

@@ -24,6 +24,7 @@ from models import (
     ServiceAIConfigRequest,
     ServiceAIConfigResponse,
     PostmortemRequest,
+    AIActionHistoryResponse,
 )
 
 router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
@@ -157,6 +158,25 @@ async def get_pending_actions(
     return actions
 
 
+@router.get("/actions/history", response_model=AIActionHistoryResponse)
+async def get_action_history(
+    service_id: Optional[int] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get AI action history with filtering and pagination."""
+    companion = SRECompanion(db)
+    return companion.get_action_history(
+        service_id=service_id,
+        status=status,
+        limit=limit,
+        offset=offset
+    )
+
+
 @router.post("/actions/{action_id}/approve")
 async def approve_action(
     action_id: int,
@@ -167,7 +187,9 @@ async def approve_action(
     companion = SRECompanion(db)
     result = await companion.approve_action(action_id, current_user.id)
 
-    if not result.get("success"):
+    # Only raise exception for action-level errors (not found, not pending)
+    # Webhook failures are returned as processed but failed
+    if result.get("error_type") == "action_error":
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to approve action"))
 
     return result

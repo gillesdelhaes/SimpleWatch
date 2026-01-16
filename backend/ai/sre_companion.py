@@ -56,6 +56,16 @@ class SRECompanion:
                 # Create action log entry
                 action_log = self._create_action_log(incident, recommendation)
 
+                # Auto-execute if status is pending_execution
+                if action_log.status == "pending_execution":
+                    logger.info(f"Auto-executing action {action_log.id} (confidence: {action_log.confidence_score})")
+                    result = await self._execute_action(action_log)
+                    action_log.status = "executed" if result["success"] else "failed"
+                    action_log.executed_at = datetime.utcnow()
+                    action_log.executed_by = "auto"
+                    action_log.result = result
+                    self.db.commit()
+
                 # Update AI settings with success
                 self.settings.last_query_at = datetime.utcnow()
                 self.settings.last_query_success = True
@@ -64,7 +74,9 @@ class SRECompanion:
 
                 return {
                     "action_log_id": action_log.id,
-                    "recommendation": recommendation
+                    "recommendation": recommendation,
+                    "auto_executed": action_log.status in ["executed", "failed"],
+                    "execution_result": action_log.result if action_log.status in ["executed", "failed"] else None
                 }
 
             return None
@@ -279,10 +291,10 @@ class SRECompanion:
         action_log = self.db.query(ActionLog).filter(ActionLog.id == action_log_id).first()
 
         if not action_log:
-            return {"success": False, "error": "Action not found"}
+            return {"success": False, "error": "Action not found", "error_type": "action_error"}
 
         if action_log.status != "pending":
-            return {"success": False, "error": f"Action is not pending (status: {action_log.status})"}
+            return {"success": False, "error": f"Action is not pending (status: {action_log.status})", "error_type": "action_error"}
 
         # Execute the action
         result = await self._execute_action(action_log)
@@ -294,6 +306,8 @@ class SRECompanion:
 
         self.db.commit()
 
+        # Mark as processed (action was handled, even if webhook failed)
+        result["processed"] = True
         return result
 
     async def reject_action(self, action_log_id: int, user_id: int, reason: str = None) -> Dict[str, Any]:
@@ -323,35 +337,57 @@ class SRECompanion:
         webhook = config.get("webhook")
 
         if not webhook:
-            return {"success": True, "message": "No webhook to execute - suggestion only"}
+            return {"success": True, "message": "No webhook configured - suggestion acknowledged"}
 
         try:
             url = webhook.get("url")
             method = webhook.get("method", "POST").upper()
-            payload = webhook.get("payload", {})
+            payload = webhook.get("payload")
+            headers = webhook.get("headers", {})
+
+            if not url:
+                return {"success": False, "error": "No webhook URL configured"}
 
             async with httpx.AsyncClient(timeout=30.0) as client:
+                kwargs = {"headers": headers} if headers else {}
+
                 if method == "GET":
-                    response = await client.get(url)
+                    response = await client.get(url, **kwargs)
                 elif method == "POST":
-                    response = await client.post(url, json=payload)
+                    if payload:
+                        response = await client.post(url, json=payload, **kwargs)
+                    else:
+                        response = await client.post(url, **kwargs)
                 elif method == "PUT":
-                    response = await client.put(url, json=payload)
+                    if payload:
+                        response = await client.put(url, json=payload, **kwargs)
+                    else:
+                        response = await client.put(url, **kwargs)
                 elif method == "DELETE":
-                    response = await client.delete(url)
+                    response = await client.delete(url, **kwargs)
                 else:
                     return {"success": False, "error": f"Unsupported HTTP method: {method}"}
 
-                return {
-                    "success": response.status_code < 400,
-                    "status_code": response.status_code,
-                    "response": response.text[:1000] if response.text else None
-                }
+                if response.status_code < 400:
+                    return {
+                        "success": True,
+                        "message": f"Webhook executed successfully ({response.status_code})",
+                        "status_code": response.status_code
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Webhook returned error: {response.status_code}",
+                        "status_code": response.status_code,
+                        "response": response.text[:500] if response.text else None
+                    }
 
         except httpx.TimeoutException:
-            return {"success": False, "error": "Webhook request timed out"}
+            return {"success": False, "error": "Webhook request timed out (30s)"}
+        except httpx.ConnectError:
+            return {"success": False, "error": f"Could not connect to webhook URL: {webhook.get('url', 'unknown')}"}
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": f"Webhook execution failed: {str(e)}"}
 
     def get_pending_actions(self, service_id: int = None) -> List[Dict[str, Any]]:
         """Get all pending actions, optionally filtered by service."""
@@ -379,6 +415,55 @@ class SRECompanion:
             })
 
         return result
+
+    def get_action_history(
+        self,
+        service_id: int = None,
+        status: str = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """Get action history with optional filtering."""
+        query = self.db.query(ActionLog)
+
+        if service_id:
+            query = query.filter(ActionLog.service_id == service_id)
+
+        if status:
+            query = query.filter(ActionLog.status == status)
+
+        # Get total count before pagination
+        total = query.count()
+
+        # Apply ordering and pagination
+        actions = query.order_by(ActionLog.created_at.desc()).offset(offset).limit(limit).all()
+
+        result = []
+        for action in actions:
+            service = self.db.query(Service).filter(Service.id == action.service_id).first()
+            result.append({
+                "id": action.id,
+                "service_id": action.service_id,
+                "service_name": service.name if service else "Unknown",
+                "incident_id": action.incident_id,
+                "action_type": action.action_type,
+                "description": action.action_description,
+                "reasoning": action.ai_reasoning,
+                "confidence": action.confidence_score,
+                "config": action.action_config,
+                "status": action.status,
+                "created_at": action.created_at.isoformat() if action.created_at else None,
+                "executed_at": action.executed_at.isoformat() if action.executed_at else None,
+                "executed_by": action.executed_by,
+                "result": action.result
+            })
+
+        return {
+            "items": result,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
 
     async def generate_postmortem(
         self,

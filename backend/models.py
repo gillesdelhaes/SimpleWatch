@@ -418,3 +418,29 @@ class PostmortemRequest(BaseModel):
     incident_id: Optional[int] = None  # For single-incident reports
     start_date: Optional[str] = None  # ISO format date (for date range reports)
     end_date: Optional[str] = None  # ISO format date (for date range reports)
+
+
+class AIActionHistoryItem(BaseModel):
+    """Response model for an AI action history item."""
+    id: int
+    service_id: int
+    service_name: str
+    incident_id: Optional[int]
+    action_type: str
+    description: str
+    reasoning: str
+    confidence: float
+    config: Optional[dict]
+    status: str
+    created_at: Optional[str]
+    executed_at: Optional[str]
+    executed_by: Optional[str]
+    result: Optional[dict]
+
+
+class AIActionHistoryResponse(BaseModel):
+    """Paginated response model for AI action history."""
+    items: List[AIActionHistoryItem]
+    total: int
+    limit: int
+    offset: int
