@@ -51,6 +51,27 @@ No configuration files. No scripting.
 
 ---
 
+## AI SRE Companion
+
+SimpleWatch includes an optional AI assistant that helps you respond to incidents faster.
+
+When something breaks, the AI can:
+
+- Analyze incidents automatically and suggest remediation actions
+- Generate post-mortem reports with a single click
+- Learn from your service context and known issues
+- Execute approved actions via configurable webhooks
+
+The AI works with:
+
+- **Ollama** - Run models locally, no data leaves your server
+- **OpenAI** - GPT-4o and other models
+- **Anthropic** - Claude models
+
+All AI actions require human approval by default. You stay in control.
+
+---
+
 ## Monitors
 
 SimpleWatch includes 11 ready-to-use monitor types:
@@ -102,27 +123,6 @@ You can:
 - Export incident logs
 
 This provides reliability insight without becoming an incident management platform.
-
----
-
-## AI SRE Companion
-
-SimpleWatch includes an optional AI assistant that helps you respond to incidents faster.
-
-When something breaks, the AI can:
-
-- Analyze incidents automatically and suggest remediation actions
-- Generate post-mortem reports with a single click
-- Learn from your service context and known issues
-- Execute approved actions via configurable webhooks
-
-The AI works with:
-
-- **Ollama** - Run models locally, no data leaves your server
-- **OpenAI** - GPT-4o and other models
-- **Anthropic** - Claude models
-
-All AI actions require human approval by default. You stay in control.
 
 ---
 
