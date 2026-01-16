@@ -56,6 +56,16 @@ class SRECompanion:
                 # Create action log entry
                 action_log = self._create_action_log(incident, recommendation)
 
+                # Auto-execute if status is pending_execution
+                if action_log.status == "pending_execution":
+                    logger.info(f"Auto-executing action {action_log.id} (confidence: {action_log.confidence_score})")
+                    result = await self._execute_action(action_log)
+                    action_log.status = "executed" if result["success"] else "failed"
+                    action_log.executed_at = datetime.utcnow()
+                    action_log.executed_by = "auto"
+                    action_log.result = result
+                    self.db.commit()
+
                 # Update AI settings with success
                 self.settings.last_query_at = datetime.utcnow()
                 self.settings.last_query_success = True
@@ -64,7 +74,9 @@ class SRECompanion:
 
                 return {
                     "action_log_id": action_log.id,
-                    "recommendation": recommendation
+                    "recommendation": recommendation,
+                    "auto_executed": action_log.status in ["executed", "failed"],
+                    "execution_result": action_log.result if action_log.status in ["executed", "failed"] else None
                 }
 
             return None
@@ -403,6 +415,55 @@ class SRECompanion:
             })
 
         return result
+
+    def get_action_history(
+        self,
+        service_id: int = None,
+        status: str = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """Get action history with optional filtering."""
+        query = self.db.query(ActionLog)
+
+        if service_id:
+            query = query.filter(ActionLog.service_id == service_id)
+
+        if status:
+            query = query.filter(ActionLog.status == status)
+
+        # Get total count before pagination
+        total = query.count()
+
+        # Apply ordering and pagination
+        actions = query.order_by(ActionLog.created_at.desc()).offset(offset).limit(limit).all()
+
+        result = []
+        for action in actions:
+            service = self.db.query(Service).filter(Service.id == action.service_id).first()
+            result.append({
+                "id": action.id,
+                "service_id": action.service_id,
+                "service_name": service.name if service else "Unknown",
+                "incident_id": action.incident_id,
+                "action_type": action.action_type,
+                "description": action.action_description,
+                "reasoning": action.ai_reasoning,
+                "confidence": action.confidence_score,
+                "config": action.action_config,
+                "status": action.status,
+                "created_at": action.created_at.isoformat() if action.created_at else None,
+                "executed_at": action.executed_at.isoformat() if action.executed_at else None,
+                "executed_by": action.executed_by,
+                "result": action.result
+            })
+
+        return {
+            "items": result,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
 
     async def generate_postmortem(
         self,

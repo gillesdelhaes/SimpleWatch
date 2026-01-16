@@ -338,3 +338,69 @@
         align-items: flex-start;
     }
 }
+
+/* ========================================
+   Collapsible Sections
+   ======================================== */
+
+.collapsible-header {
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background var(--transition-fast);
+    user-select: none;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.collapsible-header:hover {
+    background: var(--bg-tertiary);
+}
+
+.collapsible-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.collapsible-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.collapsible-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+.collapsible-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    transition: transform var(--transition-normal), color var(--transition-fast);
+}
+
+.page-section.expanded .collapsible-chevron {
+    transform: rotate(90deg);
+    color: var(--accent-primary);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-slow);
+}
+
+.page-section.expanded .collapsible-content {
+    max-height: 3000px;
+}
+
+.collapsible-content-inner {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}

@@ -89,13 +89,54 @@
             </div>
         </div>
 
-        <!-- Incidents Table -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="listIcon"></span>
-                Incident Log
-            </h2>
-            <div id="incidentsTable"></div>
+        <!-- Incidents Table (Collapsible) -->
+        <div class="page-section" id="incidentLogSection">
+            <div class="collapsible-header" onclick="toggleIncidentLog()">
+                <div class="collapsible-header-left">
+                    <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <h2 class="collapsible-title">Incident Log</h2>
+                </div>
+            </div>
+            <div class="collapsible-content">
+                <div class="collapsible-content-inner">
+                    <div id="incidentsTable"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Action History (Collapsible) -->
+        <div class="page-section" id="aiActionHistorySection" style="display: none;">
+            <div class="collapsible-header" onclick="toggleActionHistory()">
+                <div class="collapsible-header-left">
+                    <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <h2 class="collapsible-title">AI Action History</h2>
+                </div>
+                <div class="collapsible-header-right" onclick="event.stopPropagation()">
+                    <select id="actionStatusFilter" class="form-input" style="width: auto;" onchange="loadActionHistory()">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="executed">Executed</option>
+                        <option value="failed">Failed</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <button onclick="exportActionHistoryCSV()" class="btn btn-secondary btn-sm">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+            <div class="collapsible-content">
+                <div class="collapsible-content-inner">
+                    <div id="actionHistoryTable"></div>
+                    <div id="actionHistoryPagination" class="pagination-controls" style="display: none;"></div>
+                </div>
+            </div>
         </div>
     </div>
 

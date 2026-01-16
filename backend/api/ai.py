@@ -24,6 +24,7 @@ from models import (
     ServiceAIConfigRequest,
     ServiceAIConfigResponse,
     PostmortemRequest,
+    AIActionHistoryResponse,
 )
 
 router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
@@ -155,6 +156,25 @@ async def get_pending_actions(
     companion = SRECompanion(db)
     actions = companion.get_pending_actions(service_id)
     return actions
+
+
+@router.get("/actions/history", response_model=AIActionHistoryResponse)
+async def get_action_history(
+    service_id: Optional[int] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get AI action history with filtering and pagination."""
+    companion = SRECompanion(db)
+    return companion.get_action_history(
+        service_id=service_id,
+        status=status,
+        limit=limit,
+        offset=offset
+    )
 
 
 @router.post("/actions/{action_id}/approve")
