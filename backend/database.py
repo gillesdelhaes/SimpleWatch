@@ -274,7 +274,6 @@ class AISettings(Base):
     require_approval = Column(Boolean, default=True)  # Always require human approval (default: ON)
     auto_execute_enabled = Column(Boolean, default=False)  # Skip approval for high-confidence (default: OFF)
     auto_execute_confidence_threshold = Column(Float, default=0.95)  # Very high threshold when enabled
-    prompt_via_notifications = Column(Boolean, default=True)  # Send prompts to notification channels
 
     # Status tracking (for indicator)
     last_query_success = Column(Boolean)  # True if last LLM query succeeded

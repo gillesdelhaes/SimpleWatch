@@ -45,8 +45,7 @@ async def get_ai_settings(
             auto_analyze_incidents=True,
             require_approval=True,
             auto_execute_enabled=False,
-            auto_execute_confidence_threshold=0.95,
-            prompt_via_notifications=True
+            auto_execute_confidence_threshold=0.95
         )
 
     return AISettingsResponse(
@@ -59,7 +58,6 @@ async def get_ai_settings(
         require_approval=settings.require_approval if settings.require_approval is not None else True,
         auto_execute_enabled=settings.auto_execute_enabled if settings.auto_execute_enabled is not None else False,
         auto_execute_confidence_threshold=settings.auto_execute_confidence_threshold or 0.95,
-        prompt_via_notifications=settings.prompt_via_notifications if settings.prompt_via_notifications is not None else True,
         last_query_success=settings.last_query_success,
         last_query_at=settings.last_query_at,
         last_error=settings.last_error
@@ -90,7 +88,6 @@ async def update_ai_settings(
     settings.require_approval = request.require_approval
     settings.auto_execute_enabled = request.auto_execute_enabled
     settings.auto_execute_confidence_threshold = request.auto_execute_confidence_threshold
-    settings.prompt_via_notifications = request.prompt_via_notifications
     settings.updated_at = datetime.utcnow()
 
     # Encrypt and store API key if provided

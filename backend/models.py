@@ -342,7 +342,6 @@ class AISettingsRequest(BaseModel):
     require_approval: bool = True
     auto_execute_enabled: bool = False
     auto_execute_confidence_threshold: float = 0.95
-    prompt_via_notifications: bool = True
 
 
 class AISettingsResponse(BaseModel):
@@ -356,7 +355,6 @@ class AISettingsResponse(BaseModel):
     require_approval: bool = True
     auto_execute_enabled: bool = False
     auto_execute_confidence_threshold: float = 0.95
-    prompt_via_notifications: bool = True
     last_query_success: Optional[bool] = None
     last_query_at: Optional[datetime] = None
     last_error: Optional[str] = None

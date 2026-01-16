@@ -74,7 +74,6 @@ async function loadAISettings() {
         document.getElementById('autoExecuteEnabled').checked = settings.auto_execute_enabled;
         document.getElementById('confidenceThreshold').value = Math.round(settings.auto_execute_confidence_threshold * 100);
         document.getElementById('confidenceValue').textContent = Math.round(settings.auto_execute_confidence_threshold * 100) + '%';
-        document.getElementById('promptViaNotifications').checked = settings.prompt_via_notifications;
 
         updateAutoExecuteVisibility();
 
@@ -211,8 +210,7 @@ async function saveAISettings() {
         auto_analyze_incidents: document.getElementById('autoAnalyzeIncidents').checked,
         require_approval: document.getElementById('requireApproval').checked,
         auto_execute_enabled: document.getElementById('autoExecuteEnabled').checked,
-        auto_execute_confidence_threshold: parseInt(document.getElementById('confidenceThreshold').value) / 100,
-        prompt_via_notifications: document.getElementById('promptViaNotifications').checked
+        auto_execute_confidence_threshold: parseInt(document.getElementById('confidenceThreshold').value) / 100
     };
 
     const saveBtn = document.getElementById('saveAIBtn');
