@@ -236,6 +236,13 @@ async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = fals
     // Load notification settings for this service
     await loadNotificationSettingsForService(id);
 
+    // Check if AI is enabled and load AI config
+    const aiEnabled = await checkAIEnabledAndShowSection();
+    if (aiEnabled) {
+        await loadServiceAIConfig(id);
+        hideWebhookForm(); // Reset webhook form state
+    }
+
     document.getElementById('editServiceModal').classList.remove('hidden');
 }
 
@@ -420,6 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
+            // Update AI configuration if section is visible
+            if (document.getElementById('aiConfigSection').style.display !== 'none') {
+                await saveServiceAIConfig(id);
+            }
+
             hideEditServiceModal();
             loadServices();
             showSuccess('Service updated successfully');
@@ -464,6 +476,213 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('monitorPluginsLoaded', () => {
     loadServices();
 });
+
+// ============================================
+// AI Configuration Functions
+// ============================================
+
+// Store webhooks in memory while editing
+let currentRemediationWebhooks = [];
+
+/**
+ * Check if AI is enabled and show/hide the AI config section
+ */
+async function checkAIEnabledAndShowSection() {
+    try {
+        const statusStr = localStorage.getItem('ai_status');
+        if (statusStr) {
+            const status = JSON.parse(statusStr);
+            if (status.enabled) {
+                document.getElementById('aiConfigSection').style.display = 'block';
+                return true;
+            }
+        }
+        document.getElementById('aiConfigSection').style.display = 'none';
+        return false;
+    } catch (error) {
+        console.error('Error checking AI status:', error);
+        document.getElementById('aiConfigSection').style.display = 'none';
+        return false;
+    }
+}
+
+/**
+ * Load AI configuration for a service
+ */
+async function loadServiceAIConfig(serviceId) {
+    try {
+        const response = await authenticatedFetch(`/api/v1/ai/services/${serviceId}/config`);
+
+        document.getElementById('editServiceContext').value = response.service_context || '';
+        document.getElementById('editKnownIssues').value = response.known_issues || '';
+
+        currentRemediationWebhooks = response.remediation_webhooks || [];
+        renderRemediationWebhooks();
+    } catch (error) {
+        console.error('Failed to load AI config:', error);
+        // Reset to defaults
+        document.getElementById('editServiceContext').value = '';
+        document.getElementById('editKnownIssues').value = '';
+        currentRemediationWebhooks = [];
+        renderRemediationWebhooks();
+    }
+}
+
+/**
+ * Save AI configuration for a service
+ */
+async function saveServiceAIConfig(serviceId) {
+    try {
+        await authenticatedFetch(`/api/v1/ai/services/${serviceId}/config`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                service_context: document.getElementById('editServiceContext').value || null,
+                known_issues: document.getElementById('editKnownIssues').value || null,
+                remediation_webhooks: currentRemediationWebhooks.length > 0 ? currentRemediationWebhooks : null
+            })
+        });
+    } catch (error) {
+        console.error('Failed to save AI config:', error);
+        throw error;
+    }
+}
+
+/**
+ * Render the list of remediation webhooks
+ */
+function renderRemediationWebhooks() {
+    const container = document.getElementById('remediationWebhooksList');
+
+    if (currentRemediationWebhooks.length === 0) {
+        container.innerHTML = '<div class="webhook-empty">No webhooks configured</div>';
+        return;
+    }
+
+    container.innerHTML = currentRemediationWebhooks.map((webhook, index) => `
+        <div class="webhook-item">
+            <div class="webhook-item-info">
+                <span class="webhook-method webhook-method-${webhook.method.toLowerCase()}">${webhook.method}</span>
+                <span class="webhook-name">${webhook.name}</span>
+            </div>
+            <div class="webhook-item-url">${webhook.url}</div>
+            <div class="webhook-item-actions">
+                <button type="button" onclick="editWebhook(${index})" class="btn-icon" title="Edit">
+                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14.5 3.5l2 2-9 9H5.5v-2z"/>
+                        <path d="M12.5 5.5l2 2"/>
+                    </svg>
+                </button>
+                <button type="button" onclick="deleteWebhook(${index})" class="btn-icon btn-icon-danger" title="Delete">
+                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M6 6l8 8M14 6l-8 8"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Show the add webhook form
+ */
+function showAddWebhookForm() {
+    document.getElementById('webhookFormTitle').textContent = 'Add Remediation Webhook';
+    document.getElementById('editWebhookIndex').value = '-1';
+    document.getElementById('webhookName').value = '';
+    document.getElementById('webhookMethod').value = 'POST';
+    document.getElementById('webhookUrl').value = '';
+    document.getElementById('webhookPayload').value = '';
+    document.getElementById('webhookHeaders').value = '';
+    document.getElementById('addWebhookForm').style.display = 'block';
+}
+
+/**
+ * Hide the webhook form
+ */
+function hideWebhookForm() {
+    document.getElementById('addWebhookForm').style.display = 'none';
+}
+
+/**
+ * Edit an existing webhook
+ */
+function editWebhook(index) {
+    const webhook = currentRemediationWebhooks[index];
+    if (!webhook) return;
+
+    document.getElementById('webhookFormTitle').textContent = 'Edit Remediation Webhook';
+    document.getElementById('editWebhookIndex').value = index;
+    document.getElementById('webhookName').value = webhook.name || '';
+    document.getElementById('webhookMethod').value = webhook.method || 'POST';
+    document.getElementById('webhookUrl').value = webhook.url || '';
+    document.getElementById('webhookPayload').value = webhook.payload ? JSON.stringify(webhook.payload, null, 2) : '';
+    document.getElementById('webhookHeaders').value = webhook.headers ? JSON.stringify(webhook.headers, null, 2) : '';
+    document.getElementById('addWebhookForm').style.display = 'block';
+}
+
+/**
+ * Delete a webhook
+ */
+function deleteWebhook(index) {
+    currentRemediationWebhooks.splice(index, 1);
+    renderRemediationWebhooks();
+}
+
+/**
+ * Save webhook from form
+ */
+function saveWebhook() {
+    const name = document.getElementById('webhookName').value.trim();
+    const method = document.getElementById('webhookMethod').value;
+    const url = document.getElementById('webhookUrl').value.trim();
+    const payloadStr = document.getElementById('webhookPayload').value.trim();
+    const headersStr = document.getElementById('webhookHeaders').value.trim();
+
+    // Validate required fields
+    if (!name || !url) {
+        showError('Name and URL are required');
+        return;
+    }
+
+    // Parse optional JSON fields
+    let payload = null;
+    let headers = null;
+
+    if (payloadStr) {
+        try {
+            payload = JSON.parse(payloadStr);
+        } catch (e) {
+            showError('Invalid JSON in payload field');
+            return;
+        }
+    }
+
+    if (headersStr) {
+        try {
+            headers = JSON.parse(headersStr);
+        } catch (e) {
+            showError('Invalid JSON in headers field');
+            return;
+        }
+    }
+
+    const webhook = { name, method, url };
+    if (payload) webhook.payload = payload;
+    if (headers) webhook.headers = headers;
+
+    const editIndex = parseInt(document.getElementById('editWebhookIndex').value);
+    if (editIndex >= 0) {
+        // Update existing
+        currentRemediationWebhooks[editIndex] = webhook;
+    } else {
+        // Add new
+        currentRemediationWebhooks.push(webhook);
+    }
+
+    renderRemediationWebhooks();
+    hideWebhookForm();
+}
+
 /**
  * Unified Monitor Modal System
  * Handles Quick Monitor, Add to Service, and Edit Monitor flows

@@ -465,7 +465,27 @@ function renderConfidenceBar(confidence) {
 
 function renderModalAiSuggestionCard(action) {
     const hasWebhook = action.config && action.config.webhook;
+    const webhook = hasWebhook ? action.config.webhook : null;
     const actionButtonText = hasWebhook ? 'Execute Action' : 'Acknowledge';
+
+    // Build webhook info display
+    let webhookInfo = '';
+    if (webhook) {
+        webhookInfo = `
+            <div class="modal-ai-webhook">
+                <div class="modal-ai-webhook-header">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Action: ${webhook.name || 'Webhook'}
+                </div>
+                <div class="modal-ai-webhook-url">
+                    <span class="modal-ai-webhook-method modal-ai-webhook-method-${(webhook.method || 'POST').toLowerCase()}">${webhook.method || 'POST'}</span>
+                    ${webhook.url}
+                </div>
+            </div>
+        `;
+    }
 
     return `
         <div class="modal-ai-card" data-action-id="${action.id}">
@@ -479,6 +499,8 @@ function renderModalAiSuggestionCard(action) {
             <div class="modal-ai-reasoning">${action.reasoning}</div>
 
             ${renderConfidenceBar(action.confidence)}
+
+            ${webhookInfo}
 
             ${action.config && action.config.alternatives && action.config.alternatives.length > 0 ? `
                 <details class="modal-ai-alternatives">
@@ -570,21 +592,28 @@ async function approveAiAction(actionId) {
 
         const result = await response.json();
 
-        // Remove card with animation
-        if (card) {
-            card.classList.add('modal-ai-approved');
-            setTimeout(() => {
-                card.remove();
-                checkModalAiEmpty();
-            }, 400);
+        // Action was processed (even if webhook failed)
+        if (result.processed) {
+            // Remove card with appropriate animation
+            if (card) {
+                card.classList.add(result.success ? 'modal-ai-approved' : 'modal-ai-failed');
+                setTimeout(() => {
+                    card.remove();
+                    checkModalAiEmpty();
+                }, 400);
+            }
+
+            // Show appropriate toast
+            if (result.success) {
+                showToast(result.message || 'Action executed successfully', 'success');
+            } else {
+                showToast(result.error || 'Webhook execution failed', 'error');
+            }
+
+            // Refresh pending actions and dashboard cards
+            await loadAllPendingActions();
+            await loadDashboard();
         }
-
-        // Show success toast using app's toast system
-        showToast(result.message || 'Action executed successfully', 'success');
-
-        // Refresh pending actions and dashboard cards
-        await loadAllPendingActions();
-        await loadDashboard();
 
     } catch (error) {
         console.error('Failed to approve action:', error);

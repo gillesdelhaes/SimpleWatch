@@ -279,10 +279,10 @@ class SRECompanion:
         action_log = self.db.query(ActionLog).filter(ActionLog.id == action_log_id).first()
 
         if not action_log:
-            return {"success": False, "error": "Action not found"}
+            return {"success": False, "error": "Action not found", "error_type": "action_error"}
 
         if action_log.status != "pending":
-            return {"success": False, "error": f"Action is not pending (status: {action_log.status})"}
+            return {"success": False, "error": f"Action is not pending (status: {action_log.status})", "error_type": "action_error"}
 
         # Execute the action
         result = await self._execute_action(action_log)
@@ -294,6 +294,8 @@ class SRECompanion:
 
         self.db.commit()
 
+        # Mark as processed (action was handled, even if webhook failed)
+        result["processed"] = True
         return result
 
     async def reject_action(self, action_log_id: int, user_id: int, reason: str = None) -> Dict[str, Any]:
@@ -323,35 +325,57 @@ class SRECompanion:
         webhook = config.get("webhook")
 
         if not webhook:
-            return {"success": True, "message": "No webhook to execute - suggestion only"}
+            return {"success": True, "message": "No webhook configured - suggestion acknowledged"}
 
         try:
             url = webhook.get("url")
             method = webhook.get("method", "POST").upper()
-            payload = webhook.get("payload", {})
+            payload = webhook.get("payload")
+            headers = webhook.get("headers", {})
+
+            if not url:
+                return {"success": False, "error": "No webhook URL configured"}
 
             async with httpx.AsyncClient(timeout=30.0) as client:
+                kwargs = {"headers": headers} if headers else {}
+
                 if method == "GET":
-                    response = await client.get(url)
+                    response = await client.get(url, **kwargs)
                 elif method == "POST":
-                    response = await client.post(url, json=payload)
+                    if payload:
+                        response = await client.post(url, json=payload, **kwargs)
+                    else:
+                        response = await client.post(url, **kwargs)
                 elif method == "PUT":
-                    response = await client.put(url, json=payload)
+                    if payload:
+                        response = await client.put(url, json=payload, **kwargs)
+                    else:
+                        response = await client.put(url, **kwargs)
                 elif method == "DELETE":
-                    response = await client.delete(url)
+                    response = await client.delete(url, **kwargs)
                 else:
                     return {"success": False, "error": f"Unsupported HTTP method: {method}"}
 
-                return {
-                    "success": response.status_code < 400,
-                    "status_code": response.status_code,
-                    "response": response.text[:1000] if response.text else None
-                }
+                if response.status_code < 400:
+                    return {
+                        "success": True,
+                        "message": f"Webhook executed successfully ({response.status_code})",
+                        "status_code": response.status_code
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Webhook returned error: {response.status_code}",
+                        "status_code": response.status_code,
+                        "response": response.text[:500] if response.text else None
+                    }
 
         except httpx.TimeoutException:
-            return {"success": False, "error": "Webhook request timed out"}
+            return {"success": False, "error": "Webhook request timed out (30s)"}
+        except httpx.ConnectError:
+            return {"success": False, "error": f"Could not connect to webhook URL: {webhook.get('url', 'unknown')}"}
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": f"Webhook execution failed: {str(e)}"}
 
     def get_pending_actions(self, service_id: int = None) -> List[Dict[str, Any]]:
         """Get all pending actions, optionally filtered by service."""

@@ -167,7 +167,9 @@ async def approve_action(
     companion = SRECompanion(db)
     result = await companion.approve_action(action_id, current_user.id)
 
-    if not result.get("success"):
+    # Only raise exception for action-level errors (not found, not pending)
+    # Webhook failures are returned as processed but failed
+    if result.get("error_type") == "action_error":
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to approve action"))
 
     return result
