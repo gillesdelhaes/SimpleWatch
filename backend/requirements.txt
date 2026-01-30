@@ -13,6 +13,9 @@ dnspython>=2.4.0
 icmplib>=3.0.0
 beautifulsoup4>=4.12.0
 
+# SNMP Monitoring
+pysnmp>=4.4.0
+
 # AI SRE Companion (Phase 1+)
 langchain>=0.1.0
 langchain-community>=0.0.10

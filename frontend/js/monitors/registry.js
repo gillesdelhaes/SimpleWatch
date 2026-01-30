@@ -51,7 +51,8 @@ class MonitorRegistry {
                 'seo-monitor',
                 'ollama-monitor',
                 'github-actions-monitor',
-                'expiration-monitor'
+                'expiration-monitor',
+                'snmp-monitor'
             ];
 
             // Import and register each monitor plugin

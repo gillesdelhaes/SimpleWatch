@@ -73,6 +73,13 @@ const icons = {
         <path d="M8 1v2m4-2v2M8 17v2m4-2v2M1 8h2m-2 4h2m14-4h2m-2 4h2"/>
     </svg>`,
 
+    snmp: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="6" height="6" rx="1"/>
+        <rect x="11" y="11" width="6" height="6" rx="1"/>
+        <rect x="7" y="3" width="6" height="6" rx="1"/>
+        <path d="M10 9v2M6 11v-2h8v2"/>
+    </svg>`,
+
     skull: `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 2C6.5 2 4 4.5 4 8c0 2 0 4 1 5h10c1-1 1-3 1-5 0-3.5-2.5-6-6-6z"/>
         <rect x="7" y="13" width="2" height="4" rx="1"/>
