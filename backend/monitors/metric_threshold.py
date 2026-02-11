@@ -13,6 +13,8 @@ class MetricThresholdMonitor(BaseMonitor):
     The check() method is not used for scheduled checks.
     """
 
+    IS_PASSIVE = True  # Only receives data via API, not actively checked
+
     GRAPH_METRICS = [
         {"key": "value", "label": "Metric Value", "unit": "", "color": "#8B5CF6", "source": "metadata.value"},
     ]

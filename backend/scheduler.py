@@ -47,6 +47,8 @@ def discover_monitors():
                         # Use the module name as the monitor type
                         # e.g., 'website' from 'website.py', 'ssl_cert' from 'ssl_cert.py'
                         monitor_type = module_name
+                        # Set the MONITOR_TYPE on the class for reference
+                        obj.MONITOR_TYPE = monitor_type
                         monitor_classes[monitor_type] = obj
                         logger.info(f"Auto-registered monitor: {monitor_type} -> {obj.__name__}")
                         break  # Only register the first BaseMonitor subclass per file
@@ -58,11 +60,22 @@ def discover_monitors():
     return monitor_classes
 
 
+def get_passive_monitors():
+    """
+    Get set of passive monitor types (those that don't actively check).
+    Derived from monitor classes that have IS_PASSIVE = True.
+    """
+    return {
+        monitor_type for monitor_type, monitor_class in MONITOR_CLASSES.items()
+        if getattr(monitor_class, 'IS_PASSIVE', False)
+    }
+
+
 # Auto-discover all monitor classes at module load time
 MONITOR_CLASSES = discover_monitors()
 
-# Passive monitors that don't actively check (only receive data via API)
-PASSIVE_MONITORS = {'metric_threshold'}
+# Passive monitors derived from class attributes
+PASSIVE_MONITORS = get_passive_monitors()
 
 
 def check_monitor(monitor_id: int):

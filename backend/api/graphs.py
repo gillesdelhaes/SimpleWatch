@@ -11,20 +11,8 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 import json
 
-# Import monitor classes to access their GRAPH_METRICS
-from monitors.website import WebsiteMonitor
-from monitors.api import APIMonitor
-from monitors.port import PortMonitor
-from monitors.ssl_cert import SSLCertMonitor
-from monitors.ping import PingMonitor
-from monitors.metric import MetricThresholdMonitor
-from monitors.deadman import DeadmanMonitor
-from monitors.dns import DNSMonitor
-from monitors.github_actions import GitHubActionsMonitor
-from monitors.snmp import SNMPMonitor
-from monitors.seo import SEOMonitor
-from monitors.ollama import OllamaMonitor
-from monitors.expiration import ExpirationMonitor
+# Use the scheduler's auto-discovered monitor classes
+from scheduler import MONITOR_CLASSES
 
 router = APIRouter(prefix="/api/v1", tags=["graphs"])
 
@@ -33,23 +21,6 @@ PERIOD_CONFIG = {
     "24h": {"hours": 24, "bucket_minutes": 10},      # 144 points
     "7d": {"hours": 168, "bucket_minutes": 60},      # 168 points
     "30d": {"hours": 720, "bucket_minutes": 180},    # 240 points
-}
-
-# Map monitor_type string to monitor class for GRAPH_METRICS lookup
-MONITOR_CLASSES = {
-    "website": WebsiteMonitor,
-    "api": APIMonitor,
-    "port": PortMonitor,
-    "ssl_certificate": SSLCertMonitor,
-    "ping": PingMonitor,
-    "metric_threshold": MetricThresholdMonitor,
-    "deadman": DeadmanMonitor,
-    "dns": DNSMonitor,
-    "github_actions": GitHubActionsMonitor,
-    "snmp": SNMPMonitor,
-    "seo": SEOMonitor,
-    "ollama": OllamaMonitor,
-    "expiration": ExpirationMonitor,
 }
 
 # Default fallback metrics if a monitor doesn't define GRAPH_METRICS

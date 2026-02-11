@@ -165,7 +165,7 @@ def update_metric(
     config = json.loads(monitor.config_json)
 
     # Use monitor's evaluation logic instead of duplicating it
-    from monitors.metric import MetricThresholdMonitor
+    from monitors.metric_threshold import MetricThresholdMonitor
     monitor_instance = MetricThresholdMonitor(config)
     result = monitor_instance.evaluate_metric(request.value)
 

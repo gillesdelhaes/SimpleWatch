@@ -30,35 +30,37 @@ class MonitorRegistry {
         return this.loaded;
     }
 
-    // Load monitor plugins
+    // Load monitor plugins dynamically based on backend's available types
     async loadMonitors() {
         if (this.loaded) {
             return;
         }
 
         try {
-            // List of all monitor plugin files
-            // To add a new monitor: just add its filename (without .js) to this array
-            const monitorFiles = [
-                'website-monitor',
-                'api-monitor',
-                'metric-monitor',
-                'port-monitor',
-                'deadman-monitor',
-                'ssl-cert-monitor',
-                'dns-monitor',
-                'ping-monitor',
-                'seo-monitor',
-                'ollama-monitor',
-                'github-actions-monitor',
-                'expiration-monitor',
-                'snmp-monitor'
-            ];
+            // Fetch available monitor types from backend
+            const response = await fetch('/api/v1/monitors/types');
+            if (!response.ok) {
+                throw new Error('Failed to fetch monitor types from backend');
+            }
+            const data = await response.json();
 
-            // Import and register each monitor plugin
-            for (const file of monitorFiles) {
-                const module = await import(`./${file}.js`);
-                this.register(module.default);
+            // Map backend type names to frontend file names
+            // e.g., 'ssl_cert' -> 'ssl-cert-monitor', 'github_actions' -> 'github-actions-monitor'
+            const typeToFile = (type) => {
+                return type.replace(/_/g, '-') + '-monitor';
+            };
+
+            // Import and register each monitor plugin that exists
+            for (const { type } of data.types) {
+                const file = typeToFile(type);
+                try {
+                    const module = await import(`./${file}.js`);
+                    this.register(module.default);
+                } catch (importError) {
+                    // Frontend plugin doesn't exist yet - skip silently
+                    // This allows backend monitors without UI to exist
+                    console.debug(`Monitor plugin not found: ${file}.js (backend type: ${type})`);
+                }
             }
 
             this.loaded = true;

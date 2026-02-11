@@ -10,7 +10,27 @@ from datetime import datetime, timedelta
 from typing import List
 import json
 
+# Import auto-discovered monitor classes from scheduler
+from scheduler import MONITOR_CLASSES
+
 router = APIRouter(prefix="/api/v1/monitors", tags=["monitors"])
+
+
+@router.get("/types")
+def list_monitor_types():
+    """
+    List all available monitor types.
+    Used by frontend to dynamically load monitor plugins.
+    This endpoint is public (no auth required) for frontend initialization.
+    """
+    types = []
+    for monitor_type, monitor_class in MONITOR_CLASSES.items():
+        types.append({
+            "type": monitor_type,
+            "is_passive": getattr(monitor_class, 'IS_PASSIVE', False),
+            "has_graph_metrics": bool(getattr(monitor_class, 'GRAPH_METRICS', [])),
+        })
+    return {"types": sorted(types, key=lambda x: x["type"])}
 
 
 @router.get("", response_model=List[MonitorResponse])
