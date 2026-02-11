@@ -26,13 +26,13 @@ async def get_retention_settings(
     Get current data retention settings.
 
     Returns the number of days that status update data is retained.
-    Default is 90 days if not configured.
+    Default is 365 days if not configured.
     """
     retention_setting = db.query(AppSettings).filter(
         AppSettings.key == "retention_days"
     ).first()
 
-    retention_days = int(retention_setting.value) if retention_setting else 90
+    retention_days = int(retention_setting.value) if retention_setting else 365
 
     return {"retention_days": retention_days}
 
