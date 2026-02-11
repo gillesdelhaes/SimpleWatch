@@ -864,6 +864,17 @@ function renderConfiguration() {
             intervalSelect.value = currentModalState.monitor.check_interval_minutes;
         }
     }
+
+    // Setup conditional field visibility (showWhen)
+    const formContainer = document.getElementById('monitorFormFields');
+    if (formContainer) {
+        window.monitorRegistry.setupShowWhen(formContainer);
+    }
+
+    // Call post-render hook if the plugin defines one (for wiring up dynamic behavior)
+    if (monitorPlugin.onFormRendered) {
+        monitorPlugin.onFormRendered(formPrefix);
+    }
 }
 
 /**

@@ -166,9 +166,14 @@ class MonitorRegistry {
         html += Object.entries(monitor.schema).map(([key, field]) => {
             const fieldId = `${formPrefix}${this.capitalize(key)}`;
 
+            // showWhen data attributes for conditional visibility
+            const showWhenAttr = field.showWhen
+                ? ` data-show-when-field="${formPrefix}${this.capitalize(field.showWhen.field)}" data-show-when-values="${field.showWhen.values.join(',')}"`
+                : '';
+
             if (field.type === 'checkbox') {
                 return `
-                    <div class="form-group">
+                    <div class="form-group"${showWhenAttr}>
                         <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
                             <input type="checkbox"
                                    id="${fieldId}"
@@ -181,7 +186,7 @@ class MonitorRegistry {
 
             if (field.type === 'select') {
                 return `
-                    <div class="form-group">
+                    <div class="form-group"${showWhenAttr}>
                         <label class="form-label">${field.label}</label>
                         <select id="${fieldId}" class="form-input" ${field.required ? 'required' : ''}>
                             ${field.options.map(opt => `
@@ -195,9 +200,14 @@ class MonitorRegistry {
                 `;
             }
 
+            if (field.type === 'raw_html') {
+                const rawHtml = typeof field.html === 'function' ? field.html() : field.html;
+                return rawHtml.replace(/__PREFIX__/g, formPrefix);
+            }
+
             if (field.type === 'textarea') {
                 return `
-                    <div class="form-group">
+                    <div class="form-group"${showWhenAttr}>
                         <label class="form-label">${field.label}</label>
                         <textarea id="${fieldId}"
                                   class="form-input"
@@ -211,7 +221,7 @@ class MonitorRegistry {
             }
 
             return `
-                <div class="form-group">
+                <div class="form-group"${showWhenAttr}>
                     <label class="form-label">${field.label}</label>
                     <input type="${field.type}"
                            id="${fieldId}"
@@ -267,6 +277,39 @@ class MonitorRegistry {
             return monitor.renderCollapsible(formPrefix, serviceName, monitorName);
         }
         return '';
+    }
+
+    // Setup conditional visibility for fields with data-show-when-* attributes
+    setupShowWhen(container) {
+        const conditionalFields = container.querySelectorAll('[data-show-when-field]');
+        if (conditionalFields.length === 0) return;
+
+        // Group by controlling field
+        const controllers = new Map();
+        conditionalFields.forEach(el => {
+            const fieldId = el.dataset.showWhenField;
+            if (!controllers.has(fieldId)) controllers.set(fieldId, []);
+            controllers.get(fieldId).push({
+                element: el,
+                values: el.dataset.showWhenValues.split(',')
+            });
+        });
+
+        // Wire up change listeners and set initial state
+        controllers.forEach((targets, fieldId) => {
+            const controlField = document.getElementById(fieldId);
+            if (!controlField) return;
+
+            const updateVisibility = () => {
+                const currentValue = controlField.value;
+                targets.forEach(({ element, values }) => {
+                    element.style.display = values.includes(currentValue) ? '' : 'none';
+                });
+            };
+
+            controlField.addEventListener('change', updateVisibility);
+            updateVisibility();
+        });
     }
 
     // Helper: Capitalize string (e.g., 'timeout_seconds' -> 'TimeoutSeconds')
