@@ -126,9 +126,18 @@ export default {
         // Helper function to format timestamp like dashboard.js
         function formatTimestamp(timestamp) {
             if (!timestamp) return 'Never';
-            const date = new Date(timestamp);
+
+            // Append 'Z' if no timezone info to treat as UTC
+            let ts = timestamp;
+            if (!ts.endsWith('Z') && !ts.includes('+') && !ts.includes('-', 10)) {
+                ts += 'Z';
+            }
+
+            const date = new Date(ts);
             const now = new Date();
             const diff = Math.floor((now - date) / 1000);
+
+            if (isNaN(diff) || diff < 0) return 'Never';
 
             if (diff < 60) return `${diff}s ago`;
             if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;

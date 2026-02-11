@@ -340,7 +340,17 @@ async function exportIncidentsCSV() {
 }
 
 function formatTimestamp(isoString) {
-    const date = new Date(isoString);
+    if (!isoString) {
+        return 'N/A';
+    }
+
+    // Append 'Z' if no timezone info to treat as UTC
+    let ts = isoString;
+    if (!ts.endsWith('Z') && !ts.includes('+') && !ts.includes('-', 10)) {
+        ts += 'Z';
+    }
+
+    const date = new Date(ts);
     return date.toLocaleString();
 }
 
