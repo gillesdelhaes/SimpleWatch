@@ -41,6 +41,10 @@ ERROR_MODEL_DISPLAY_LIMIT = 5
 class OllamaMonitor(BaseMonitor):
     """Monitor for checking local LLM API availability and model status."""
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Response Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+    ]
+
     def _build_url(self, protocol: str, host: str, port: int, endpoint: str) -> str:
         """Build full URL from components."""
         return f"{protocol}://{host}:{port}{endpoint}"

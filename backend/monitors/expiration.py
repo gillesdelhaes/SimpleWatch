@@ -10,6 +10,10 @@ from monitors.base import BaseMonitor
 class ExpirationMonitor(BaseMonitor):
     """Monitor for tracking expiration dates of licenses, subscriptions, and other items."""
 
+    GRAPH_METRICS = [
+        {"key": "days_until_expiry", "label": "Days Until Expiry", "unit": "days", "color": "#F59E0B", "source": "metadata.days_until_expiry"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Check expiration date and determine status based on days remaining."""
         item_name = self.config.get("item_name", "Item")

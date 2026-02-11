@@ -41,6 +41,11 @@ class SNMPMonitor(BaseMonitor):
         timeout: Query timeout in seconds (default: 5)
     """
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Response Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+        {"key": "value", "label": "OID Value", "unit": "", "color": "#8B5CF6", "source": "metadata.value"},
+    ]
+
     # Common OID presets for quick reference
     COMMON_OIDS = {
         'sysUptime': '1.3.6.1.2.1.1.3.0',

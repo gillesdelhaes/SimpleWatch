@@ -10,6 +10,10 @@ from monitors.base import BaseMonitor
 class PortMonitor(BaseMonitor):
     """Monitor for checking TCP port availability."""
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Connection Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Check if a TCP port is open and accepting connections."""
         host = self.config.get("host")

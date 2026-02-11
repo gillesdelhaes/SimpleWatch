@@ -10,6 +10,11 @@ from monitors.base import BaseMonitor
 class PingMonitor(BaseMonitor):
     """Monitor for checking host reachability via ICMP ping."""
 
+    GRAPH_METRICS = [
+        {"key": "avg_rtt_ms", "label": "Avg Latency", "unit": "ms", "color": "#10B981", "source": "metadata.avg_rtt_ms"},
+        {"key": "packet_loss_percent", "label": "Packet Loss", "unit": "%", "color": "#EF4444", "source": "metadata.packet_loss_percent"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Perform ICMP ping check."""
         host = self.config.get("host")

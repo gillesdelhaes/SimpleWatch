@@ -11,6 +11,10 @@ from monitors.base import BaseMonitor
 class SSLCertMonitor(BaseMonitor):
     """Monitor for checking SSL certificate expiration."""
 
+    GRAPH_METRICS = [
+        {"key": "days_until_expiry", "label": "Days Until Expiry", "unit": "days", "color": "#F59E0B", "source": "metadata.days_until_expiry"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Check SSL certificate validity and expiration."""
         hostname = self.config.get("hostname")

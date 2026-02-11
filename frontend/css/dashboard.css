@@ -353,3 +353,105 @@
     font-weight: 600;
     color: var(--text-primary);
 }
+
+/* Graph Section */
+.graph-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+}
+
+.graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.graph-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.graph-select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.graph-select:hover {
+    border-color: var(--border-hover);
+}
+
+.graph-select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.graph-period-buttons {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    gap: 0.25rem;
+}
+
+.graph-period-btn {
+    background: transparent;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.375rem;
+    transition: all var(--transition-fast);
+}
+
+.graph-period-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.graph-period-btn.active {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.graph-container {
+    position: relative;
+    height: 250px;
+    margin-top: 0.5rem;
+}
+
+.graph-loading,
+.graph-no-data {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
+.graph-no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#monitorGraph {
+    width: 100% !important;
+    height: 100% !important;
+}

@@ -2,11 +2,16 @@
 Base monitor class for all monitor types.
 """
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 
 class BaseMonitor(ABC):
     """Base class for all monitors."""
+
+    # Graphable metrics for this monitor type
+    # Each metric: {"key": str, "label": str, "unit": str, "color": str, "source": str}
+    # source can be "response_time_ms" or "metadata.<key>"
+    GRAPH_METRICS: List[Dict[str, str]] = []
 
     def __init__(self, config: Dict[str, Any]):
         """

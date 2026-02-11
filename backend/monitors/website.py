@@ -10,6 +10,11 @@ from monitors.base import BaseMonitor
 class WebsiteMonitor(BaseMonitor):
     """Monitor for checking website/URL availability."""
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Response Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+        {"key": "status_code", "label": "Status Code", "unit": "", "color": "#6366F1", "source": "metadata.status_code"},
+    ]
+
     def _determine_status_from_http_code(self, status_code: int) -> str:
         """
         Determine service status from HTTP status code.

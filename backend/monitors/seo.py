@@ -12,6 +12,11 @@ from monitors.base import BaseMonitor
 class SEOMonitor(BaseMonitor):
     """Monitor for checking SEO meta tags on web pages."""
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Response Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+        {"key": "score", "label": "SEO Score", "unit": "%", "color": "#10B981", "source": "metadata.score"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Check SEO meta tags for a URL."""
         url = self.config.get("url")

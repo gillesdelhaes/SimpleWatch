@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/maintenance.css">
     <link rel="stylesheet" href="/static/css/ai-sre.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
 </head>
 <body>
     <div id="navigation" data-page="dashboard"></div>
@@ -60,6 +63,31 @@
             <div style="margin-bottom: 1rem;">
                 <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem;">Monitor Details</h3>
                 <div id="monitorDetailsList" class="monitor-details-list"></div>
+            </div>
+
+            <!-- Monitor Graph Section -->
+            <div id="graphSection" class="graph-section" style="margin-bottom: 1.5rem;">
+                <div class="graph-header">
+                    <h3 style="font-size: 1.125rem; font-weight: 700;">Performance Graph</h3>
+                    <div class="graph-controls">
+                        <select id="graphMonitorSelect" class="graph-select" onchange="loadMonitorGraph()">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select id="graphMetricSelect" class="graph-select" onchange="updateGraphMetric()">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <div class="graph-period-buttons">
+                            <button class="graph-period-btn active" data-period="24h" onclick="setGraphPeriod('24h')">24h</button>
+                            <button class="graph-period-btn" data-period="7d" onclick="setGraphPeriod('7d')">7d</button>
+                            <button class="graph-period-btn" data-period="30d" onclick="setGraphPeriod('30d')">30d</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="graphContainer" class="graph-container">
+                    <div id="graphLoading" class="graph-loading">Loading graph data...</div>
+                    <div id="graphNoData" class="graph-no-data hidden">No data available for this period</div>
+                    <canvas id="monitorGraph"></canvas>
+                </div>
             </div>
 
             <!-- AI SRE Suggestions (shown when there are pending actions for this service) -->

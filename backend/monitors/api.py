@@ -11,6 +11,11 @@ from monitors.base import BaseMonitor
 class APIMonitor(BaseMonitor):
     """Monitor for checking API endpoint availability and responses."""
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Response Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+        {"key": "status_code", "label": "Status Code", "unit": "", "color": "#6366F1", "source": "metadata.status_code"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Check if API endpoint responds correctly."""
         url = self.config.get("url")

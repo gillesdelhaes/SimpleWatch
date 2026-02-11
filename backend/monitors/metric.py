@@ -13,6 +13,10 @@ class MetricThresholdMonitor(BaseMonitor):
     The check() method is not used for scheduled checks.
     """
 
+    GRAPH_METRICS = [
+        {"key": "value", "label": "Metric Value", "unit": "", "color": "#8B5CF6", "source": "metadata.value"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """
         Metric monitors are passive receivers.

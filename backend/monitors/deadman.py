@@ -15,6 +15,10 @@ class DeadmanMonitor(BaseMonitor):
     Useful for monitoring cron jobs, backups, and scheduled tasks.
     """
 
+    GRAPH_METRICS = [
+        {"key": "hours_since_heartbeat", "label": "Hours Since Heartbeat", "unit": "h", "color": "#F59E0B", "source": "metadata.hours_since_heartbeat"},
+    ]
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize deadman monitor.

@@ -12,6 +12,10 @@ from monitors.base import BaseMonitor
 class DNSMonitor(BaseMonitor):
     """Monitor for checking DNS record resolution and validation."""
 
+    GRAPH_METRICS = [
+        {"key": "response_time_ms", "label": "Resolution Time", "unit": "ms", "color": "#10B981", "source": "response_time_ms"},
+    ]
+
     def check(self) -> Dict[str, Any]:
         """Check DNS records for a hostname."""
         hostname = self.config.get("hostname")

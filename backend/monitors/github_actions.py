@@ -11,6 +11,11 @@ from monitors.base import BaseMonitor
 class GitHubActionsMonitor(BaseMonitor):
     """Monitor for checking GitHub Actions workflow status."""
 
+    GRAPH_METRICS = [
+        {"key": "success_rate", "label": "Success Rate", "unit": "%", "color": "#10B981", "source": "metadata.success_rate"},
+        {"key": "avg_duration_seconds", "label": "Avg Duration", "unit": "s", "color": "#6366F1", "source": "metadata.avg_duration_seconds"},
+    ]
+
     GITHUB_API_BASE = "https://api.github.com"
 
     def _create_status_response(self, status: str, response_time_ms: int = None,

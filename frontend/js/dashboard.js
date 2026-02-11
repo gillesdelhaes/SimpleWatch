@@ -135,9 +135,25 @@ function getStatusText(status) {
 }
 
 function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
+    // Handle null/undefined timestamps (e.g., passive monitors that haven't received data)
+    if (!timestamp) {
+        return 'Never';
+    }
+
+    // Parse timestamp - append 'Z' if no timezone info to treat as UTC
+    let isoString = timestamp;
+    if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.includes('-', 10)) {
+        isoString += 'Z';
+    }
+
+    const date = new Date(isoString);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
+
+    // Handle future dates or invalid dates
+    if (isNaN(diff) || diff < 0) {
+        return 'Never';
+    }
 
     if (diff < 60) return `${diff}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -317,6 +333,294 @@ function getMonitorMetrics(monitor) {
     return html;
 }
 
+// ============================================
+// Graph State and Functions
+// ============================================
+
+let monitorChart = null;
+let currentGraphMonitorId = null;
+let currentGraphPeriod = '24h';
+let currentGraphData = null;
+let currentGraphMetricIndex = 0;
+
+// Status colors for annotations
+const STATUS_COLORS = {
+    'operational': 'rgba(16, 185, 129, 0.7)',
+    'degraded': 'rgba(245, 158, 11, 0.7)',
+    'down': 'rgba(239, 68, 68, 0.7)'
+};
+
+function getGraphableMetrics(monitorType) {
+    // Try to get from plugin first
+    const plugin = window.monitorRegistry?.get(monitorType);
+    if (plugin?.graphableMetrics) {
+        return plugin.graphableMetrics;
+    }
+    // Fallback defaults
+    return [{ key: 'response_time_ms', label: 'Response Time', unit: 'ms', color: '#10B981' }];
+}
+
+function populateGraphSelectors(service) {
+    const monitorSelect = document.getElementById('graphMonitorSelect');
+    const metricSelect = document.getElementById('graphMetricSelect');
+
+    // Clear and populate monitor selector
+    monitorSelect.innerHTML = '';
+    if (service.monitors && service.monitors.length > 0) {
+        service.monitors.forEach((monitor, idx) => {
+            const option = document.createElement('option');
+            option.value = monitor.monitor_id;
+            option.textContent = `${getMonitorTypeName(monitor.monitor_type)}${monitor.config?.name ? ` (${monitor.config.name})` : ''}`;
+            if (idx === 0) option.selected = true;
+            monitorSelect.appendChild(option);
+        });
+        currentGraphMonitorId = service.monitors[0].monitor_id;
+
+        // Populate metric selector for first monitor
+        populateMetricSelector(service.monitors[0].monitor_type);
+    }
+}
+
+function populateMetricSelector(monitorType) {
+    const metricSelect = document.getElementById('graphMetricSelect');
+    const metrics = getGraphableMetrics(monitorType);
+
+    metricSelect.innerHTML = '';
+    metrics.forEach((metric, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = `${metric.label}${metric.unit ? ` (${metric.unit})` : ''}`;
+        if (idx === 0) option.selected = true;
+        metricSelect.appendChild(option);
+    });
+    currentGraphMetricIndex = 0;
+}
+
+async function loadMonitorGraph() {
+    const monitorSelect = document.getElementById('graphMonitorSelect');
+    const selectedMonitorId = monitorSelect.value;
+
+    if (!selectedMonitorId) {
+        showGraphNoData();
+        return;
+    }
+
+    currentGraphMonitorId = parseInt(selectedMonitorId);
+
+    // Update metric selector for the selected monitor type
+    const service = currentServiceData.find(s =>
+        s.monitors?.some(m => m.monitor_id === currentGraphMonitorId)
+    );
+    const monitor = service?.monitors?.find(m => m.monitor_id === currentGraphMonitorId);
+    if (monitor) {
+        populateMetricSelector(monitor.monitor_type);
+    }
+
+    await fetchAndRenderGraph();
+}
+
+function updateGraphMetric() {
+    const metricSelect = document.getElementById('graphMetricSelect');
+    currentGraphMetricIndex = parseInt(metricSelect.value) || 0;
+
+    if (currentGraphData) {
+        renderGraph(currentGraphData);
+    }
+}
+
+function setGraphPeriod(period) {
+    currentGraphPeriod = period;
+
+    // Update button styles
+    document.querySelectorAll('.graph-period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+    });
+
+    fetchAndRenderGraph();
+}
+
+async function fetchAndRenderGraph() {
+    if (!currentGraphMonitorId) {
+        showGraphNoData();
+        return;
+    }
+
+    showGraphLoading();
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+            `/api/v1/monitors/${currentGraphMonitorId}/graph?period=${currentGraphPeriod}`,
+            { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch graph data');
+        }
+
+        currentGraphData = await response.json();
+        renderGraph(currentGraphData);
+
+    } catch (error) {
+        console.error('Failed to load graph:', error);
+        showGraphNoData();
+    }
+}
+
+function showGraphLoading() {
+    document.getElementById('graphLoading').classList.remove('hidden');
+    document.getElementById('graphNoData').classList.add('hidden');
+    const canvas = document.getElementById('monitorGraph');
+    canvas.style.display = 'none';
+}
+
+function showGraphNoData() {
+    document.getElementById('graphLoading').classList.add('hidden');
+    document.getElementById('graphNoData').classList.remove('hidden');
+    const canvas = document.getElementById('monitorGraph');
+    canvas.style.display = 'none';
+}
+
+function renderGraph(data) {
+    document.getElementById('graphLoading').classList.add('hidden');
+    document.getElementById('graphNoData').classList.add('hidden');
+
+    const canvas = document.getElementById('monitorGraph');
+    canvas.style.display = 'block';
+
+    // Destroy existing chart
+    if (monitorChart) {
+        monitorChart.destroy();
+        monitorChart = null;
+    }
+
+    // Get the selected metric
+    const metric = data.metrics[currentGraphMetricIndex];
+    if (!metric || !metric.data || metric.data.length === 0) {
+        showGraphNoData();
+        return;
+    }
+
+    // Check if all values are null
+    const hasData = metric.data.some(d => d.value !== null);
+    if (!hasData) {
+        showGraphNoData();
+        return;
+    }
+
+    // Prepare data for Chart.js
+    const labels = metric.data.map(d => new Date(d.timestamp));
+    const values = metric.data.map(d => d.value);
+
+    // Create status change annotations
+    const annotations = {};
+    if (data.status_changes) {
+        data.status_changes.forEach((change, idx) => {
+            annotations[`statusChange${idx}`] = {
+                type: 'line',
+                xMin: new Date(change.timestamp),
+                xMax: new Date(change.timestamp),
+                borderColor: STATUS_COLORS[change.to] || 'rgba(156, 163, 175, 0.5)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                    display: true,
+                    content: change.to.charAt(0).toUpperCase(),
+                    position: 'start',
+                    backgroundColor: STATUS_COLORS[change.to] || 'rgba(156, 163, 175, 0.8)',
+                    color: 'white',
+                    font: { size: 10, weight: 'bold' },
+                    padding: 3
+                }
+            };
+        });
+    }
+
+    const ctx = canvas.getContext('2d');
+    monitorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: metric.label,
+                data: values,
+                borderColor: metric.color || '#10B981',
+                backgroundColor: (metric.color || '#10B981') + '20',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                spanGaps: false  // Show gaps for null values
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: { size: 12 },
+                    bodyFont: { size: 12 },
+                    padding: 10,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(items) {
+                            const date = new Date(items[0].parsed.x);
+                            return date.toLocaleString();
+                        },
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            if (value === null) return 'No data';
+                            return `${metric.label}: ${value}${metric.unit ? ' ' + metric.unit : ''}`;
+                        }
+                    }
+                },
+                annotation: {
+                    annotations: annotations
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        displayFormats: {
+                            hour: 'HH:mm',
+                            day: 'MMM d'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(156, 163, 175, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(156, 163, 175, 0.8)',
+                        maxRotation: 0
+                    }
+                },
+                y: {
+                    beginAtZero: metric.key !== 'status_code',
+                    grid: {
+                        color: 'rgba(156, 163, 175, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(156, 163, 175, 0.8)',
+                        callback: function(value) {
+                            return value + (metric.unit ? ' ' + metric.unit : '');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 function openMonitorModal(serviceId) {
     const service = currentServiceData.find(s => s.service_id === serviceId);
     if (!service) return;
@@ -361,6 +665,21 @@ function openMonitorModal(serviceId) {
         `}).join('');
     } else {
         monitorDetailsList.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">No monitors configured for this service</p>';
+    }
+
+    // Initialize graph section
+    if (service.monitors && service.monitors.length > 0) {
+        document.getElementById('graphSection').style.display = 'block';
+        populateGraphSelectors(service);
+        // Reset period to 24h
+        currentGraphPeriod = '24h';
+        document.querySelectorAll('.graph-period-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.period === '24h');
+        });
+        // Load graph data
+        fetchAndRenderGraph();
+    } else {
+        document.getElementById('graphSection').style.display = 'none';
     }
 
     // Show AI analyze button and suggestions if AI is enabled
