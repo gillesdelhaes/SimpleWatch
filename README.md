@@ -74,7 +74,7 @@ All AI actions require human approval by default. You stay in control.
 
 ## Monitors
 
-SimpleWatch includes 11 ready-to-use monitor types:
+SimpleWatch includes 13 ready-to-use monitor types:
 
 - **Website** - HTTP/HTTPS endpoint checks
 - **API** - JSON API validation with custom headers
@@ -87,6 +87,8 @@ SimpleWatch includes 11 ready-to-use monitor types:
 - **SEO** - Comprehensive SEO health checks (title, meta, headings, structured data)
 - **Ollama/Local LLM** - Monitor local LLM APIs (Ollama, LM Studio, LocalAI)
 - **GitHub Actions** - Monitor CI/CD workflow status and build success rates
+- **SNMP** - Query network devices via SNMP v1/v2c/v3 with preset OIDs for common checks
+- **Expiration** - Track license, domain, and contract expiry dates with renewal reminders
 
 Monitors are designed to be practical, not endlessly configurable.
 
