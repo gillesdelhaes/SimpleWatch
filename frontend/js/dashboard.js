@@ -8,6 +8,22 @@ requireAuth();
 const userInfo = getUserInfo();
 let statusPoller;
 let aiEnabled = false;
+let passiveMonitorTypes = new Set();
+
+// Fetch monitor types to identify passive monitors
+async function fetchMonitorTypes() {
+    try {
+        const response = await fetch('/api/v1/monitors/types');
+        if (response.ok) {
+            const data = await response.json();
+            passiveMonitorTypes = new Set(
+                data.types.filter(t => t.is_passive).map(t => t.type)
+            );
+        }
+    } catch (error) {
+        console.debug('Failed to fetch monitor types:', error);
+    }
+}
 
 // Check if AI SRE is enabled
 async function checkAiStatus() {
@@ -645,6 +661,15 @@ function openMonitorModal(serviceId) {
     if (service.monitors && service.monitors.length > 0) {
         monitorDetailsList.innerHTML = service.monitors.map(monitor => {
             const description = getMonitorDescription(monitor);
+            const isPassive = passiveMonitorTypes.has(monitor.monitor_type);
+            const checkNowBtn = !isPassive ? `
+                <button class="check-now-btn" onclick="checkMonitorNow(${monitor.monitor_id}, this)" title="Run check now">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12l5 5L20 7"/>
+                    </svg>
+                    Check Now
+                </button>
+            ` : '';
             return `
             <div class="monitor-detail-card">
                 <div class="monitor-detail-header">
@@ -653,9 +678,12 @@ function openMonitorModal(serviceId) {
                         ${description ? `<div class="monitor-description">${description}</div>` : ''}
                         <div class="monitor-interval">Every ${monitor.check_interval_minutes} minutes</div>
                     </div>
-                    <div class="status-indicator status-${getStatusClass(monitor.status)}">
-                        <span class="status-dot"></span>
-                        ${getStatusText(monitor.status)}
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        ${checkNowBtn}
+                        <div class="status-indicator status-${getStatusClass(monitor.status)}">
+                            <span class="status-dot"></span>
+                            ${getStatusText(monitor.status)}
+                        </div>
                     </div>
                 </div>
                 <div class="monitor-metrics">
@@ -723,6 +751,44 @@ function openMonitorModal(serviceId) {
 
 function closeMonitorModal() {
     document.getElementById('monitorDetailsModal').classList.add('hidden');
+}
+
+async function checkMonitorNow(monitorId, btn) {
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"/>
+        </svg>
+        Checking...
+    `;
+
+    showToast('Running monitor check...', 'info');
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/v1/monitors/${monitorId}/check`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const statusText = data.status === 'operational' ? 'Operational' :
+                              data.status === 'degraded' ? 'Degraded' : 'Down';
+            showToast(`Check complete: ${statusText}`, data.status === 'operational' ? 'success' : 'error');
+            // Refresh the dashboard to show updated status
+            await loadDashboard();
+        } else {
+            showToast(data.detail || 'Check failed', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to run check', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
 }
 
 // Close modal when clicking outside
@@ -995,6 +1061,7 @@ function checkModalAiEmpty() {
 // ============================================
 
 async function loadDashboardWithAi() {
+    await fetchMonitorTypes();
     await checkAiStatus();
     await loadDashboard();
     if (aiEnabled) {

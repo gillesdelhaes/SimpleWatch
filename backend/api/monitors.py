@@ -3,15 +3,18 @@ Monitor management API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db, Monitor, Service
+from database import get_db, Monitor, Service, StatusUpdate
 from models import MonitorCreate, MonitorUpdate, MonitorResponse
 from api.auth import get_current_user
 from datetime import datetime, timedelta
 from typing import List
 import json
+import logging
 
 # Import auto-discovered monitor classes from scheduler
 from scheduler import MONITOR_CLASSES
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/monitors", tags=["monitors"])
 
@@ -246,3 +249,69 @@ def resume_monitor(
         db.commit()
 
     return {"success": True, "message": "Monitor resumed"}
+
+
+@router.post("/{monitor_id}/check")
+def check_monitor_now(
+    monitor_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """
+    Manually trigger a monitor check immediately.
+    Only works for active (non-passive) monitors.
+    """
+    monitor = db.query(Monitor).filter(Monitor.id == monitor_id).first()
+    if not monitor:
+        raise HTTPException(status_code=404, detail="Monitor not found")
+
+    if not monitor.is_active:
+        raise HTTPException(status_code=400, detail="Cannot check a paused monitor")
+
+    # Get monitor class to check if passive
+    monitor_class = MONITOR_CLASSES.get(monitor.monitor_type)
+    if not monitor_class:
+        raise HTTPException(status_code=400, detail=f"Unknown monitor type: {monitor.monitor_type}")
+
+    if getattr(monitor_class, 'IS_PASSIVE', False):
+        raise HTTPException(status_code=400, detail="Passive monitors cannot be manually checked")
+
+    # Run the check
+    config = json.loads(monitor.config_json)
+    config['monitor_id'] = monitor.id
+    monitor_instance = monitor_class(config)
+
+    try:
+        result = monitor_instance.check()
+    except Exception as e:
+        logger.error(f"Error running manual check for monitor {monitor_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Check failed: {str(e)}")
+
+    # Create status update
+    status = result.get("status", "down")
+    response_time_ms = result.get("response_time_ms")
+    metadata = result.get("metadata", {})
+    if result.get("message"):
+        metadata["reason"] = result["message"]
+
+    status_update = StatusUpdate(
+        service_id=monitor.service_id,
+        monitor_id=monitor.id,
+        status=status,
+        timestamp=datetime.utcnow(),
+        response_time_ms=response_time_ms,
+        metadata_json=json.dumps(metadata)
+    )
+    db.add(status_update)
+
+    # Update next_check_at (reset the interval timer)
+    monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
+    db.commit()
+
+    return {
+        "success": True,
+        "status": status,
+        "response_time_ms": response_time_ms,
+        "message": result.get("message", ""),
+        "metadata": metadata
+    }
