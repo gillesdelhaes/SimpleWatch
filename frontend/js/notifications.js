@@ -166,17 +166,114 @@ function hideChannelModal() {
 
 function updateChannelTypeHelp() {
     const type = document.getElementById('channelType').value;
-    const helpText = document.getElementById('webhookHelp');
+    const webhookUrlLabel = document.getElementById('webhookUrlLabel');
+    const webhookHelp = document.getElementById('webhookHelp');
+    const webhookInput = document.getElementById('channelWebhookUrl');
+    const secretTokenGroup = document.getElementById('secretTokenGroup');
+    const secretTokenLabel = document.getElementById('secretTokenLabel');
+    const secretTokenHelp = document.getElementById('secretTokenHelp');
+    const secretTokenInput = document.getElementById('channelSecretToken');
     const customTemplateGroup = document.getElementById('customTemplateGroup');
 
-    if (type === 'slack') {
-        helpText.textContent = 'Enter your Slack webhook URL from Incoming Webhooks app';
-        customTemplateGroup.style.display = 'none';
-    } else if (type === 'discord') {
-        helpText.textContent = 'Enter your Discord webhook URL from Server Settings > Integrations';
-        customTemplateGroup.style.display = 'none';
+    // Reset to defaults
+    webhookUrlLabel.textContent = 'Webhook URL';
+    webhookInput.type = 'url';
+    webhookInput.placeholder = 'https://...';
+    secretTokenGroup.style.display = 'block';
+    secretTokenLabel.textContent = 'Secret Token (Optional)';
+    secretTokenHelp.textContent = '';
+    secretTokenInput.required = false;
+    customTemplateGroup.style.display = 'none';
+
+    const configs = {
+        slack: {
+            urlLabel: 'Webhook URL',
+            urlHelp: 'Slack > Apps > Incoming Webhooks > Add webhook to channel',
+            urlPlaceholder: 'https://hooks.slack.com/services/...',
+            showSecret: false
+        },
+        discord: {
+            urlLabel: 'Webhook URL',
+            urlHelp: 'Discord > Server Settings > Integrations > Webhooks > Copy URL',
+            urlPlaceholder: 'https://discord.com/api/webhooks/...',
+            showSecret: false
+        },
+        teams: {
+            urlLabel: 'Webhook URL',
+            urlHelp: 'Teams > Channel > Connectors > Incoming Webhook > Configure',
+            urlPlaceholder: 'https://outlook.office.com/webhook/...',
+            showSecret: false
+        },
+        telegram: {
+            urlLabel: 'Chat ID',
+            urlHelp: 'Group/Channel ID (e.g., -1001234567890). Use @userinfobot to find it.',
+            urlPlaceholder: '-1001234567890',
+            urlType: 'text',
+            secretLabel: 'Bot Token (Required)',
+            secretHelp: 'Create a bot with @BotFather, then copy the token',
+            secretPlaceholder: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz',
+            secretRequired: true
+        },
+        matrix: {
+            urlLabel: 'Homeserver | Room ID',
+            urlHelp: 'Format: https://matrix.org|!roomid:matrix.org',
+            urlPlaceholder: 'https://matrix.org|!abc123:matrix.org',
+            urlType: 'text',
+            secretLabel: 'Access Token (Required)',
+            secretHelp: 'Settings > Help & About > Advanced > Access Token',
+            secretRequired: true
+        },
+        pagerduty: {
+            urlLabel: 'Integration Key',
+            urlHelp: 'PagerDuty > Service > Integrations > Events API v2 > Integration Key',
+            urlPlaceholder: 'a1b2c3d4e5f6...',
+            urlType: 'text',
+            showSecret: false,
+            storeInSecret: true
+        },
+        opsgenie: {
+            urlLabel: 'API Key',
+            urlHelp: 'Opsgenie > Settings > API key management > Create API Key',
+            urlPlaceholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+            urlType: 'text',
+            showSecret: false,
+            storeInSecret: true
+        },
+        ntfy: {
+            urlLabel: 'Topic URL',
+            urlHelp: 'Full ntfy URL. Public: ntfy.sh/your-topic. Self-hosted: https://your-server/topic',
+            urlPlaceholder: 'https://ntfy.sh/simplewatch-alerts',
+            secretLabel: 'Access Token (Optional)',
+            secretHelp: 'Only needed for private/authenticated topics'
+        },
+        generic: {
+            urlLabel: 'Webhook URL',
+            urlHelp: 'Any endpoint that accepts JSON POST requests',
+            urlPlaceholder: 'https://your-api.com/webhook',
+            showTemplate: true
+        }
+    };
+
+    const config = configs[type] || configs.generic;
+
+    webhookUrlLabel.textContent = config.urlLabel;
+    webhookHelp.textContent = config.urlHelp;
+    webhookInput.placeholder = config.urlPlaceholder || '';
+    webhookInput.type = config.urlType || 'url';
+
+    if (config.showSecret === false) {
+        secretTokenGroup.style.display = 'none';
     } else {
-        helpText.textContent = 'Enter any webhook URL that accepts JSON POST requests';
+        secretTokenGroup.style.display = 'block';
+        secretTokenLabel.textContent = config.secretLabel || 'Secret Token (Optional)';
+        secretTokenHelp.textContent = config.secretHelp || '';
+        secretTokenInput.required = config.secretRequired || false;
+        if (config.secretPlaceholder) {
+            secretTokenInput.placeholder = config.secretPlaceholder;
+        }
+    }
+
+    if (config.showTemplate) {
         customTemplateGroup.style.display = 'block';
     }
 }
@@ -184,11 +281,25 @@ function updateChannelTypeHelp() {
 document.getElementById('channelForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const channelType = document.getElementById('channelType').value;
+    const urlField = document.getElementById('channelWebhookUrl').value;
+    const secretField = document.getElementById('channelSecretToken').value || null;
+
+    // Handle special cases where fields are stored differently
+    let webhookUrl = urlField;
+    let secretToken = secretField;
+
+    if (channelType === 'pagerduty' || channelType === 'opsgenie') {
+        // These store the key in secret_token, URL is fixed/unused
+        webhookUrl = channelType; // placeholder, backend uses fixed URLs
+        secretToken = urlField;   // the key goes in secret_token
+    }
+
     const channelData = {
         label: document.getElementById('channelLabel').value,
-        channel_type: document.getElementById('channelType').value,
-        webhook_url: document.getElementById('channelWebhookUrl').value,
-        secret_token: document.getElementById('channelSecretToken').value || null,
+        channel_type: channelType,
+        webhook_url: webhookUrl,
+        secret_token: secretToken,
         custom_payload_template: document.getElementById('channelCustomTemplate').value || null
     };
 
@@ -224,8 +335,17 @@ async function editChannel(id) {
     document.getElementById('channelId').value = id;
     document.getElementById('channelLabel').value = channel.label;
     document.getElementById('channelType').value = channel.channel_type;
-    document.getElementById('channelWebhookUrl').value = channel.webhook_url;
-    document.getElementById('channelSecretToken').value = channel.secret_token || '';
+
+    // Handle special cases where data is stored differently
+    if (channel.channel_type === 'pagerduty' || channel.channel_type === 'opsgenie') {
+        // Key is stored in secret_token, show it in URL field for editing
+        document.getElementById('channelWebhookUrl').value = channel.secret_token || '';
+        document.getElementById('channelSecretToken').value = '';
+    } else {
+        document.getElementById('channelWebhookUrl').value = channel.webhook_url;
+        document.getElementById('channelSecretToken').value = channel.secret_token || '';
+    }
+
     document.getElementById('channelCustomTemplate').value = channel.custom_payload_template || '';
 
     updateChannelTypeHelp();

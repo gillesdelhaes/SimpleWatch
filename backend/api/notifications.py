@@ -13,7 +13,10 @@ from models import (
 from api.auth import get_current_user
 from utils.notifications import (
     encrypt_password, send_email_with_config, send_webhook_with_payload,
-    format_slack_payload, format_discord_payload, format_generic_payload
+    format_slack_payload, format_discord_payload, format_generic_payload,
+    format_pagerduty_payload, format_opsgenie_payload, format_teams_payload,
+    format_telegram_payload, format_ntfy_payload, format_matrix_payload,
+    send_pagerduty, send_opsgenie, send_telegram, send_ntfy, send_matrix
 )
 from typing import List
 from datetime import datetime
@@ -276,30 +279,99 @@ def test_notification_channel(
     timestamp = datetime.utcnow().isoformat() + "Z"
 
     try:
+        success = False
+        error = None
+
         if channel.channel_type == "slack":
             payload = format_slack_payload(
                 "Test Service", "operational", "operational",
                 [], test_monitors, timestamp
             )
+            success, error = send_webhook_with_payload(channel.webhook_url, payload)
+
         elif channel.channel_type == "discord":
             payload = format_discord_payload(
                 "Test Service", "operational", "operational",
                 [], test_monitors, timestamp
             )
+            success, error = send_webhook_with_payload(channel.webhook_url, payload)
+
+        elif channel.channel_type == "teams":
+            payload = format_teams_payload(
+                "Test Service", "operational", "operational",
+                [], test_monitors, timestamp
+            )
+            success, error = send_webhook_with_payload(channel.webhook_url, payload)
+
+        elif channel.channel_type == "pagerduty":
+            # For test, we send a trigger then immediately resolve
+            payload = format_pagerduty_payload(
+                "Test Service", "down", "operational",
+                [], test_monitors, timestamp,
+                routing_key=channel.secret_token,
+                service_id=0
+            )
+            # Change to resolve for test
+            payload["event_action"] = "resolve"
+            payload["payload"]["summary"] = "SimpleWatch test notification - all is well!"
+            success, error = send_pagerduty(channel.secret_token, payload)
+
+        elif channel.channel_type == "opsgenie":
+            # For test, we just send a low-priority test alert
+            payload = {
+                "message": "SimpleWatch Test Notification",
+                "alias": "simplewatch-test",
+                "description": "This is a test notification from SimpleWatch. If you see this, your integration is working!",
+                "priority": "P5",
+                "source": "SimpleWatch",
+                "tags": ["simplewatch", "test"]
+            }
+            success, error = send_opsgenie(channel.secret_token, payload)
+
+        elif channel.channel_type == "telegram":
+            payload = format_telegram_payload(
+                "Test Service", "down", "operational",
+                [], test_monitors, timestamp,
+                chat_id=channel.webhook_url
+            )
+            payload["text"] = "✅ *SimpleWatch Test*\n\nYour Telegram integration is working!"
+            success, error = send_telegram(channel.secret_token, payload)
+
+        elif channel.channel_type == "ntfy":
+            payload = {
+                "_ntfy_headers": {
+                    "Title": "SimpleWatch Test",
+                    "Priority": "default",
+                    "Tags": "white_check_mark"
+                },
+                "_ntfy_body": "Your ntfy integration is working!"
+            }
+            success, error = send_ntfy(channel.webhook_url, payload, channel.secret_token)
+
+        elif channel.channel_type == "matrix":
+            parts = channel.webhook_url.split("|", 1)
+            if len(parts) == 2:
+                homeserver, room_id = parts
+                payload = {
+                    "msgtype": "m.text",
+                    "body": "✅ SimpleWatch Test - Your Matrix integration is working!",
+                    "format": "org.matrix.custom.html",
+                    "formatted_body": "<h4>✅ SimpleWatch Test</h4><p>Your Matrix integration is working!</p>"
+                }
+                success, error = send_matrix(homeserver, room_id, channel.secret_token, payload)
+            else:
+                error = "Invalid Matrix config format"
+
         elif channel.channel_type == "generic":
             payload = format_generic_payload(
                 channel.custom_payload_template,
                 "Test Service", "operational", "operational",
                 [], test_monitors, timestamp
             )
-        else:
-            raise HTTPException(status_code=400, detail="Invalid channel type")
+            success, error = send_webhook_with_payload(channel.webhook_url, payload, channel.secret_token)
 
-        success, error = send_webhook_with_payload(
-            channel.webhook_url,
-            payload,
-            channel.secret_token
-        )
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid channel type: {channel.channel_type}")
 
         if success:
             # Mark as tested

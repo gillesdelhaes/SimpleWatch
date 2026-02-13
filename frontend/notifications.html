@@ -159,21 +159,36 @@
                     <div class="form-group">
                         <label class="form-label">Channel Type</label>
                         <select id="channelType" class="form-input" onchange="updateChannelTypeHelp()" required>
-                            <option value="slack">Slack (Block Kit)</option>
-                            <option value="discord">Discord (Embeds)</option>
-                            <option value="generic">Generic JSON</option>
+                            <optgroup label="Chat Platforms">
+                                <option value="slack">Slack</option>
+                                <option value="discord">Discord</option>
+                                <option value="teams">Microsoft Teams</option>
+                                <option value="telegram">Telegram</option>
+                                <option value="matrix">Matrix</option>
+                            </optgroup>
+                            <optgroup label="Incident Management">
+                                <option value="pagerduty">PagerDuty</option>
+                                <option value="opsgenie">Opsgenie</option>
+                            </optgroup>
+                            <optgroup label="Push Notifications">
+                                <option value="ntfy">ntfy.sh</option>
+                            </optgroup>
+                            <optgroup label="Custom">
+                                <option value="generic">Generic Webhook</option>
+                            </optgroup>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Webhook URL</label>
-                        <input type="url" id="channelWebhookUrl" class="form-input" placeholder="https://hooks.slack.com/services/..." required>
+                        <label class="form-label" id="webhookUrlLabel">Webhook URL</label>
+                        <input type="text" id="channelWebhookUrl" class="form-input" placeholder="https://hooks.slack.com/services/..." required>
                         <div id="webhookHelp" style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;"></div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Secret Token (Optional)</label>
+                    <div class="form-group" id="secretTokenGroup">
+                        <label class="form-label" id="secretTokenLabel">Secret Token (Optional)</label>
                         <input type="text" id="channelSecretToken" class="form-input" placeholder="Optional authentication token">
+                        <div id="secretTokenHelp" style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;"></div>
                     </div>
 
                     <div class="form-group" id="customTemplateGroup" style="display: none;">

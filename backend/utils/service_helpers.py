@@ -10,7 +10,10 @@ from database import (
 )
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
-    format_slack_payload, format_discord_payload, format_generic_payload
+    format_slack_payload, format_discord_payload, format_generic_payload,
+    format_pagerduty_payload, format_opsgenie_payload, format_teams_payload,
+    format_telegram_payload, format_ntfy_payload, format_matrix_payload,
+    send_pagerduty, send_opsgenie, send_telegram, send_ntfy, send_matrix
 )
 from datetime import datetime, timedelta
 from typing import List
@@ -473,33 +476,106 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
 
         for channel in channels:
             try:
-                # Format payload based on channel type
+                # Format and send based on channel type
+                success = False
+                error = None
+
                 if channel.channel_type == "slack":
                     payload = format_slack_payload(
                         service.name, old_status, new_status,
                         affected_monitors, all_monitors, timestamp
                     )
+                    success, error = send_webhook_with_payload(
+                        channel.webhook_url, payload, channel.secret_token
+                    )
+
                 elif channel.channel_type == "discord":
                     payload = format_discord_payload(
                         service.name, old_status, new_status,
                         affected_monitors, all_monitors, timestamp
                     )
+                    success, error = send_webhook_with_payload(
+                        channel.webhook_url, payload, channel.secret_token
+                    )
+
+                elif channel.channel_type == "teams":
+                    payload = format_teams_payload(
+                        service.name, old_status, new_status,
+                        affected_monitors, all_monitors, timestamp
+                    )
+                    success, error = send_webhook_with_payload(
+                        channel.webhook_url, payload
+                    )
+
+                elif channel.channel_type == "pagerduty":
+                    # secret_token holds the routing key
+                    payload = format_pagerduty_payload(
+                        service.name, old_status, new_status,
+                        affected_monitors, all_monitors, timestamp,
+                        routing_key=channel.secret_token,
+                        service_id=service_id
+                    )
+                    success, error = send_pagerduty(channel.secret_token, payload)
+
+                elif channel.channel_type == "opsgenie":
+                    # secret_token holds the API key
+                    payload = format_opsgenie_payload(
+                        service.name, old_status, new_status,
+                        affected_monitors, all_monitors, timestamp,
+                        service_id=service_id
+                    )
+                    success, error = send_opsgenie(channel.secret_token, payload)
+
+                elif channel.channel_type == "telegram":
+                    # webhook_url format: chat_id (e.g., "-1001234567890")
+                    # secret_token holds the bot token
+                    payload = format_telegram_payload(
+                        service.name, old_status, new_status,
+                        affected_monitors, all_monitors, timestamp,
+                        chat_id=channel.webhook_url
+                    )
+                    success, error = send_telegram(channel.secret_token, payload)
+
+                elif channel.channel_type == "ntfy":
+                    # webhook_url is the full ntfy URL (e.g., https://ntfy.sh/mytopic)
+                    # secret_token is optional access token for private topics
+                    payload = format_ntfy_payload(
+                        service.name, old_status, new_status,
+                        affected_monitors, all_monitors, timestamp
+                    )
+                    success, error = send_ntfy(
+                        channel.webhook_url, payload, channel.secret_token
+                    )
+
+                elif channel.channel_type == "matrix":
+                    # webhook_url format: "homeserver|room_id" (e.g., "https://matrix.org|!roomid:matrix.org")
+                    # secret_token holds the access token
+                    parts = channel.webhook_url.split("|", 1)
+                    if len(parts) == 2:
+                        homeserver, room_id = parts
+                        payload = format_matrix_payload(
+                            service.name, old_status, new_status,
+                            affected_monitors, all_monitors, timestamp
+                        )
+                        success, error = send_matrix(
+                            homeserver, room_id, channel.secret_token, payload
+                        )
+                    else:
+                        error = "Invalid Matrix config format (expected 'homeserver|room_id')"
+
                 elif channel.channel_type == "generic":
                     payload = format_generic_payload(
                         channel.custom_payload_template,
                         service.name, old_status, new_status,
                         affected_monitors, all_monitors, timestamp
                     )
+                    success, error = send_webhook_with_payload(
+                        channel.webhook_url, payload, channel.secret_token
+                    )
+
                 else:
                     logger.error(f"Unknown channel type: {channel.channel_type}")
                     continue
-
-                # Send webhook
-                success, error = send_webhook_with_payload(
-                    channel.webhook_url,
-                    payload,
-                    channel.secret_token
-                )
 
                 # Log webhook notification
                 log_entry = NotificationLog(
