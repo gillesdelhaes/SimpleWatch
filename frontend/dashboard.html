@@ -18,7 +18,18 @@
     <!-- Main content -->
     <div class="main-container">
         <div class="page-header">
-            <h1 class="page-title">Mission Control</h1>
+            <div class="page-header-row">
+                <h1 class="page-title">Mission Control</h1>
+                <div class="header-controls">
+                    <button id="filterButton" class="filter-btn-compact" onclick="toggleFilterPanel()" title="Sort & Filter">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        <span id="filterIndicator" class="filter-indicator-dot"></span>
+                    </button>
+                    <div id="filterPanel" class="filter-panel hidden"></div>
+                </div>
+            </div>
             <div class="last-update" id="lastUpdate"></div>
         </div>
 

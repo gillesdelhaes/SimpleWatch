@@ -10,6 +10,91 @@ let statusPoller;
 let aiEnabled = false;
 let passiveMonitorTypes = new Set();
 
+// ============================================
+// Dashboard Sort & Filter State
+// ============================================
+
+const SORT_OPTIONS = {
+    'default': { label: 'Default (Date Added)', fn: (a, b) => a.service_id - b.service_id },
+    'name-asc': { label: 'Name (A-Z)', fn: (a, b) => a.service.localeCompare(b.service) },
+    'name-desc': { label: 'Name (Z-A)', fn: (a, b) => b.service.localeCompare(a.service) },
+    'status': { label: 'Status (Worst First)', fn: (a, b) => {
+        const order = { 'down': 0, 'degraded': 1, 'operational': 2, 'unknown': 3 };
+        return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+    }},
+    'category': { label: 'Category', fn: (a, b) => (a.category || '').localeCompare(b.category || '') },
+    'last-checked': { label: 'Last Checked', fn: (a, b) => {
+        const aTime = a.monitors?.[0]?.last_check_at || '';
+        const bTime = b.monitors?.[0]?.last_check_at || '';
+        return bTime.localeCompare(aTime); // Most recent first
+    }}
+};
+
+let dashboardPrefs = {
+    sort: 'default',
+    statusFilters: ['operational', 'degraded', 'down'],
+    categoryFilters: [] // Empty = show all
+};
+
+function loadDashboardPrefs() {
+    try {
+        const saved = localStorage.getItem('dashboardPrefs');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            dashboardPrefs = { ...dashboardPrefs, ...parsed };
+        }
+    } catch (e) {
+        console.debug('Failed to load dashboard prefs:', e);
+    }
+}
+
+function saveDashboardPrefs() {
+    try {
+        localStorage.setItem('dashboardPrefs', JSON.stringify(dashboardPrefs));
+    } catch (e) {
+        console.debug('Failed to save dashboard prefs:', e);
+    }
+}
+
+function getUniqueCategories(services) {
+    const categories = new Set();
+    services.forEach(s => {
+        if (s.category) categories.add(s.category);
+    });
+    return Array.from(categories).sort();
+}
+
+function applyFiltersAndSort(services) {
+    let filtered = services;
+
+    // Apply status filter
+    if (dashboardPrefs.statusFilters.length < 3) {
+        filtered = filtered.filter(s => dashboardPrefs.statusFilters.includes(s.status));
+    }
+
+    // Apply category filter
+    if (dashboardPrefs.categoryFilters.length > 0) {
+        filtered = filtered.filter(s => dashboardPrefs.categoryFilters.includes(s.category || ''));
+    }
+
+    // Apply sort
+    const sortOpt = SORT_OPTIONS[dashboardPrefs.sort];
+    if (sortOpt) {
+        filtered = [...filtered].sort(sortOpt.fn);
+    }
+
+    return filtered;
+}
+
+function hasActiveFilters() {
+    return dashboardPrefs.statusFilters.length < 3 ||
+           dashboardPrefs.categoryFilters.length > 0 ||
+           dashboardPrefs.sort !== 'default';
+}
+
+// Initialize prefs on load
+loadDashboardPrefs();
+
 // Fetch monitor types to identify passive monitors
 async function fetchMonitorTypes() {
     try {
@@ -808,22 +893,193 @@ async function loadDashboard() {
         if (data.services.length === 0) {
             dashboardGrid.innerHTML = '';
             emptyState.classList.remove('hidden');
+            updateFilterButton();
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        dashboardGrid.innerHTML = data.services
-            .map(service => createStatusWidget(service))
-            .join('');
+        // Update category filters based on available categories
+        updateCategoryFilters(data.services);
+
+        // Apply filters and sort
+        const displayServices = applyFiltersAndSort(data.services);
+
+        if (displayServices.length === 0) {
+            dashboardGrid.innerHTML = `
+                <div class="filter-empty-state">
+                    <div class="filter-empty-icon">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                    </div>
+                    <p>No services match your filters</p>
+                    <button class="filter-reset-btn" onclick="resetFilters()">Reset Filters</button>
+                </div>
+            `;
+        } else {
+            dashboardGrid.innerHTML = displayServices
+                .map(service => createStatusWidget(service))
+                .join('');
+        }
 
         const lastUpdate = document.getElementById('lastUpdate');
         const now = new Date();
         lastUpdate.textContent = `Last updated: ${now.toLocaleTimeString()}`;
 
+        // Update filter button indicator
+        updateFilterButton();
+
     } catch (error) {
         console.error('Failed to load dashboard:', error);
     }
+}
+
+// ============================================
+// Filter Panel UI
+// ============================================
+
+function toggleFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    const isOpen = !panel.classList.contains('hidden');
+
+    if (isOpen) {
+        panel.classList.add('hidden');
+    } else {
+        panel.classList.remove('hidden');
+        renderFilterPanel();
+    }
+}
+
+function closeFilterPanel() {
+    document.getElementById('filterPanel').classList.add('hidden');
+}
+
+function renderFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    const categories = getUniqueCategories(currentServiceData || []);
+
+    panel.innerHTML = `
+        <div class="filter-panel-header">
+            <span class="filter-panel-title">Sort & Filter</span>
+            <button class="filter-panel-close" onclick="closeFilterPanel()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-section-label">Sort By</div>
+            <div class="filter-sort-options">
+                ${Object.entries(SORT_OPTIONS).map(([key, opt]) => `
+                    <label class="filter-radio ${dashboardPrefs.sort === key ? 'active' : ''}">
+                        <input type="radio" name="sort" value="${key}" ${dashboardPrefs.sort === key ? 'checked' : ''} onchange="setSort('${key}')">
+                        <span>${opt.label}</span>
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-section-label">Status</div>
+            <div class="filter-status-toggles">
+                <button class="filter-status-chip status-operational ${dashboardPrefs.statusFilters.includes('operational') ? 'active' : ''}" onclick="toggleStatusFilter('operational')">
+                    <span class="filter-chip-dot"></span>
+                    Operational
+                </button>
+                <button class="filter-status-chip status-degraded ${dashboardPrefs.statusFilters.includes('degraded') ? 'active' : ''}" onclick="toggleStatusFilter('degraded')">
+                    <span class="filter-chip-dot"></span>
+                    Degraded
+                </button>
+                <button class="filter-status-chip status-down ${dashboardPrefs.statusFilters.includes('down') ? 'active' : ''}" onclick="toggleStatusFilter('down')">
+                    <span class="filter-chip-dot"></span>
+                    Down
+                </button>
+            </div>
+        </div>
+
+        ${categories.length > 0 ? `
+            <div class="filter-section">
+                <div class="filter-section-label">Categories</div>
+                <div class="filter-category-list">
+                    ${categories.map(cat => `
+                        <label class="filter-checkbox ${dashboardPrefs.categoryFilters.includes(cat) ? 'active' : ''}">
+                            <input type="checkbox" value="${cat}" ${dashboardPrefs.categoryFilters.includes(cat) ? 'checked' : ''} onchange="toggleCategoryFilter('${cat}')">
+                            <span>${cat}</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <div class="filter-category-hint">Leave all unchecked to show all categories</div>
+            </div>
+        ` : ''}
+
+        <div class="filter-panel-footer">
+            <button class="filter-reset-link" onclick="resetFilters()">Reset to Default</button>
+        </div>
+    `;
+}
+
+function updateCategoryFilters(services) {
+    const availableCategories = getUniqueCategories(services);
+    // Remove category filters that no longer exist
+    dashboardPrefs.categoryFilters = dashboardPrefs.categoryFilters.filter(
+        cat => availableCategories.includes(cat)
+    );
+}
+
+function updateFilterButton() {
+    const btn = document.getElementById('filterButton');
+    const indicator = document.getElementById('filterIndicator');
+    if (!btn || !indicator) return;
+
+    const hasFilters = hasActiveFilters();
+    indicator.classList.toggle('visible', hasFilters);
+}
+
+function setSort(sortKey) {
+    dashboardPrefs.sort = sortKey;
+    saveDashboardPrefs();
+    renderFilterPanel();
+    loadDashboard();
+}
+
+function toggleStatusFilter(status) {
+    const idx = dashboardPrefs.statusFilters.indexOf(status);
+    if (idx > -1) {
+        // Don't allow removing the last status filter
+        if (dashboardPrefs.statusFilters.length > 1) {
+            dashboardPrefs.statusFilters.splice(idx, 1);
+        }
+    } else {
+        dashboardPrefs.statusFilters.push(status);
+    }
+    saveDashboardPrefs();
+    renderFilterPanel();
+    loadDashboard();
+}
+
+function toggleCategoryFilter(category) {
+    const idx = dashboardPrefs.categoryFilters.indexOf(category);
+    if (idx > -1) {
+        dashboardPrefs.categoryFilters.splice(idx, 1);
+    } else {
+        dashboardPrefs.categoryFilters.push(category);
+    }
+    saveDashboardPrefs();
+    renderFilterPanel();
+    loadDashboard();
+}
+
+function resetFilters() {
+    dashboardPrefs = {
+        sort: 'default',
+        statusFilters: ['operational', 'degraded', 'down'],
+        categoryFilters: []
+    };
+    saveDashboardPrefs();
+    closeFilterPanel();
+    loadDashboard();
 }
 
 // ============================================
@@ -1077,5 +1333,16 @@ statusPoller.start();
 window.addEventListener('beforeunload', () => {
     if (statusPoller) {
         statusPoller.stop();
+    }
+});
+
+// Close filter panel when clicking outside
+document.addEventListener('click', (e) => {
+    const headerControls = document.querySelector('.header-controls');
+    const filterPanel = document.getElementById('filterPanel');
+    if (filterPanel && !filterPanel.classList.contains('hidden')) {
+        if (!headerControls.contains(e.target)) {
+            closeFilterPanel();
+        }
     }
 });

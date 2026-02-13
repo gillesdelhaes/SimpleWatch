@@ -156,6 +156,7 @@ def get_all_status(
             result.append({
                 "service": service.name,
                 "service_id": service.id,
+                "category": service.category,
                 "status": overall_status,
                 "timestamp": latest_timestamp,
                 "response_time_ms": aggregate_response_time,
