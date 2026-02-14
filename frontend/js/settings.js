@@ -673,3 +673,119 @@ document.getElementById('importModal')?.addEventListener('click', (e) => {
         closeImportModal();
     }
 });
+
+// ====================================================================
+// Status Page Banner Settings
+// ====================================================================
+
+let currentBannerText = '';
+let currentBannerSeverity = 'info';
+
+// Load banner settings on page load
+async function loadStatusPageBannerSettings() {
+    try {
+        const response = await authenticatedFetch('/api/v1/settings/status-page-banner');
+        currentBannerText = response.text || '';
+        currentBannerSeverity = response.severity || 'info';
+
+        document.getElementById('bannerText').value = currentBannerText;
+        document.getElementById('bannerSeverity').value = currentBannerSeverity;
+        updateBannerCharCount();
+        updateBannerPreview();
+    } catch (error) {
+        console.error('Failed to load banner settings:', error);
+    }
+}
+
+// Character count update
+function updateBannerCharCount() {
+    const text = document.getElementById('bannerText').value;
+    document.getElementById('bannerCharCount').textContent = text.length;
+}
+
+// Preview update
+function updateBannerPreview() {
+    const text = document.getElementById('bannerText').value.trim();
+    const severity = document.getElementById('bannerSeverity').value;
+    const preview = document.getElementById('bannerPreview');
+
+    if (!text) {
+        preview.innerHTML = '<div class="banner-preview-empty">Enter a message above to see preview</div>';
+        return;
+    }
+
+    const severityClass = `banner-${severity}`;
+    const icon = severity === 'critical' ? icons.alertCircle :
+                 severity === 'warning' ? icons.alertTriangle :
+                 icons.info;
+
+    preview.innerHTML = `
+        <div class="status-banner ${severityClass}">
+            <span class="status-banner-icon">${icon}</span>
+            <span class="status-banner-text">${escapeHtml(text)}</span>
+        </div>
+    `;
+}
+
+// Escape HTML for preview
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Save banner settings
+async function saveStatusPageBanner() {
+    const text = document.getElementById('bannerText').value.trim();
+    const severity = document.getElementById('bannerSeverity').value;
+
+    try {
+        await authenticatedFetch('/api/v1/settings/status-page-banner', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, severity })
+        });
+
+        currentBannerText = text;
+        currentBannerSeverity = severity;
+        showSuccess('Banner settings saved successfully');
+    } catch (error) {
+        showError('Failed to save banner settings: ' + error.message);
+    }
+}
+
+// Clear banner
+async function clearStatusPageBanner() {
+    document.getElementById('bannerText').value = '';
+    document.getElementById('bannerSeverity').value = 'info';
+    updateBannerCharCount();
+    updateBannerPreview();
+    await saveStatusPageBanner();
+}
+
+// Initialize banner settings
+document.addEventListener('DOMContentLoaded', () => {
+    // Inject status page icon
+    const statusPageIcon = document.getElementById('statusPageIcon');
+    if (statusPageIcon) {
+        statusPageIcon.innerHTML = icons.globe;
+    }
+
+    // Load banner settings
+    loadStatusPageBannerSettings();
+
+    // Setup event listeners for live preview
+    const bannerText = document.getElementById('bannerText');
+    const bannerSeverity = document.getElementById('bannerSeverity');
+
+    if (bannerText) {
+        bannerText.addEventListener('input', () => {
+            updateBannerCharCount();
+            updateBannerPreview();
+        });
+    }
+
+    if (bannerSeverity) {
+        bannerSeverity.addEventListener('change', updateBannerPreview);
+    }
+});

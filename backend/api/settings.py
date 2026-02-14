@@ -17,6 +17,11 @@ class RetentionSettings(BaseModel):
     retention_days: int = Field(..., gt=0, description="Number of days to retain status update data (must be greater than 0)")
 
 
+class StatusPageBannerSettings(BaseModel):
+    text: str = Field("", max_length=500, description="Banner message text (empty to hide)")
+    severity: str = Field("info", description="Banner severity: info, warning, or critical")
+
+
 @router.get("/retention")
 async def get_retention_settings(
     current_user=Depends(get_current_user),
@@ -80,4 +85,70 @@ async def update_retention_settings(
         "success": True,
         "retention_days": settings.retention_days,
         "message": f"Data retention set to {settings.retention_days} days. Old data has been cleaned up."
+    }
+
+
+@router.get("/status-page-banner")
+async def get_status_page_banner(db: Session = Depends(get_db)):
+    """
+    Get current status page banner settings.
+    Public endpoint - no authentication required (used by public status page).
+    """
+    text_setting = db.query(AppSettings).filter(
+        AppSettings.key == "status_page_banner_text"
+    ).first()
+    severity_setting = db.query(AppSettings).filter(
+        AppSettings.key == "status_page_banner_severity"
+    ).first()
+
+    return {
+        "text": text_setting.value if text_setting else "",
+        "severity": severity_setting.value if severity_setting else "info"
+    }
+
+
+@router.put("/status-page-banner")
+async def update_status_page_banner(
+    settings: StatusPageBannerSettings,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update status page banner settings (admin only).
+    """
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    # Validate severity
+    if settings.severity not in ["info", "warning", "critical"]:
+        raise HTTPException(status_code=400, detail="Invalid severity. Must be: info, warning, or critical")
+
+    # Update or create text setting
+    text_setting = db.query(AppSettings).filter(
+        AppSettings.key == "status_page_banner_text"
+    ).first()
+    if text_setting:
+        text_setting.value = settings.text.strip()
+    else:
+        text_setting = AppSettings(key="status_page_banner_text", value=settings.text.strip())
+        db.add(text_setting)
+
+    # Update or create severity setting
+    severity_setting = db.query(AppSettings).filter(
+        AppSettings.key == "status_page_banner_severity"
+    ).first()
+    if severity_setting:
+        severity_setting.value = settings.severity
+    else:
+        severity_setting = AppSettings(key="status_page_banner_severity", value=settings.severity)
+        db.add(severity_setting)
+
+    db.commit()
+
+    logger.info(f"Status page banner updated by user {current_user.username}")
+
+    return {
+        "success": True,
+        "text": settings.text.strip(),
+        "severity": settings.severity
     }

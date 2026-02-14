@@ -5,6 +5,7 @@
  */
 
 let refreshInterval;
+let currentBanner = { text: '', severity: 'info' };
 
 // Format timestamp to human-readable
 function formatTimestamp(isoString) {
@@ -167,6 +168,53 @@ function renderServiceCard(service) {
     `;
 }
 
+// Fetch and render banner
+async function fetchBanner() {
+    try {
+        const response = await fetch('/api/v1/settings/status-page-banner');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const bannerContainer = document.getElementById('statusBanner');
+
+        // Only update if banner content changed
+        if (data.text === currentBanner.text && data.severity === currentBanner.severity) {
+            return;
+        }
+
+        currentBanner = data;
+
+        if (!data.text || data.text.trim() === '') {
+            bannerContainer.classList.add('hidden');
+            bannerContainer.innerHTML = '';
+            return;
+        }
+
+        // Show banner
+        const severityClass = `banner-${data.severity}`;
+        const icon = data.severity === 'critical' ? icons.alertCircle :
+                     data.severity === 'warning' ? icons.alertTriangle :
+                     icons.info;
+
+        bannerContainer.innerHTML = `
+            <div class="status-banner ${severityClass}">
+                <span class="status-banner-icon">${icon}</span>
+                <span class="status-banner-text">${escapeHtml(data.text)}</span>
+            </div>
+        `;
+        bannerContainer.classList.remove('hidden');
+    } catch (error) {
+        console.error('Error fetching banner:', error);
+    }
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Fetch and render status
 async function fetchStatus() {
     try {
@@ -242,11 +290,15 @@ function init() {
     // Insert theme toggle
     insertThemeToggle('themeToggleContainer');
 
-    // Fetch status immediately
+    // Fetch banner and status immediately
+    fetchBanner();
     fetchStatus();
 
     // Set up auto-refresh every 30 seconds
-    refreshInterval = setInterval(fetchStatus, 30000);
+    refreshInterval = setInterval(() => {
+        fetchBanner();
+        fetchStatus();
+    }, 30000);
 }
 
 // Start when DOM is ready

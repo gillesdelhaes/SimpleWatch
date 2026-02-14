@@ -314,6 +314,58 @@
             </div>
         </div>
 
+        <!-- Status Page Settings -->
+        <div class="page-section">
+            <h2 class="section-title">
+                <span class="section-icon" id="statusPageIcon"></span>
+                Status Page Settings
+            </h2>
+            <p class="section-desc">Configure the public status page appearance and announcements.</p>
+
+            <!-- Banner Settings -->
+            <div class="status-page-banner-settings">
+                <h4 style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Announcement Banner</h4>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                    Display a message at the top of the public status page. Leave empty to hide.
+                </p>
+
+                <div class="form-group">
+                    <label class="form-label">Banner Message</label>
+                    <textarea id="bannerText" class="form-input" rows="3" maxlength="500"
+                              placeholder="e.g., Scheduled maintenance on Sunday at 2:00 AM UTC"></textarea>
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+                        <span id="bannerCharCount">0</span>/500 characters
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Severity</label>
+                    <select id="bannerSeverity" class="form-input">
+                        <option value="info">Info (Green)</option>
+                        <option value="warning">Warning (Amber)</option>
+                        <option value="critical">Critical (Red)</option>
+                    </select>
+                </div>
+
+                <!-- Banner Preview -->
+                <div class="form-group">
+                    <label class="form-label">Preview</label>
+                    <div id="bannerPreview" class="banner-preview">
+                        <div class="banner-preview-empty">Enter a message above to see preview</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button onclick="saveStatusPageBanner()" class="btn btn-primary" id="saveBannerBtn">
+                    Save Banner Settings
+                </button>
+                <button onclick="clearStatusPageBanner()" class="btn btn-secondary" id="clearBannerBtn">
+                    Clear Banner
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Data Retention Confirmation Modal -->
