@@ -1,7 +1,7 @@
 """
 Notification configuration API endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_db, SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog, Service
@@ -11,6 +11,7 @@ from models import (
     ServiceNotificationSettingsUpdate, ServiceNotificationSettingsResponse
 )
 from api.auth import get_current_user
+from utils.audit import log_action
 from utils.notifications import (
     encrypt_password, send_email_with_config, send_webhook_with_payload,
     format_slack_payload, format_discord_payload, format_generic_payload,
@@ -157,6 +158,7 @@ def list_notification_channels(
 @router.post("/channels", response_model=NotificationChannelResponse)
 def create_notification_channel(
     channel_data: NotificationChannelCreate,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -183,6 +185,12 @@ def create_notification_channel(
     db.add(channel)
     db.commit()
     db.refresh(channel)
+
+    log_action(db, user=current_user, action="channel.create", resource_type="channel",
+               resource_id=channel.id, resource_name=channel.label,
+               details={"channel_type": channel.channel_type},
+               ip_address=req.client.host if req.client else None)
+
     return channel
 
 
@@ -190,6 +198,7 @@ def create_notification_channel(
 def update_notification_channel(
     channel_id: int,
     channel_data: NotificationChannelUpdate,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -213,12 +222,18 @@ def update_notification_channel(
 
     db.commit()
     db.refresh(channel)
+
+    log_action(db, user=current_user, action="channel.update", resource_type="channel",
+               resource_id=channel.id, resource_name=channel.label,
+               ip_address=req.client.host if req.client else None)
+
     return channel
 
 
 @router.delete("/channels/{channel_id}")
 def delete_notification_channel(
     channel_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -230,8 +245,15 @@ def delete_notification_channel(
     if not channel:
         raise HTTPException(status_code=404, detail="Channel not found")
 
+    channel_label = channel.label
+
     db.delete(channel)
     db.commit()
+
+    log_action(db, user=current_user, action="channel.delete", resource_type="channel",
+               resource_id=channel_id, resource_name=channel_label,
+               ip_address=req.client.host if req.client else None)
+
     return {"success": True, "message": "Channel deleted"}
 
 

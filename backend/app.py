@@ -13,7 +13,7 @@ from database import init_db, SessionLocal
 from utils.db import create_default_admin, initialize_encryption_key
 from scheduler import start_scheduler, stop_scheduler
 
-from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings, incidents, public_status, maintenance, ai, graphs
+from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings, incidents, public_status, maintenance, ai, graphs, audit
 
 logging.basicConfig(
     level=logging.INFO,
@@ -127,6 +127,7 @@ app.include_router(maintenance.router)
 app.include_router(settings.router)
 app.include_router(ai.router)
 app.include_router(graphs.router)
+app.include_router(audit.router)
 
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")

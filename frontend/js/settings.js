@@ -675,6 +675,83 @@ document.getElementById('importModal')?.addEventListener('click', (e) => {
 });
 
 // ====================================================================
+// Audit Log
+// ====================================================================
+
+async function loadAuditLogCount() {
+    try {
+        const response = await authenticatedFetch('/api/v1/audit/count');
+        document.getElementById('auditLogCount').textContent = response.count;
+    } catch (error) {
+        console.error('Failed to load audit log count:', error);
+    }
+}
+
+async function exportAuditLog() {
+    try {
+        const fromDate = document.getElementById('auditFromDate').value;
+        const toDate = document.getElementById('auditToDate').value;
+        const token = localStorage.getItem('token');
+
+        let url = '/api/v1/audit/export';
+        const params = [];
+        if (fromDate) params.push(`from_date=${fromDate}`);
+        if (toDate) params.push(`to_date=${toDate}`);
+        if (params.length > 0) url += '?' + params.join('&');
+
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Export failed');
+        }
+
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'audit_log.csv';
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match) filename = match[1];
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+
+        showSuccess('Audit log exported successfully');
+    } catch (error) {
+        showError('Failed to export audit log: ' + error.message);
+    }
+}
+
+// Initialize audit log section
+document.addEventListener('DOMContentLoaded', () => {
+    const auditLogIcon = document.getElementById('auditLogIcon');
+    if (auditLogIcon) {
+        auditLogIcon.innerHTML = icons.clipboard || icons.file || icons.list;
+    }
+
+    const auditInfoIcon = document.getElementById('auditInfoIcon');
+    if (auditInfoIcon) {
+        auditInfoIcon.innerHTML = icons.infoCircle;
+    }
+
+    const auditExportBtnIcon = document.getElementById('auditExportBtnIcon');
+    if (auditExportBtnIcon) {
+        auditExportBtnIcon.innerHTML = icons.download;
+    }
+
+    loadAuditLogCount();
+});
+
+// ====================================================================
 // Status Page Banner Settings
 // ====================================================================
 

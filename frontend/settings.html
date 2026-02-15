@@ -366,6 +366,41 @@
             </div>
         </div>
 
+        <!-- Audit Log -->
+        <div class="page-section">
+            <h2 class="section-title">
+                <span class="section-icon" id="auditLogIcon"></span>
+                Audit Log
+            </h2>
+            <p class="section-desc">Track user actions for compliance and security. Export the full audit trail as CSV.</p>
+
+            <div class="retention-info">
+                <span class="icon retention-info-icon" id="auditInfoIcon"></span>
+                <span>Total entries: <strong id="auditLogCount">0</strong></span>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <h4 style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">Date Range (optional)</h4>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem;">From</label>
+                        <input type="date" id="auditFromDate" class="form-input" style="width: auto;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem;">To</label>
+                        <input type="date" id="auditToDate" class="form-input" style="width: auto;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button onclick="exportAuditLog()" class="btn btn-primary">
+                    <span class="icon btn-icon" id="auditExportBtnIcon"></span>
+                    Export Audit Log
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Data Retention Confirmation Modal -->

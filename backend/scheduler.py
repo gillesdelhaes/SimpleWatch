@@ -8,7 +8,7 @@ import inspect
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings, MaintenanceWindow
+from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings, MaintenanceWindow, AuditLog
 from monitors.base import BaseMonitor
 from utils.service_helpers import (
     calculate_service_status, send_service_notification, update_service_incidents
@@ -235,6 +235,16 @@ def cleanup_old_status_updates():
 
         if deleted_count > 0:
             logger.info(f"Cleaned up {deleted_count} status updates older than {retention_days} days")
+
+        # Also clean up old audit log entries using the same retention period
+        audit_deleted = db.query(AuditLog).filter(
+            AuditLog.created_at < cutoff_date
+        ).delete(synchronize_session=False)
+
+        db.commit()
+
+        if audit_deleted > 0:
+            logger.info(f"Cleaned up {audit_deleted} audit log entries older than {retention_days} days")
 
     except Exception as e:
         logger.error(f"Error cleaning up old status updates: {e}")

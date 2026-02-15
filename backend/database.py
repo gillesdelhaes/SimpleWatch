@@ -314,6 +314,22 @@ class ActionLog(Base):
     incident = relationship("Incident")
 
 
+class AuditLog(Base):
+    """Audit log for tracking user actions."""
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    username = Column(String(255), nullable=True)
+    action = Column(String(100), nullable=False, index=True)
+    resource_type = Column(String(50), nullable=True)
+    resource_id = Column(Integer, nullable=True)
+    resource_name = Column(String(255), nullable=True)
+    details = Column(Text, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, index=True)
+
+
 class ServiceAIConfig(Base):
     """Per-service AI configuration and remediation webhooks"""
     __tablename__ = "service_ai_config"

@@ -1,10 +1,11 @@
 """
 System settings API endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import get_db, AppSettings, User
 from api.auth import get_current_user
+from utils.audit import log_action
 from pydantic import BaseModel, Field
 from scheduler import cleanup_old_status_updates
 import logging
@@ -45,6 +46,7 @@ async def get_retention_settings(
 @router.post("/retention")
 async def update_retention_settings(
     settings: RetentionSettings,
+    req: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -71,6 +73,10 @@ async def update_retention_settings(
         db.add(retention_setting)
 
     db.commit()
+
+    log_action(db, user=current_user, action="settings.retention_update", resource_type="settings",
+               details={"retention_days": settings.retention_days},
+               ip_address=req.client.host if req.client else None)
 
     logger.info(f"Data retention updated to {settings.retention_days} days by user {current_user.username}")
 
@@ -110,6 +116,7 @@ async def get_status_page_banner(db: Session = Depends(get_db)):
 @router.put("/status-page-banner")
 async def update_status_page_banner(
     settings: StatusPageBannerSettings,
+    req: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -144,6 +151,10 @@ async def update_status_page_banner(
         db.add(severity_setting)
 
     db.commit()
+
+    log_action(db, user=current_user, action="settings.banner_update", resource_type="settings",
+               details={"severity": settings.severity, "has_text": bool(settings.text.strip())},
+               ip_address=req.client.host if req.client else None)
 
     logger.info(f"Status page banner updated by user {current_user.username}")
 

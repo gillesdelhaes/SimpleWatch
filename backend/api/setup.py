@@ -2,12 +2,13 @@
 Setup API endpoints for first-run configuration.
 These endpoints are accessible without authentication during initial setup.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from database import get_db, User, AppSettings
 from utils.auth import hash_password, generate_api_key
 from utils.password_validation import validate_password, validate_password_match
+from utils.audit import log_action
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def get_setup_status(db: Session = Depends(get_db)):
 
 
 @router.post("")
-def complete_setup(setup: SetupRequest, db: Session = Depends(get_db)):
+def complete_setup(setup: SetupRequest, req: Request, db: Session = Depends(get_db)):
     """
     Complete initial setup by creating admin user and marking setup as done.
 
@@ -110,6 +111,10 @@ def complete_setup(setup: SetupRequest, db: Session = Depends(get_db)):
         db.add(setting)
 
     db.commit()
+
+    log_action(db, user=admin_user, action="setup.complete", resource_type="system",
+               details={"create_examples": setup.create_examples},
+               ip_address=req.client.host if req.client else None)
 
     logger.info(f"Setup completed successfully. Admin user '{setup.username}' created.")
 

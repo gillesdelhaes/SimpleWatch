@@ -1,11 +1,12 @@
 """
 Monitor management API endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import get_db, Monitor, Service, StatusUpdate
 from models import MonitorCreate, MonitorUpdate, MonitorResponse
 from api.auth import get_current_user
+from utils.audit import log_action
 from datetime import datetime, timedelta
 from typing import List
 import json
@@ -64,6 +65,7 @@ def list_monitors(
 @router.post("", response_model=MonitorResponse)
 def create_monitor(
     monitor: MonitorCreate,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -84,6 +86,13 @@ def create_monitor(
     db.add(new_monitor)
     db.commit()
     db.refresh(new_monitor)
+
+    config = json.loads(new_monitor.config_json)
+    monitor_name = config.get("name") or config.get("url") or config.get("host") or monitor.monitor_type
+    log_action(db, user=current_user, action="monitor.create", resource_type="monitor",
+               resource_id=new_monitor.id, resource_name=monitor_name,
+               details={"monitor_type": monitor.monitor_type, "service": service.name},
+               ip_address=req.client.host if req.client else None)
 
     return MonitorResponse(
         id=new_monitor.id,
@@ -126,6 +135,7 @@ def get_monitor(
 def update_monitor(
     monitor_id: int,
     monitor_update: MonitorUpdate,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -144,6 +154,12 @@ def update_monitor(
     db.commit()
     db.refresh(monitor)
 
+    config = json.loads(monitor.config_json)
+    monitor_name = config.get("name") or config.get("url") or config.get("host") or monitor.monitor_type
+    log_action(db, user=current_user, action="monitor.update", resource_type="monitor",
+               resource_id=monitor.id, resource_name=monitor_name,
+               ip_address=req.client.host if req.client else None)
+
     return MonitorResponse(
         id=monitor.id,
         service_id=monitor.service_id,
@@ -160,6 +176,7 @@ def update_monitor(
 @router.delete("/{monitor_id}")
 def delete_monitor(
     monitor_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -169,10 +186,16 @@ def delete_monitor(
         raise HTTPException(status_code=404, detail="Monitor not found")
 
     service_id = monitor.service_id
+    config = json.loads(monitor.config_json) if monitor.config_json else {}
+    monitor_name = config.get("name") or config.get("url") or config.get("host") or monitor.monitor_type
 
     # CASCADE delete will remove all status_updates
     db.delete(monitor)
     db.commit()
+
+    log_action(db, user=current_user, action="monitor.delete", resource_type="monitor",
+               resource_id=monitor_id, resource_name=monitor_name,
+               ip_address=req.client.host if req.client else None)
 
     # Check if service has any remaining active monitors
     active_monitors = db.query(Monitor).filter(
@@ -193,6 +216,7 @@ def delete_monitor(
 @router.post("/{monitor_id}/pause")
 def pause_monitor(
     monitor_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -207,6 +231,12 @@ def pause_monitor(
     service_id = monitor.service_id
     monitor.is_active = False
     db.commit()
+
+    config = json.loads(monitor.config_json) if monitor.config_json else {}
+    monitor_name = config.get("name") or config.get("url") or config.get("host") or monitor.monitor_type
+    log_action(db, user=current_user, action="monitor.pause", resource_type="monitor",
+               resource_id=monitor_id, resource_name=monitor_name,
+               ip_address=req.client.host if req.client else None)
 
     # Check if service has any remaining active monitors
     active_monitors = db.query(Monitor).filter(
@@ -227,6 +257,7 @@ def pause_monitor(
 @router.post("/{monitor_id}/resume")
 def resume_monitor(
     monitor_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -242,6 +273,12 @@ def resume_monitor(
     monitor.is_active = True
     db.commit()
 
+    config = json.loads(monitor.config_json) if monitor.config_json else {}
+    monitor_name = config.get("name") or config.get("url") or config.get("host") or monitor.monitor_type
+    log_action(db, user=current_user, action="monitor.resume", resource_type="monitor",
+               resource_id=monitor_id, resource_name=monitor_name,
+               ip_address=req.client.host if req.client else None)
+
     # Auto-resume service if it was paused
     service = db.query(Service).filter(Service.id == service_id).first()
     if service and not service.is_active:
@@ -254,6 +291,7 @@ def resume_monitor(
 @router.post("/{monitor_id}/check")
 def check_monitor_now(
     monitor_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -307,6 +345,13 @@ def check_monitor_now(
     # Update next_check_at (reset the interval timer)
     monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
     db.commit()
+
+    config_data = json.loads(monitor.config_json) if monitor.config_json else {}
+    monitor_name = config_data.get("name") or config_data.get("url") or config_data.get("host") or monitor.monitor_type
+    log_action(db, user=current_user, action="monitor.check_now", resource_type="monitor",
+               resource_id=monitor_id, resource_name=monitor_name,
+               details={"result_status": status},
+               ip_address=req.client.host if req.client else None)
 
     return {
         "success": True,

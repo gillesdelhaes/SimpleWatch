@@ -1,30 +1,35 @@
 """
 Authentication API endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db, User
 from models import LoginRequest, LoginResponse
 from utils.auth import verify_password, create_access_token, decode_access_token
 from utils.db import get_user_by_username, get_user_by_api_key
+from utils.audit import log_action
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 security = HTTPBearer()
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(request: LoginRequest, db: Session = Depends(get_db)):
+def login(request: LoginRequest, req: Request, db: Session = Depends(get_db)):
     """Authenticate user and return JWT token."""
     user = get_user_by_username(db, request.username)
+    ip = req.client.host if req.client else None
 
     if not user or not verify_password(request.password, user.password_hash):
+        log_action(db, username=request.username, action="login.failed", ip_address=ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password"
         )
 
     access_token = create_access_token(data={"sub": user.username, "user_id": user.id})
+
+    log_action(db, user=user, action="login.success", ip_address=ip)
 
     return LoginResponse(
         access_token=access_token,

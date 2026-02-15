@@ -1,12 +1,13 @@
 """
 Services API endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_db, Service, StatusUpdate, Monitor
 from models import ServiceCreate, ServiceResponse
 from api.auth import get_current_user
+from utils.audit import log_action
 from typing import List, Optional
 from datetime import datetime, timedelta
 import json
@@ -28,6 +29,7 @@ def list_services(
 @router.post("", response_model=ServiceResponse)
 def create_service(
     service: ServiceCreate,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -52,6 +54,10 @@ def create_service(
     db.add(new_service)
     db.commit()
     db.refresh(new_service)
+
+    log_action(db, user=current_user, action="service.create", resource_type="service",
+               resource_id=new_service.id, resource_name=new_service.name,
+               ip_address=req.client.host if req.client else None)
 
     return new_service
 
@@ -208,6 +214,7 @@ async def validate_import(
 
 @router.post("/import")
 async def import_services(
+    req: Request,
     file: UploadFile = File(...),
     service_indices: Optional[str] = Query(None, description="Comma-separated list of service indices to import (0-based)"),
     db: Session = Depends(get_db),
@@ -313,6 +320,12 @@ async def import_services(
                 "error": str(e)
             })
 
+    if imported:
+        imported_names = [s["service"] for s in imported]
+        log_action(db, user=current_user, action="service.import", resource_type="service",
+                   details={"imported": imported_names, "count": len(imported)},
+                   ip_address=req.client.host if req.client else None)
+
     return {
         "success": True,
         "imported": len(imported),
@@ -343,6 +356,7 @@ def get_service(
 def update_service(
     service_id: int,
     service_update: ServiceCreate,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -361,12 +375,17 @@ def update_service(
     db.commit()
     db.refresh(service)
 
+    log_action(db, user=current_user, action="service.update", resource_type="service",
+               resource_id=service.id, resource_name=service.name,
+               ip_address=req.client.host if req.client else None)
+
     return service
 
 
 @router.delete("/{service_id}")
 def delete_service(
     service_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -375,9 +394,15 @@ def delete_service(
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
+    service_name = service.name
+
     # CASCADE delete will remove all monitors and status_updates
     db.delete(service)
     db.commit()
+
+    log_action(db, user=current_user, action="service.delete", resource_type="service",
+               resource_id=service_id, resource_name=service_name,
+               ip_address=req.client.host if req.client else None)
 
     return {"success": True, "message": "Service deleted"}
 
@@ -385,6 +410,7 @@ def delete_service(
 @router.post("/{service_id}/pause")
 def pause_service(
     service_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -406,12 +432,17 @@ def pause_service(
 
     db.commit()
 
+    log_action(db, user=current_user, action="service.pause", resource_type="service",
+               resource_id=service_id, resource_name=service.name,
+               ip_address=req.client.host if req.client else None)
+
     return {"success": True, "message": "Service and all monitors paused"}
 
 
 @router.post("/{service_id}/resume")
 def resume_service(
     service_id: int,
+    req: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -432,6 +463,10 @@ def resume_service(
     ).update({"is_active": True})
 
     db.commit()
+
+    log_action(db, user=current_user, action="service.resume", resource_type="service",
+               resource_id=service_id, resource_name=service.name,
+               ip_address=req.client.host if req.client else None)
 
     return {"success": True, "message": "Service and all monitors resumed"}
 
