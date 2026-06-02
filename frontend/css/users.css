@@ -1,62 +1,82 @@
 /**
- * Users Page Specific Styles
- * Styles unique to the users management page that aren't reusable
- * Generic styles like .page-header, .icon-btn, .modal-subtitle, .actions now in theme.css
+ * Users page styles — Simple* family design
  */
 
 .users-list {
-    background: var(--bg-secondary);
+    background: #fff;
     border: 1px solid var(--border-color);
-    border-radius: 1rem;
+    border-radius: 14px;
+    overflow: hidden;
 }
 
 .user-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
+    gap: 14px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--border-color);
-    transition: background var(--transition-normal);
+    transition: background var(--transition-fast);
 }
 
-.user-item:last-child {
-    border-bottom: none;
+.user-item:last-child { border-bottom: none; }
+
+.user-item:hover { background: var(--ink-50); }
+
+/* Avatar circle — initial letter with brand gradient */
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--sw-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0;
+    user-select: none;
 }
 
-.user-item:hover {
-    background: var(--bg-primary);
-}
-
-.user-info {
-    flex: 1;
-}
+.user-info { flex: 1; min-width: 0; }
 
 .user-name {
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.25rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
 }
 
 .user-meta {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    font-size: 12px;
+    color: var(--ink-500);
+    font-family: var(--font-mono);
 }
 
+/* Role badge */
 .user-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: var(--accent-glow);
-    color: var(--accent-primary);
-    margin-left: 0.5rem;
+    letter-spacing: 0.06em;
+    background: rgba(0,200,150,0.09);
+    color: #00A87E;
+    border: 1px solid rgba(0,200,150,0.20);
 }
 
+/* Checkbox group in modal */
 .checkbox-group {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 8px;
 }

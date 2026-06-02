@@ -32,6 +32,30 @@
             <div class="last-update" id="lastUpdate"></div>
         </div>
 
+        <!-- Stats strip — populated by dashboard.js -->
+        <div id="statsStrip" class="stats-strip hidden">
+            <div class="stat-card stat-card--accent">
+                <div class="stat-card__label">Operational</div>
+                <div class="stat-card__value ok" id="statOpValue">—</div>
+                <div class="stat-card__sub" id="statOpSub">services</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">Degraded</div>
+                <div class="stat-card__value warn" id="statDegValue">—</div>
+                <div class="stat-card__sub">services</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">Down</div>
+                <div class="stat-card__value crit" id="statDownValue">—</div>
+                <div class="stat-card__sub">services</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">Avg Uptime</div>
+                <div class="stat-card__value neutral" id="statUptimeValue">—</div>
+                <div class="stat-card__sub" id="statUptimeSub">all services</div>
+            </div>
+        </div>
+
         <div id="dashboardGrid" class="service-grid"></div>
 
         <div id="emptyState" class="empty-state hidden">
@@ -59,13 +83,13 @@
             </div>
 
             <div class="modal-overall-status">
-                <div style="flex: 1;">
-                    <div style="font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Overall Status</div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <span id="modalOverallStatus" style="font-size: 1.25rem; font-weight: 700;"></span>
+                <div class="mos-info">
+                    <div class="mos-label">Overall Status</div>
+                    <div class="mos-status-row">
+                        <span id="modalOverallStatus" class="mos-status-text"></span>
                         <span id="modalStatusIndicator" class="service-status-dot"></span>
                     </div>
-                    <div id="modalMonitorSummary" style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.5rem; font-family: var(--font-mono);"></div>
+                    <div id="modalMonitorSummary" class="mos-summary"></div>
                 </div>
                 <div id="modalAiAnalyzeContainer"></div>
             </div>

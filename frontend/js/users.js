@@ -25,6 +25,7 @@ async function loadUsers() {
 
         usersList.innerHTML = users.map(user => `
             <div class="user-item">
+                <div class="user-avatar">${user.username.charAt(0).toUpperCase()}</div>
                 <div class="user-info">
                     <div class="user-name">
                         ${user.username}

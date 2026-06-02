@@ -328,56 +328,73 @@ function createStatusWidget(service) {
     const showAiButton = aiEnabled && hasIssue && !hasPendingAnalysis;
     const showPendingIndicator = aiEnabled && hasIssue && hasPendingAnalysis;
 
+    const uptimePct = service.uptime ? Math.min(100, parseFloat(service.uptime.percentage)) : null;
+
     return `
         <div class="service-card${inMaintenance ? ' in-maintenance' : ''}" onclick="openMonitorModal(${service.service_id})">
             ${maintenanceBadge}
-            <div class="service-header">
-                <div class="service-name">${service.service}</div>
-                <div class="service-status-dot ${getStatusClass(service.status)}"></div>
+            <div class="sc-header">
+                <div class="sc-name">${service.service}</div>
+                <div class="status-indicator status-${getStatusClass(service.status)}">
+                    <span class="status-dot"></span>${getStatusText(service.status)}
+                </div>
             </div>
-            <div class="service-metrics">
-                ${service.monitor_count > 0 && monitorSummary ?
-                    `<div class="service-monitor-summary">
-                        <span class="monitors-info">${monitorSummary}</span>
-                        ${service.uptime ? `<span class="service-uptime">${service.uptime.percentage}% (${service.uptime.period_label})${renderSlaBadge(service.sla)}</span>` : ''}
-                    </div>` : ''}
-                <div class="metric-row">
-                    <span class="metric-label">Status</span>
-                    <span class="metric-value status ${getStatusClass(service.status)}">${getStatusText(service.status)}</span>
-                </div>
-                ${service.response_time_ms ? `
-                <div class="metric-row">
-                    <span class="metric-label">Avg Response</span>
-                    <span class="metric-value">${service.response_time_ms}ms</span>
-                </div>
-                ` : ''}
-                <div class="metric-row">
-                    <span class="metric-label">Last Check</span>
-                    <span class="metric-value">${formatTimestamp(service.timestamp)}</span>
-                </div>
-                ${showAiButton ? `
-                <button class="ai-analyze-btn" onclick="event.stopPropagation(); analyzeServiceWithAi(${service.service_id}, '${service.service}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                    Analyze with AI
-                </button>
-                ` : ''}
-                ${showPendingIndicator ? `
-                <div class="ai-analysis-available" onclick="event.stopPropagation(); openMonitorModal(${service.service_id})">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                    </svg>
-                    Analysis Available
-                </div>
-                ` : ''}
+            <div class="sc-monitors">
+                ${service.monitor_count > 0
+                    ? `<span class="sc-monitor-count">${service.monitor_count} monitor${service.monitor_count !== 1 ? 's' : ''}</span>${monitorSummary ? `<span class="sc-monitor-summary">${monitorSummary}</span>` : ''}`
+                    : '<span class="sc-no-monitors">No monitors</span>'}
             </div>
+            <div class="sc-footer">
+                ${uptimePct !== null ? `
+                <div class="sc-uptime-row">
+                    <div class="sc-uptime-bar"><div class="sc-uptime-fill" style="width:${uptimePct}%"></div></div>
+                    <span class="sc-uptime-pct">${service.uptime.percentage}%</span>
+                    ${renderSlaBadge(service.sla)}
+                </div>` : ''}
+                <div class="sc-meta">
+                    ${service.response_time_ms ? `<span class="sc-meta-item">${service.response_time_ms}ms</span>` : ''}
+                    <span class="sc-meta-item">${formatTimestamp(service.timestamp)}</span>
+                </div>
+            </div>
+            ${showAiButton ? `
+            <button class="ai-analyze-btn" onclick="event.stopPropagation(); analyzeServiceWithAi(${service.service_id}, '${service.service}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                Analyze with AI
+            </button>` : ''}
+            ${showPendingIndicator ? `
+            <div class="ai-analysis-available" onclick="event.stopPropagation(); openMonitorModal(${service.service_id})">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Analysis Available
+            </div>` : ''}
         </div>
     `;
 }
 
 let currentServiceData = [];
+
+function updateStatsStrip(services) {
+    const strip = document.getElementById('statsStrip');
+    if (!strip) return;
+    if (!services || services.length === 0) { strip.classList.add('hidden'); return; }
+
+    strip.classList.remove('hidden');
+    const op  = services.filter(s => s.status === 'operational').length;
+    const deg = services.filter(s => s.status === 'degraded').length;
+    const dn  = services.filter(s => s.status === 'down').length;
+
+    document.getElementById('statOpValue').textContent  = op;
+    document.getElementById('statOpSub').textContent    = `of ${services.length} service${services.length !== 1 ? 's' : ''}`;
+    document.getElementById('statDegValue').textContent = deg;
+    document.getElementById('statDownValue').textContent = dn;
+
+    const withUptime = services.filter(s => s.uptime && s.uptime.percentage != null);
+    if (withUptime.length > 0) {
+        const avg = (withUptime.reduce((s, x) => s + parseFloat(x.uptime.percentage), 0) / withUptime.length).toFixed(1);
+        document.getElementById('statUptimeValue').textContent = `${avg}%`;
+    } else {
+        document.getElementById('statUptimeValue').textContent = '—';
+    }
+}
 
 function getMonitorTypeName(type) {
     const monitorPlugin = window.monitorRegistry?.get(type);
@@ -889,6 +906,8 @@ async function loadDashboard() {
         currentServiceData = data.services;
         const dashboardGrid = document.getElementById('dashboardGrid');
         const emptyState = document.getElementById('emptyState');
+
+        updateStatsStrip(data.services);
 
         if (data.services.length === 0) {
             dashboardGrid.innerHTML = '';
