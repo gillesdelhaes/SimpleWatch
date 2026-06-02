@@ -170,7 +170,7 @@
 }
 
 .filter-radio.active {
-    background: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.1);
+    background: rgba(0, 200, 150, 0.09);
     color: var(--accent-primary);
 }
 
@@ -289,7 +289,7 @@
 }
 
 .filter-checkbox.active {
-    background: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.1);
+    background: rgba(0, 200, 150, 0.09);
     color: var(--accent-primary);
 }
 
@@ -724,7 +724,7 @@
 .check-now-btn:hover {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
-    background: rgba(var(--accent-primary-rgb), 0.1);
+    background: rgba(0, 200, 150, 0.09);
 }
 
 .check-now-btn:disabled {

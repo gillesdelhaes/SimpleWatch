@@ -33,24 +33,36 @@
   gap: 1.5rem;
 }
 
+/* Wordmark — same "Simple*" family pattern as sidebar */
 .status-logo {
-  font-family: var(--font-display);
-  font-size: 3rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  font-family: var(--font-body);
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  user-select: none;
+}
+
+.status-logo__simple {
+  font-weight: 200;
+  color: var(--ink-800);
+}
+
+.status-logo__app {
+  font-weight: 800;
+  background: var(--sw-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.03em;
 }
 
 .status-tagline {
-  font-size: 1.125rem;
+  font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
+  font-family: var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.14em;
 }
 
 /* Overall Status Indicator */
