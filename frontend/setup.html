@@ -1,602 +1,761 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Setup - SimpleWatch</title>
-    <link rel="stylesheet" href="/static/css/theme.css">
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow-x: hidden;
-            overflow-y: auto;
-            padding: 2rem 0;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Setup — SimpleWatch</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style>
+    /* ── Standalone auth layout (no sidebar) ── */
+    body {
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+      background: var(--ink-50);
+    }
 
-        /* Animated background */
-        .background-grid {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(var(--border-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.3;
-            animation: gridMove 20s linear infinite;
-        }
+    /* ── Left brand panel ── */
+    .auth-brand {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+      background: var(--ink-950);
+      flex-shrink: 0;
+    }
+    @media (min-width: 1024px) {
+      .auth-brand { display: flex; width: 58%; }
+    }
 
-        @keyframes gridMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
+    .auth-brand__rule {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      z-index: 10;
+      background: var(--sw-gradient-h);
+    }
 
-        .background-glow {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(
-                circle at 50% 50%,
-                var(--accent-glow) 0%,
-                transparent 70%
-            );
-            opacity: 0.4;
-            animation: pulse 4s ease-in-out infinite;
-        }
+    .auth-brand__dots {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.6; }
-        }
+    .auth-brand__glow-a {
+      position: absolute;
+      pointer-events: none;
+      top: -160px; left: -160px;
+      width: 560px; height: 560px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #00C896 0%, transparent 70%);
+      opacity: 0.07;
+      filter: blur(50px);
+    }
 
-        /* Setup container */
-        .setup-container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 520px;
-            margin: auto;
-            padding: 3rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 1.5rem;
-            box-shadow: var(--shadow-lg);
-            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+    .auth-brand__glow-b {
+      position: absolute;
+      pointer-events: none;
+      bottom: -100px; right: -100px;
+      width: 520px; height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #3B82F6 0%, transparent 70%);
+      opacity: 0.09;
+      filter: blur(50px);
+    }
 
-        @media (max-width: 640px) {
-            .setup-container {
-                padding: 2rem 1.5rem;
-                margin: 0 1rem;
-                border-radius: 1rem;
-            }
-        }
+    .auth-brand__deco-a {
+      position: absolute;
+      pointer-events: none;
+      bottom: 80px; right: -60px;
+      width: 460px; height: 300px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(0,200,150,0.07) 0%, rgba(59,130,246,0.05) 100%);
+      border: 1px solid rgba(0,200,150,0.10);
+      transform: rotate(-12deg);
+    }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .auth-brand__deco-b {
+      position: absolute;
+      pointer-events: none;
+      bottom: 140px; right: 20px;
+      width: 300px; height: 200px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0,200,150,0.04) 0%, rgba(59,130,246,0.04) 100%);
+      border: 1px solid rgba(59,130,246,0.09);
+      transform: rotate(-6deg);
+    }
 
-        /* Header with initialization theme */
-        .setup-header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 2rem;
-        }
+    .auth-brand__status-dots {
+      position: absolute;
+      bottom: 198px; right: 269px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
 
-        .setup-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: var(--accent-glow);
-            border: 1px solid var(--accent-primary);
-            border-radius: 2rem;
-            color: var(--accent-primary);
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            margin-bottom: 1.5rem;
-            animation: badgePulse 2s ease-in-out infinite;
-        }
+    .auth-brand__status-dots span {
+      display: block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
 
-        @keyframes badgePulse {
-            0%, 100% {
-                box-shadow: 0 0 10px var(--accent-glow);
-            }
-            50% {
-                box-shadow: 0 0 20px var(--accent-glow);
-            }
-        }
+    .auth-brand__content {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
 
-        .setup-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.75rem;
-        }
+    .auth-brand__content.in { opacity: 1; transform: translateY(0); }
 
-        .setup-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.6;
-            max-width: 400px;
-            margin: 0 auto;
-        }
+    .auth-wordmark {
+      line-height: 1;
+      letter-spacing: -0.04em;
+      user-select: none;
+      margin-bottom: 20px;
+    }
 
-        /* Form styling */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
+    .auth-wordmark__size { font-size: clamp(48px, 5.5vw, 78px); }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+    .auth-wordmark__simple {
+      font-weight: 200;
+      color: rgba(255,255,255,0.90);
+    }
 
-        .form-group input {
-            width: 100%;
-            padding: 1rem;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-family: var(--font-body);
-            transition: all var(--transition-normal);
-        }
+    .auth-wordmark__app {
+      font-weight: 800;
+      background: var(--sw-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
+    .auth-wordmark__sub {
+      display: block;
+      margin-top: 18px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(115,115,115,0.60);
+    }
 
-        .form-help {
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-            font-family: var(--font-mono);
-        }
+    /* System init badge */
+    .init-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 26px;
+      padding: 0 12px;
+      border-radius: 99px;
+      background: rgba(0,200,150,0.08);
+      border: 1px solid rgba(0,200,150,0.18);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(0,200,150,0.80);
+      margin-bottom: 28px;
+    }
 
-        /* Checkbox styling */
-        .checkbox-group {
-            margin-bottom: 2rem;
-            padding: 1.25rem;
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
-            transition: all var(--transition-normal);
-        }
+    .init-badge__dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #00C896;
+      animation: statusPulse 2s ease-in-out infinite;
+    }
 
-        .checkbox-group:hover {
-            border-color: var(--accent-primary);
-            background: var(--bg-secondary);
-        }
+    .auth-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 48px;
+    }
 
-        .checkbox-wrapper {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            cursor: pointer;
-        }
+    .auth-callout {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
 
-        .checkbox-wrapper input[type="checkbox"] {
-            width: 1.25rem;
-            height: 1.25rem;
-            margin-top: 0.125rem;
-            cursor: pointer;
-            accent-color: var(--accent-primary);
-        }
+    /* Step number instead of icon for setup — matches onboarding flow */
+    .auth-callout__step {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,200,150,0.08);
+      border: 1px solid rgba(0,200,150,0.15);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(0,200,150,0.75);
+    }
 
-        .checkbox-content {
-            flex: 1;
-        }
+    .auth-callout__label {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(242,242,242,0.50);
+      letter-spacing: 0.01em;
+    }
 
-        .checkbox-label {
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
+    .auth-brand__version {
+      position: relative;
+      z-index: 10;
+      padding: 0 64px 32px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(115,115,115,0.35);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
 
-        .checkbox-description {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
+    /* ── Right form panel ── */
+    .auth-form-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px;
+      overflow-y: auto;
+      opacity: 0;
+      transform: translateX(16px);
+      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s,
+                  transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s;
+    }
 
-        /* Submit button */
-        .submit-btn {
-            width: 100%;
-            padding: 1.25rem 2rem;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            border: none;
-            border-radius: 0.75rem;
-            color: white;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            position: relative;
-            overflow: hidden;
-        }
+    .auth-form-panel.in { opacity: 1; transform: translateX(0); }
 
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow);
-        }
+    .auth-mobile-wordmark {
+      display: block;
+      text-align: center;
+      margin-bottom: 32px;
+      font-size: 38px;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      user-select: none;
+    }
+    @media (min-width: 1024px) { .auth-mobile-wordmark { display: none; } }
 
-        .submit-btn:active {
-            transform: translateY(0);
-        }
+    .auth-form-wrap {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+    }
 
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+    .auth-heading { margin-bottom: 28px; }
 
-        .submit-btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
-            opacity: 0;
-            transition: opacity var(--transition-normal);
-        }
+    .auth-heading h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--ink-950);
+      margin: 0 0 6px;
+    }
 
-        .submit-btn:hover::before {
-            opacity: 1;
-        }
+    .auth-heading p {
+      font-size: 14px;
+      color: var(--ink-500);
+      margin: 0;
+      line-height: 1.5;
+    }
 
-        .submit-btn span {
-            position: relative;
-            z-index: 1;
-        }
+    .auth-fields { display: flex; flex-direction: column; gap: 15px; }
 
-        /* Error/Success messages */
-        .message {
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-            animation: shake 0.4s ease-in-out;
-        }
+    .auth-field { display: flex; flex-direction: column; gap: 6px; }
 
-        .message.error {
-            background: var(--status-down-bg);
-            border: 1px solid var(--status-down);
-            color: var(--status-down);
-        }
+    .auth-field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-800);
+      letter-spacing: 0.01em;
+      margin: 0;
+      text-transform: none;
+    }
 
-        .message.success {
-            background: var(--status-operational-bg);
-            border: 1px solid var(--status-operational);
-            color: var(--status-operational);
-        }
+    .auth-field .field-wrap { position: relative; }
 
-        /* Theme toggle */
-        .corner-theme-toggle {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            z-index: 20;
-        }
+    .auth-field input {
+      height: 44px;
+      padding: 0 44px 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--ink-200);
+      background: white;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--ink-950);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
 
-        .hidden {
-            display: none;
-        }
+    .auth-field input.no-icon { padding: 0 14px; }
 
-        /* Loading state */
-        .submit-btn.loading span::after {
-            content: '';
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            margin-left: 0.75rem;
-            border: 2px solid white;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
+    .auth-field input:focus {
+      border-color: var(--sw-primary);
+      box-shadow: 0 0 0 3px var(--sw-focus-ring);
+    }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+    .auth-field input.invalid {
+      border-color: var(--status-down);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.10);
+    }
+
+    .auth-field input.valid {
+      border-color: var(--status-operational);
+    }
+
+    .auth-field input::placeholder { color: #C4C4C4; }
+
+    .pw-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--ink-400);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+    }
+    .pw-toggle:hover { color: var(--ink-800); }
+
+    .field-hint {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-400);
+      margin-top: 2px;
+      letter-spacing: 0.02em;
+    }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--status-down);
+      font-weight: 500;
+      display: none;
+      margin-top: 2px;
+    }
+
+    .field-error.visible { display: block; }
+
+    /* Examples checkbox card */
+    .examples-card {
+      border-radius: 12px;
+      border: 1px solid var(--ink-200);
+      padding: 14px 16px;
+      background: var(--ink-50);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .examples-card:hover {
+      border-color: rgba(0,200,150,0.30);
+      background: rgba(0,200,150,0.03);
+    }
+
+    .examples-card label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .examples-card input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--sw-primary);
+      cursor: pointer;
+    }
+
+    .examples-card__text {}
+
+    .examples-card__title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-800);
+      margin-bottom: 3px;
+    }
+
+    .examples-card__desc {
+      font-size: 12px;
+      color: var(--ink-500);
+      line-height: 1.5;
+    }
+
+    /* Status message */
+    .setup-message {
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .setup-message.error {
+      display: block;
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.20);
+      color: #DC2626;
+    }
+
+    .setup-message.success {
+      display: block;
+      background: rgba(0,200,150,0.06);
+      border: 1px solid rgba(0,200,150,0.20);
+      color: #00A87E;
+    }
+
+    .auth-submit {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      border: none;
+      background: var(--sw-gradient);
+      color: white;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,200,150,0.22);
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .auth-submit:hover { opacity: 0.9; }
+    .auth-submit:active { transform: scale(0.99); }
+    .auth-submit:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.7s linear infinite; }
+  </style>
 </head>
 <body>
-    <!-- Background effects -->
-    <div class="background-grid"></div>
-    <div class="background-glow"></div>
 
-    <!-- Theme toggle -->
-    <div class="corner-theme-toggle">
-        <div id="themeToggleContainer"></div>
+  <!-- Left brand panel -->
+  <div class="auth-brand">
+    <div class="auth-brand__rule"></div>
+    <div class="auth-brand__dots"></div>
+    <div class="auth-brand__glow-a"></div>
+    <div class="auth-brand__glow-b"></div>
+    <div class="auth-brand__deco-a"></div>
+    <div class="auth-brand__deco-b"></div>
+
+    <div class="auth-brand__status-dots">
+      <span style="background:rgba(0,200,150,0.25);"></span>
+      <span style="background:rgba(0,200,150,0.18);"></span>
+      <span style="background:rgba(59,130,246,0.20);"></span>
+      <span style="background:rgba(0,200,150,0.12);"></span>
+      <span style="background:rgba(59,130,246,0.15);"></span>
     </div>
 
-    <!-- Setup container -->
-    <div class="setup-container">
-        <div class="setup-header">
-            <div class="setup-badge">System Initialization</div>
-            <h1 class="setup-title">SimpleWatch</h1>
-            <p class="setup-subtitle">
-                Welcome to SimpleWatch. Complete this one-time setup to configure your monitoring system.
-            </p>
+    <div class="auth-brand__content" id="brandContent">
+
+      <div class="init-badge">
+        <span class="init-badge__dot"></span>
+        System Initialization
+      </div>
+
+      <div class="auth-wordmark">
+        <div class="auth-wordmark__size">
+          <span class="auth-wordmark__simple">Simple</span><span class="auth-wordmark__app">Watch</span>
+        </div>
+        <span class="auth-wordmark__sub">One-time setup · takes under 60 seconds</span>
+      </div>
+
+      <div class="auth-callouts">
+        <div class="auth-callout">
+          <div class="auth-callout__step">01</div>
+          <span class="auth-callout__label">Create your admin account</span>
+        </div>
+        <div class="auth-callout">
+          <div class="auth-callout__step">02</div>
+          <span class="auth-callout__label">Optionally load example monitors</span>
+        </div>
+        <div class="auth-callout">
+          <div class="auth-callout__step">03</div>
+          <span class="auth-callout__label">Start monitoring immediately</span>
+        </div>
+        <div class="auth-callout">
+          <div class="auth-callout__step" style="font-size:11px;">✓</div>
+          <span class="auth-callout__label">No config files or env vars needed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-brand__version">v1.0 · Self-hosted</div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="auth-form-panel" id="formPanel">
+
+    <span class="auth-mobile-wordmark">
+      <span style="font-weight:200;color:var(--ink-950);">Simple</span><span class="gradient-text" style="font-weight:800;">Watch</span>
+    </span>
+
+    <div class="auth-form-wrap">
+      <div class="auth-heading">
+        <h2>Create admin account</h2>
+        <p>This is a one-time setup. Your credentials will be used to sign in to SimpleWatch.</p>
+      </div>
+
+      <form id="setupForm" class="auth-fields">
+        <div id="messageContainer"></div>
+
+        <!-- Username -->
+        <div class="auth-field">
+          <label for="username">Admin Username</label>
+          <input type="text" id="username" class="no-icon"
+                 placeholder="Choose admin username"
+                 autocomplete="off" />
+          <div class="field-error" id="usernameError"></div>
+          <div class="field-hint" id="usernameHint">Minimum 3 characters</div>
         </div>
 
-        <form id="setupForm">
-            <div id="messageContainer"></div>
-
-            <div class="form-group">
-                <label for="username">Admin Username</label>
-                <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    placeholder="Choose admin username"
-                    autocomplete="off"
-                >
-                <div class="field-error" id="usernameError"></div>
-                <div class="form-help" id="usernameHint">Minimum 3 characters</div>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Admin Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Create secure password"
-                    autocomplete="new-password"
-                >
-                <div class="field-error" id="passwordError"></div>
-                <div class="form-help" id="passwordHint">Minimum 8 characters</div>
-            </div>
-
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    placeholder="Re-enter password"
-                    autocomplete="new-password"
-                >
-                <div class="field-error" id="confirmPasswordError"></div>
-            </div>
-
-            <div class="checkbox-group">
-                <label class="checkbox-wrapper">
-                    <input type="checkbox" id="createExamples" name="createExamples" checked>
-                    <div class="checkbox-content">
-                        <div class="checkbox-label">Create Example Monitors</div>
-                        <div class="checkbox-description">
-                            Add sample monitors (Google Search, API, DNS, Disk Usage) to help you get started and explore SimpleWatch features.
-                        </div>
-                    </div>
-                </label>
-            </div>
-
-            <button type="submit" class="submit-btn" id="submitBtn">
-                <span>Initialize System</span>
+        <!-- Password -->
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="field-wrap">
+            <input type="password" id="password"
+                   placeholder="Create a secure password"
+                   autocomplete="new-password" />
+            <button type="button" class="pw-toggle" id="pwToggle1" aria-label="Show password">
+              <svg id="eyeIcon1" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
             </button>
-        </form>
+          </div>
+          <div class="field-error" id="passwordError"></div>
+          <div class="field-hint" id="passwordHint">Minimum 8 characters</div>
+        </div>
+
+        <!-- Confirm password -->
+        <div class="auth-field">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="field-wrap">
+            <input type="password" id="confirmPassword"
+                   placeholder="Re-enter password"
+                   autocomplete="new-password" />
+            <button type="button" class="pw-toggle" id="pwToggle2" aria-label="Show password">
+              <svg id="eyeIcon2" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="field-error" id="confirmPasswordError"></div>
+        </div>
+
+        <!-- Example monitors card -->
+        <div class="examples-card">
+          <label>
+            <input type="checkbox" id="createExamples" name="createExamples" checked />
+            <div class="examples-card__text">
+              <div class="examples-card__title">Create example monitors</div>
+              <div class="examples-card__desc">
+                Add sample monitors (Google Search, API check, DNS, Disk Usage) to explore SimpleWatch right away.
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <button type="submit" class="auth-submit" id="submitBtn">
+          Initialize System
+        </button>
+      </form>
     </div>
+  </div>
 
-    <script src="/static/js/theme.js"></script>
-    <script src="/static/js/validation.js"></script>
-    <script>
-        // Insert theme toggle
-        insertThemeToggle('themeToggleContainer');
+  <script src="/static/js/theme.js"></script>
+  <script src="/static/js/validation.js"></script>
+  <script>
+    // Entry animation
+    window.addEventListener('load', () => {
+      document.getElementById('brandContent').classList.add('in');
+      document.getElementById('formPanel').classList.add('in');
+    });
 
-        const form = document.getElementById('setupForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const messageContainer = document.getElementById('messageContainer');
-
-        // Check if setup already completed
-        async function checkSetupStatus() {
-            try {
-                const response = await fetch('/api/v1/setup/status');
-                const data = await response.json();
-
-                if (data.setup_completed) {
-                    // Setup already done, redirect to login
-                    window.location.href = '/static/login.html';
-                }
-            } catch (error) {
-                console.error('Failed to check setup status:', error);
-            }
+    // Check if setup already completed
+    async function checkSetupStatus() {
+      try {
+        const res = await fetch('/api/v1/setup/status');
+        const data = await res.json();
+        if (data.setup_completed) {
+          window.location.href = '/static/login.html';
         }
+      } catch (e) {
+        console.error('Setup check failed', e);
+      }
+    }
+    checkSetupStatus();
 
-        checkSetupStatus();
+    // Set hint text from centralized validation rules
+    document.getElementById('usernameHint').textContent = getUsernameRequirements();
+    document.getElementById('passwordHint').textContent = getPasswordRequirements();
 
-        // Set validation hints from centralized rules
-        document.getElementById('usernameHint').textContent = getUsernameRequirements();
-        document.getElementById('passwordHint').textContent = getPasswordRequirements();
+    // Message helpers
+    const msgContainer = document.getElementById('messageContainer');
+    function showMessage(text, type = 'error') {
+      msgContainer.innerHTML = `<div class="setup-message ${type}">${text}</div>`;
+    }
+    function clearMessage() { msgContainer.innerHTML = ''; }
 
-        function showMessage(text, type = 'error') {
-            messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
+    // Password visibility toggles
+    function makePwToggle(inputId, btnId, iconId) {
+      const input = document.getElementById(inputId);
+      const btn   = document.getElementById(btnId);
+      const icon  = document.getElementById(iconId);
+      const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+      const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+      btn.addEventListener('click', () => {
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        icon.innerHTML = show ? eyeOff : eyeOpen;
+      });
+    }
+    makePwToggle('password', 'pwToggle1', 'eyeIcon1');
+    makePwToggle('confirmPassword', 'pwToggle2', 'eyeIcon2');
+
+    // Confirm password live check
+    function validateConfirmPasswordField() {
+      const pw  = document.getElementById('password').value;
+      const cpw = document.getElementById('confirmPassword').value;
+      if (!cpw) {
+        showFieldError('confirmPassword', 'confirmPasswordError', 'Please confirm your password');
+      } else if (pw !== cpw) {
+        showFieldError('confirmPassword', 'confirmPasswordError', 'Passwords do not match');
+      } else {
+        clearFieldError('confirmPassword', 'confirmPasswordError');
+        markFieldValid('confirmPassword');
+      }
+    }
+
+    // Real-time: username
+    document.getElementById('username').addEventListener('blur', (e) => {
+      const v = validateUsername(e.target.value.trim());
+      if (!e.target.value.trim()) {
+        showFieldError('username', 'usernameError', 'Username is required');
+      } else if (!v.valid) {
+        showFieldError('username', 'usernameError', v.error);
+      } else {
+        clearFieldError('username', 'usernameError');
+        markFieldValid('username');
+      }
+    });
+    document.getElementById('username').addEventListener('input', (e) => {
+      if (e.target.classList.contains('invalid')) {
+        const v = validateUsername(e.target.value.trim());
+        if (v.valid) { clearFieldError('username', 'usernameError'); markFieldValid('username'); }
+      }
+    });
+
+    // Real-time: password
+    document.getElementById('password').addEventListener('blur', (e) => {
+      if (!e.target.value) {
+        showFieldError('password', 'passwordError', 'Password is required');
+      } else {
+        const v = validatePassword(e.target.value);
+        if (!v.valid) {
+          showFieldError('password', 'passwordError', v.error);
+        } else {
+          clearFieldError('password', 'passwordError');
+          markFieldValid('password');
         }
+      }
+    });
+    document.getElementById('password').addEventListener('input', (e) => {
+      if (e.target.classList.contains('invalid')) {
+        const v = validatePassword(e.target.value);
+        if (v.valid) { clearFieldError('password', 'passwordError'); markFieldValid('password'); }
+      }
+      if (document.getElementById('confirmPassword').value) validateConfirmPasswordField();
+    });
 
-        function clearMessage() {
-            messageContainer.innerHTML = '';
-        }
+    // Real-time: confirm password
+    document.getElementById('confirmPassword').addEventListener('blur', (e) => {
+      if (e.target.value) validateConfirmPasswordField();
+    });
+    document.getElementById('confirmPassword').addEventListener('input', (e) => {
+      if (e.target.value && (e.target.classList.contains('invalid') || e.target.value.length >= getPasswordMinLength())) {
+        validateConfirmPasswordField();
+      }
+    });
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            clearMessage();
-            clearAllFieldErrors();
+    // Submit
+    document.getElementById('setupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessage();
+      clearAllFieldErrors();
 
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const createExamples = document.getElementById('createExamples').checked;
+      const username        = document.getElementById('username').value.trim();
+      const password        = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const createExamples  = document.getElementById('createExamples').checked;
 
-            // Client-side validation using centralized rules
-            const usernameValidation = validateUsername(username);
-            if (!usernameValidation.valid) {
-                showFieldError('username', 'usernameError', usernameValidation.error);
-                return;
-            }
+      const uv = validateUsername(username);
+      if (!uv.valid) { showFieldError('username', 'usernameError', uv.error); return; }
 
-            const passwordValidation = validatePassword(password);
-            if (!passwordValidation.valid) {
-                showFieldError('password', 'passwordError', passwordValidation.error);
-                return;
-            }
+      const pv = validatePassword(password);
+      if (!pv.valid) { showFieldError('password', 'passwordError', pv.error); return; }
 
-            const passwordMatchValidation = validatePasswordMatch(password, confirmPassword);
-            if (!passwordMatchValidation.valid) {
-                showFieldError('confirmPassword', 'confirmPasswordError', passwordMatchValidation.error);
-                return;
-            }
+      const pmv = validatePasswordMatch(password, confirmPassword);
+      if (!pmv.valid) { showFieldError('confirmPassword', 'confirmPasswordError', pmv.error); return; }
 
-            // Disable submit button
-            submitBtn.disabled = true;
-            submitBtn.classList.add('loading');
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <path d="M8 2a6 6 0 0 1 6 6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Initializing…`;
 
-            try {
-                const response = await fetch('/api/v1/setup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username,
-                        password,
-                        confirm_password: confirmPassword,
-                        create_examples: createExamples
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.detail || 'Setup failed');
-                }
-
-                // Success
-                showMessage('Setup completed successfully! Redirecting to login...', 'success');
-
-                // Redirect to login after short delay
-                setTimeout(() => {
-                    window.location.href = '/static/login.html';
-                }, 2000);
-
-            } catch (error) {
-                showMessage(error.message || 'Failed to complete setup. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('loading');
-            }
+      try {
+        const res = await fetch('/api/v1/setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, confirm_password: confirmPassword, create_examples: createExamples })
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Setup failed');
 
-        // Real-time username validation
-        document.getElementById('username').addEventListener('blur', (e) => {
-            const username = e.target.value.trim();
-            if (!username) {
-                showFieldError('username', 'usernameError', 'Username is required');
-            } else {
-                const validation = validateUsername(username);
-                if (!validation.valid) {
-                    showFieldError('username', 'usernameError', validation.error);
-                } else {
-                    clearFieldError('username', 'usernameError');
-                    markFieldValid('username');
-                }
-            }
-        });
-
-        document.getElementById('username').addEventListener('input', (e) => {
-            if (e.target.classList.contains('invalid')) {
-                const username = e.target.value.trim();
-                const validation = validateUsername(username);
-                if (validation.valid) {
-                    clearFieldError('username', 'usernameError');
-                    markFieldValid('username');
-                }
-            }
-        });
-
-        // Real-time password validation
-        document.getElementById('password').addEventListener('blur', (e) => {
-            const password = e.target.value;
-            if (!password) {
-                showFieldError('password', 'passwordError', 'Password is required');
-            } else {
-                const validation = validatePassword(password);
-                if (!validation.valid) {
-                    showFieldError('password', 'passwordError', validation.error);
-                } else {
-                    clearFieldError('password', 'passwordError');
-                    markFieldValid('password');
-                }
-            }
-        });
-
-        document.getElementById('password').addEventListener('input', (e) => {
-            if (e.target.classList.contains('invalid')) {
-                const password = e.target.value;
-                const validation = validatePassword(password);
-                if (validation.valid) {
-                    clearFieldError('password', 'passwordError');
-                    markFieldValid('password');
-                }
-            }
-            // Also revalidate confirm password if it has a value
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            if (confirmPassword) {
-                validateConfirmPasswordField();
-            }
-        });
-
-        // Real-time password match validation
-        function validateConfirmPasswordField() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (!confirmPassword) {
-                showFieldError('confirmPassword', 'confirmPasswordError', 'Please confirm your password');
-            } else if (password !== confirmPassword) {
-                showFieldError('confirmPassword', 'confirmPasswordError', 'Passwords do not match');
-            } else {
-                clearFieldError('confirmPassword', 'confirmPasswordError');
-                markFieldValid('confirmPassword');
-            }
-        }
-
-        document.getElementById('confirmPassword').addEventListener('blur', (e) => {
-            if (e.target.value) {
-                validateConfirmPasswordField();
-            }
-        });
-
-        document.getElementById('confirmPassword').addEventListener('input', (e) => {
-            if (e.target.value && (e.target.classList.contains('invalid') || e.target.value.length >= getPasswordMinLength())) {
-                validateConfirmPasswordField();
-            }
-        });
-    </script>
+        showMessage('System initialized — redirecting to sign in…', 'success');
+        setTimeout(() => { window.location.href = '/static/login.html'; }, 2000);
+      } catch (err) {
+        showMessage(err.message || 'Setup failed. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Initialize System';
+      }
+    });
+  </script>
 </body>
 </html>
