@@ -93,6 +93,27 @@
     border-radius: 6px;
 }
 
+/* ── Empty state icons (SVG injected into div/span) ──────── */
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-500);
+}
+
+.empty-state-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    color: var(--ink-400);
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-state-icon svg { width: 100%; height: 100%; }
+
 /* ── Notification log ─────────────────────────────────────── */
 
 #logSection { overflow: hidden; }
@@ -146,7 +167,42 @@
     white-space: nowrap;
 }
 
-/* Service notification settings */
+/* ── Log collapsible content ──────────────────────────────── */
+
+.log-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.log-content.expanded { max-height: 2000px; }
+
+.log-content-inner {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.log-table-container { overflow-x: auto; }
+
+.log-loading,
+.log-empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--ink-500);
+    font-size: 13px;
+}
+
+.log-delivery-icon {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.log-export-btn {
+    margin-top: 16px;
+}
+
+/* ── Service notification settings */
 .service-notification-settings {
     border: 1px solid var(--border-color);
     border-radius: 12px;

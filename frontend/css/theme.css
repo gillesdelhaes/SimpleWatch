@@ -1232,6 +1232,34 @@ input[type="checkbox"] {
 }
 
 /* ============================================================
+   GENERIC SVG ICON WRAPPER
+   Used as: <span class="icon" style="width:Xpx;height:Xpx;">
+   ============================================================ */
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Icons nested inside .btn must stay small regardless of ai-sre.css */
+.btn .icon,
+.icon.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================================
    ICON BUTTONS
    ============================================================ */
 

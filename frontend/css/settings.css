@@ -2,6 +2,8 @@
  * Settings page styles — Simple* family design
  */
 
+/* ── Setting rows ─────────────────────────────────────────── */
+
 .setting-row {
     display: flex;
     justify-content: space-between;
@@ -28,7 +30,8 @@
     line-height: 1.5;
 }
 
-/* API key display */
+/* ── API key display ──────────────────────────────────────── */
+
 .api-key-display {
     font-family: var(--font-mono);
     font-size: 13px;
@@ -42,12 +45,14 @@
     margin: 12px 0;
 }
 
-/* Data retention */
+/* ── Data retention ───────────────────────────────────────── */
+
 .retention-control {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
 }
 
 .retention-input-group {
@@ -56,11 +61,16 @@
     background: #fff;
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    padding: 10px 14px;
-    transition: border-color var(--transition-fast);
+    padding: 0 14px;
+    height: 42px;
+    gap: 6px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.retention-input-group:focus-within { border-color: var(--sw-primary); box-shadow: 0 0 0 3px var(--sw-focus-ring); }
+.retention-input-group:focus-within {
+    border-color: var(--sw-primary);
+    box-shadow: 0 0 0 3px var(--sw-focus-ring);
+}
 
 .retention-input {
     background: transparent;
@@ -69,27 +79,285 @@
     font-size: 15px;
     font-weight: 600;
     color: var(--ink-800);
-    width: 70px;
+    width: 64px;
     text-align: center;
     font-family: var(--font-mono);
 }
 
 .retention-input::placeholder { color: var(--ink-400); }
 
-/* SLA settings */
-.sla-setting-row {
+.retention-unit {
+    font-size: 13px;
+    color: var(--ink-500);
+    font-weight: 500;
+}
+
+.retention-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-500);
+    margin-top: 8px;
+}
+
+.retention-info-icon {
+    width: 16px !important;
+    height: 16px !important;
+    color: var(--sw-secondary);
+}
+
+/* Retention confirmation modal */
+.retention-confirm-details {
+    background: var(--ink-50);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.retention-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.retention-detail-label { color: var(--ink-500); }
+
+.retention-detail-value {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--ink-800);
+}
+
+.retention-detail-highlight { color: var(--status-down); }
+
+/* ── Backup & Restore ─────────────────────────────────────── */
+
+.backup-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 14px;
 }
 
-/* Password form */
+.backup-action-card {
+    background: var(--ink-50);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color var(--transition-fast);
+}
+
+.backup-action-card:hover { border-color: rgba(0,200,150,0.25); }
+
+.backup-action-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.backup-action-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--sw-primary);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.backup-action-icon svg { width: 100%; height: 100%; }
+
+.backup-action-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-800);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.backup-action-desc {
+    font-size: 13px;
+    color: var(--ink-500);
+    line-height: 1.5;
+}
+
+/* ── Export service list ──────────────────────────────────── */
+
+.export-service-list,
+.import-service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 14px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.modal-description {
+    font-size: 14px;
+    color: var(--ink-500);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+/* ── Import upload area ───────────────────────────────────── */
+
+.import-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink-50);
+}
+
+.import-upload-area:hover {
+    border-color: var(--sw-primary);
+    background: rgba(0,200,150,0.03);
+}
+
+.import-upload-icon {
+    width: 40px !important;
+    height: 40px !important;
+    color: var(--ink-400);
+    margin-bottom: 4px;
+}
+
+.import-upload-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-800);
+    margin: 0;
+}
+
+.import-upload-hint {
+    font-size: 12px;
+    color: var(--ink-400);
+    margin: 0;
+    font-family: var(--font-mono);
+}
+
+.import-file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--status-operational-bg);
+    border: 1px solid rgba(0,200,150,0.25);
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-800);
+}
+
+.import-file-clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-400);
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 4px;
+    transition: color var(--transition-fast);
+    margin-left: auto;
+}
+
+.import-file-clear:hover { color: var(--status-down); }
+
+.import-result-summary {
+    font-size: 14px;
+    color: var(--ink-800);
+    line-height: 1.6;
+}
+
+/* ── Toggle switch (AI enable) ────────────────────────────── */
+
+.toggle-switch {
+    position: relative;
+    display: inline-flex;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--ink-200);
+    border-radius: 99px;
+    transition: background var(--transition-fast);
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform var(--transition-fast);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--sw-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* ── AI provider config ───────────────────────────────────── */
+
+.ai-provider-config { margin-top: 8px; }
+
+/* ── Banner preview ───────────────────────────────────────── */
+
+.banner-preview {
+    min-height: 60px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--ink-50);
+    display: flex;
+    align-items: center;
+}
+
+.banner-preview-empty {
+    font-size: 13px;
+    color: var(--ink-400);
+    font-style: italic;
+}
+
+/* ── Password requirements ────────────────────────────────── */
+
 .password-requirements {
     font-size: 12px;
     color: var(--ink-400);
     font-family: var(--font-mono);
     margin-top: 6px;
 }
-
-/* AI section overrides (settings page) */
-.ai-settings-section .page-section { margin-top: 14px; }
