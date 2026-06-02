@@ -287,9 +287,6 @@ async function fetchStatus() {
 
 // Initialize page
 function init() {
-    // Insert theme toggle
-    insertThemeToggle('themeToggleContainer');
-
     // Fetch banner and status immediately
     fetchBanner();
     fetchStatus();
