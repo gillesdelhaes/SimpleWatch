@@ -960,18 +960,23 @@ async function loadDashboard() {
 
 function toggleFilterPanel() {
     const panel = document.getElementById('filterPanel');
-    const isOpen = !panel.classList.contains('hidden');
+    const btn   = document.getElementById('filterButton');
+    const isOpen = panel.classList.contains('open');
 
     if (isOpen) {
-        panel.classList.add('hidden');
+        panel.classList.remove('open');
+        btn.classList.remove('active');
     } else {
-        panel.classList.remove('hidden');
         renderFilterPanel();
+        panel.classList.add('open');
+        btn.classList.add('active');
     }
 }
 
 function closeFilterPanel() {
-    document.getElementById('filterPanel').classList.add('hidden');
+    document.getElementById('filterPanel').classList.remove('open');
+    const btn = document.getElementById('filterButton');
+    if (btn) btn.classList.remove('active');
 }
 
 function renderFilterPanel() {
@@ -979,48 +984,38 @@ function renderFilterPanel() {
     const categories = getUniqueCategories(currentServiceData || []);
 
     panel.innerHTML = `
-        <div class="filter-panel-header">
-            <span class="filter-panel-title">Sort & Filter</span>
-            <button class="filter-panel-close" onclick="closeFilterPanel()">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
+        <div class="filter-bar-inner">
 
-        <div class="filter-section">
-            <div class="filter-section-label">Sort By</div>
-            <div class="filter-sort-options">
-                ${Object.entries(SORT_OPTIONS).map(([key, opt]) => `
-                    <label class="filter-radio ${dashboardPrefs.sort === key ? 'active' : ''}">
-                        <input type="radio" name="sort" value="${key}" ${dashboardPrefs.sort === key ? 'checked' : ''} onchange="setSort('${key}')">
-                        <span>${opt.label}</span>
-                    </label>
-                `).join('')}
+            <div class="filter-bar-section">
+                <div class="filter-bar-label">Sort By</div>
+                <div class="filter-sort-options">
+                    ${Object.entries(SORT_OPTIONS).map(([key, opt]) => `
+                        <label class="filter-radio ${dashboardPrefs.sort === key ? 'active' : ''}">
+                            <input type="radio" name="sort" value="${key}" ${dashboardPrefs.sort === key ? 'checked' : ''} onchange="setSort('${key}')">
+                            <span>${opt.label}</span>
+                        </label>
+                    `).join('')}
+                </div>
             </div>
-        </div>
 
-        <div class="filter-section">
-            <div class="filter-section-label">Status</div>
-            <div class="filter-status-toggles">
-                <button class="filter-status-chip status-operational ${dashboardPrefs.statusFilters.includes('operational') ? 'active' : ''}" onclick="toggleStatusFilter('operational')">
-                    <span class="filter-chip-dot"></span>
-                    Operational
-                </button>
-                <button class="filter-status-chip status-degraded ${dashboardPrefs.statusFilters.includes('degraded') ? 'active' : ''}" onclick="toggleStatusFilter('degraded')">
-                    <span class="filter-chip-dot"></span>
-                    Degraded
-                </button>
-                <button class="filter-status-chip status-down ${dashboardPrefs.statusFilters.includes('down') ? 'active' : ''}" onclick="toggleStatusFilter('down')">
-                    <span class="filter-chip-dot"></span>
-                    Down
-                </button>
+            <div class="filter-bar-section">
+                <div class="filter-bar-label">Status</div>
+                <div class="filter-status-toggles">
+                    <button class="filter-status-chip status-operational ${dashboardPrefs.statusFilters.includes('operational') ? 'active' : ''}" onclick="toggleStatusFilter('operational')">
+                        <span class="filter-chip-dot"></span>Operational
+                    </button>
+                    <button class="filter-status-chip status-degraded ${dashboardPrefs.statusFilters.includes('degraded') ? 'active' : ''}" onclick="toggleStatusFilter('degraded')">
+                        <span class="filter-chip-dot"></span>Degraded
+                    </button>
+                    <button class="filter-status-chip status-down ${dashboardPrefs.statusFilters.includes('down') ? 'active' : ''}" onclick="toggleStatusFilter('down')">
+                        <span class="filter-chip-dot"></span>Down
+                    </button>
+                </div>
             </div>
-        </div>
 
-        ${categories.length > 0 ? `
-            <div class="filter-section">
-                <div class="filter-section-label">Categories</div>
+            ${categories.length > 0 ? `
+            <div class="filter-bar-section filter-bar-cats">
+                <div class="filter-bar-label">Category</div>
                 <div class="filter-category-list">
                     ${categories.map(cat => `
                         <label class="filter-checkbox ${dashboardPrefs.categoryFilters.includes(cat) ? 'active' : ''}">
@@ -1029,12 +1024,13 @@ function renderFilterPanel() {
                         </label>
                     `).join('')}
                 </div>
-                <div class="filter-category-hint">Leave all unchecked to show all categories</div>
             </div>
-        ` : ''}
+            ` : ''}
 
-        <div class="filter-panel-footer">
-            <button class="filter-reset-link" onclick="resetFilters()">Reset to Default</button>
+            <div class="filter-bar-section filter-bar-reset-section">
+                <button class="filter-reset-link" onclick="resetFilters()">↺ Reset</button>
+            </div>
+
         </div>
     `;
 }
@@ -1359,8 +1355,8 @@ window.addEventListener('beforeunload', () => {
 document.addEventListener('click', (e) => {
     const headerControls = document.querySelector('.header-controls');
     const filterPanel = document.getElementById('filterPanel');
-    if (filterPanel && !filterPanel.classList.contains('hidden')) {
-        if (!headerControls.contains(e.target)) {
+    if (filterPanel && filterPanel.classList.contains('open')) {
+        if (!headerControls.contains(e.target) && !filterPanel.contains(e.target)) {
             closeFilterPanel();
         }
     }
