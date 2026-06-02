@@ -592,6 +592,32 @@
 }
 
 /* ============================================
+   Sidebar popup variant
+   Opens to the right of the sidebar — suppress
+   the default top-right arrow, add left arrow.
+   ============================================ */
+
+.ai-status-popup--sidebar {
+    /* nav.js sets position:fixed + left/bottom via inline style */
+    position: fixed !important;
+    top: auto !important;
+    right: auto !important;
+}
+
+/* Replace top-right arrow with left-pointing one */
+.ai-status-popup--sidebar::before {
+    top: auto !important;
+    right: auto !important;
+    bottom: 16px;
+    left: -7px;
+    border-left: none;
+    border-top: none;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    transform: rotate(45deg);
+}
+
+/* ============================================
    Responsive
    ============================================ */
 

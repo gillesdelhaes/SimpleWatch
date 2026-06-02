@@ -132,7 +132,7 @@ function buildSidebar(activePage, userInfo) {
         ${NAV_ICONS.logout}
       </button>
     </div>
-    <div class="sidebar__ai-indicator" id="sidebarAiIndicator" style="display:none;" onclick="toggleAIStatusPopup && toggleAIStatusPopup()">
+    <div class="sidebar__ai-indicator" id="sidebarAiIndicator" style="display:none;" onclick="toggleAIStatusPopup()">
       <span class="sidebar__ai-dot" id="sidebarAiDot"></span>
       <span class="sidebar__ai-label" id="sidebarAiLabel">AI SRE</span>
     </div>
@@ -185,6 +185,100 @@ function updateAIStatusIndicator() {
 
 // Keep legacy export name so existing pages that call window.updateAIStatusIndicator still work
 window.updateAIStatusIndicator = updateAIStatusIndicator;
+
+// ── AI status popup (appears to the right of the sidebar) ─────────────────────
+
+function toggleAIStatusPopup() {
+  const existing = document.getElementById('aiStatusPopup');
+  if (existing) {
+    existing.remove();
+    document.removeEventListener('click', _closeAIPopupOutside);
+    return;
+  }
+
+  const statusStr = localStorage.getItem('ai_status');
+  if (!statusStr) return;
+
+  let status;
+  try { status = JSON.parse(statusStr); } catch { return; }
+  if (!status.enabled) return;
+
+  const indicator = document.getElementById('sidebarAiIndicator');
+  if (!indicator) return;
+
+  const rect = indicator.getBoundingClientRect();
+
+  // Determine status display values
+  let statusText, statusColor, dotClass;
+  if (status.connected === true) {
+    statusText = 'Connected';   statusColor = 'var(--status-operational)'; dotClass = 'ai-status-connected';
+  } else if (status.connected === false) {
+    statusText = 'Disconnected'; statusColor = 'var(--status-down)';        dotClass = 'ai-status-disconnected';
+  } else {
+    statusText = 'Unknown';     statusColor = 'var(--status-degraded)';     dotClass = 'ai-status-unknown';
+  }
+
+  const lastQueryText = status.lastQueryAt
+    ? formatRelativeTime(new Date(status.lastQueryAt))
+    : 'Never';
+
+  const popup = document.createElement('div');
+  popup.id = 'aiStatusPopup';
+  popup.className = 'ai-status-popup ai-status-popup--sidebar';
+  // Position to the right of the sidebar, aligned with the indicator
+  popup.style.cssText = `
+    position: fixed;
+    left: ${Math.round(rect.right + 10)}px;
+    bottom: ${Math.round(window.innerHeight - rect.bottom)}px;
+    z-index: 200;
+  `;
+
+  popup.innerHTML = `
+    <div class="ai-status-popup-header">
+      <span class="ai-status-popup-title">AI SRE Companion</span>
+      <span class="ai-status-dot ${dotClass}"></span>
+    </div>
+    <div class="ai-status-popup-content">
+      <div class="ai-status-row">
+        <span class="ai-status-label">Status</span>
+        <span class="ai-status-value" style="color:${statusColor}">${statusText}</span>
+      </div>
+      ${status.provider ? `
+      <div class="ai-status-row">
+        <span class="ai-status-label">Provider</span>
+        <span class="ai-status-value">${status.provider}</span>
+      </div>` : ''}
+      ${status.model ? `
+      <div class="ai-status-row">
+        <span class="ai-status-label">Model</span>
+        <span class="ai-status-value">${status.model}</span>
+      </div>` : ''}
+      <div class="ai-status-row">
+        <span class="ai-status-label">Last Query</span>
+        <span class="ai-status-value">${lastQueryText}</span>
+      </div>
+    </div>
+    <a href="/static/settings.html" class="ai-status-popup-link">Configure Settings →</a>
+  `;
+
+  document.body.appendChild(popup);
+
+  // Close on outside click (deferred so this click doesn't immediately close it)
+  setTimeout(() => {
+    document.addEventListener('click', _closeAIPopupOutside);
+  }, 0);
+}
+
+function _closeAIPopupOutside(e) {
+  const popup     = document.getElementById('aiStatusPopup');
+  const indicator = document.getElementById('sidebarAiIndicator');
+  if (popup && !popup.contains(e.target) && indicator && !indicator.contains(e.target)) {
+    popup.remove();
+    document.removeEventListener('click', _closeAIPopupOutside);
+  }
+}
+
+window.toggleAIStatusPopup = toggleAIStatusPopup;
 
 // ── Format relative time (used by AI popup, keep for compat) ──────────────────
 
