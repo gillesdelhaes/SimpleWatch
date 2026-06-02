@@ -219,7 +219,7 @@ function toggleAIStatusPopup() {
   }
 
   const lastQueryText = status.lastQueryAt
-    ? formatRelativeTime(new Date(status.lastQueryAt))
+    ? formatRelativeTime(status.lastQueryAt)
     : 'Never';
 
   const popup = document.createElement('div');
@@ -280,20 +280,31 @@ function _closeAIPopupOutside(e) {
 
 window.toggleAIStatusPopup = toggleAIStatusPopup;
 
-// ── Format relative time (used by AI popup, keep for compat) ──────────────────
+// ── Format relative time (used by AI popup) ───────────────────────────────────
+// Accepts an ISO string. Appends 'Z' if the string has no timezone marker so
+// naive UTC timestamps from the server are not misread as local time.
 
-function formatRelativeTime(date) {
-  const diffMs  = Date.now() - date;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHr  = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHr / 24);
+function formatRelativeTime(isoString) {
+  if (!isoString) return 'Never';
 
-  if (diffSec < 60)  return 'Just now';
-  if (diffMin < 60)  return `${diffMin}m ago`;
-  if (diffHr  < 24)  return `${diffHr}h ago`;
-  if (diffDay < 7)   return `${diffDay}d ago`;
-  return new Date(date).toLocaleDateString();
+  let str = isoString;
+  if (typeof str === 'string' && !str.endsWith('Z') && !str.includes('+') && !str.includes('-', 10)) {
+    str += 'Z';
+  }
+
+  const date    = new Date(str);
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (isNaN(diffSec) || diffSec < 0) return 'Just now';
+  if (diffSec < 60)                  return 'Just now';
+  if (diffSec < 3600)                return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400)               return `${Math.floor(diffSec / 3600)}h ago`;
+  if (diffSec < 86400 * 7)           return `${Math.floor(diffSec / 86400)}d ago`;
+
+  return date.toLocaleString('default', {
+    month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit'
+  });
 }
 
 window.formatRelativeTime = formatRelativeTime;
