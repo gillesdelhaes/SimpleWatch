@@ -444,6 +444,12 @@ body.app-layout {
   min-width: 0;
 }
 
+/* Inside the new app shell .page-content already provides padding */
+.page-content .main-container {
+  padding: 0;
+  max-width: none;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;

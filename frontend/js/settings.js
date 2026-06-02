@@ -4,7 +4,6 @@
  */
 
 requireAuth();
-insertThemeToggle('settingsThemeToggle');
 
 const userInfo = getUserInfo();
 let currentApiKey = '';
