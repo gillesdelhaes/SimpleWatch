@@ -28,18 +28,6 @@
     margin: 0;
 }
 
-/* ── Empty state ──────────────────────────────────────────── */
-
-.empty-state-icon {
-    width: 52px;
-    height: 52px;
-    margin: 0 auto 14px;
-    color: var(--ink-400);
-    opacity: 0.5;
-}
-
-.empty-state-icon svg { width: 100%; height: 100%; }
-
 /* ── Channel cards ────────────────────────────────────────── */
 
 .channel-card {

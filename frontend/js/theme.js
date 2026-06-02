@@ -11,8 +11,6 @@ window.themeManager = {
   applyTheme: function() {},
 };
 
-// insertThemeToggle is called from some pages — safe no-op
-window.insertThemeToggle = function() {};
 
 // ============================================================
 // Form Field Validation UI Helpers
