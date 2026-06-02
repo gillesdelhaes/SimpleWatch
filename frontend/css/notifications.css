@@ -2,6 +2,32 @@
  * Notifications page styles — Simple* family design
  */
 
+/* ── Log section collapsible header ──────────────────────── */
+
+.log-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.log-chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--ink-500);
+    transition: transform var(--transition-fast);
+}
+
+.log-header.open .log-chevron { transform: rotate(90deg); }
+
+.log-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-800);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
 /* ── Empty state ──────────────────────────────────────────── */
 
 .empty-state-icon {
