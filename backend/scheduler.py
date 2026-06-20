@@ -5,6 +5,7 @@ import logging
 import os
 import importlib
 import inspect
+from concurrent.futures import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
@@ -175,16 +176,18 @@ def monitor_scheduler_job():
         if due_monitors:
             logger.info(f"Found {len(due_monitors)} monitors due for checking")
 
-        for monitor in due_monitors:
-            try:
-                check_monitor(monitor.id)
-            except Exception as e:
-                logger.error(f"Failed to check monitor {monitor.id}: {e}")
+        monitor_ids = [m.id for m in due_monitors]
 
     except Exception as e:
         logger.error(f"Error in monitor scheduler job: {e}")
+        return
     finally:
         db.close()
+
+    # Run checks in parallel — each check manages its own DB session
+    with ThreadPoolExecutor(max_workers=20) as pool:
+        for monitor_id in monitor_ids:
+            pool.submit(check_monitor, monitor_id)
 
 
 def initialize_monitors():
