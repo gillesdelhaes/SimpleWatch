@@ -486,9 +486,13 @@
 }
 
 .empty-state-icon {
-    font-size: 3rem;
     margin-bottom: 1.25rem;
     opacity: 0.3;
+}
+
+.empty-state-icon svg {
+    width: 48px;
+    height: 48px;
 }
 
 .empty-state-title {

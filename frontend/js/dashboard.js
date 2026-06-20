@@ -6,6 +6,11 @@
 requireAuth();
 
 const userInfo = getUserInfo();
+
+document.addEventListener('DOMContentLoaded', () => {
+    const emptyStateIcon = document.getElementById('emptyStateIcon');
+    if (emptyStateIcon) emptyStateIcon.innerHTML = icons.chart;
+});
 let statusPoller;
 let aiEnabled = false;
 let passiveMonitorTypes = new Set();

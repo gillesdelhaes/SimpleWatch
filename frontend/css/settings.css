@@ -347,6 +347,31 @@
     align-items: center;
 }
 
+.status-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 14px;
+}
+
+.status-banner.banner-info { background: color-mix(in srgb, var(--sw-primary) 12%, transparent); color: var(--sw-primary); }
+.status-banner.banner-warning { background: color-mix(in srgb, #F59E0B 12%, transparent); color: #B45309; }
+.status-banner.banner-critical { background: color-mix(in srgb, var(--status-down) 12%, transparent); color: var(--status-down); }
+
+.status-banner-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.status-banner-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
 .banner-preview-empty {
     font-size: 13px;
     color: var(--ink-400);
