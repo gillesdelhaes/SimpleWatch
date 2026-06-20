@@ -26,7 +26,7 @@ class MetricThresholdMonitor(BaseMonitor):
         """
         return {
             "status": "unknown",
-            "message": "Metric monitors are passive and receive data via API"
+            "metadata": {"reason": "Metric monitors are passive and receive data via API"}
         }
 
     def evaluate_metric(self, value: float) -> Dict[str, str]:

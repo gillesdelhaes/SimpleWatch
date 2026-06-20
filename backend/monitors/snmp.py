@@ -72,7 +72,6 @@ class SNMPMonitor(BaseMonitor):
                     "error": "configuration_error",
                     "reason": "Host and OID are required"
                 },
-                "message": "Invalid configuration: host and OID required"
             }
 
         try:
@@ -97,7 +96,6 @@ class SNMPMonitor(BaseMonitor):
                         "error": error,
                         "reason": error
                     },
-                    "message": f"SNMP query failed: {error}"
                 }
 
             # Evaluate the result
@@ -114,7 +112,6 @@ class SNMPMonitor(BaseMonitor):
                     "value_type": type(result).__name__,
                     "reason": reason
                 },
-                "message": reason
             }
 
         except Exception as e:
@@ -128,7 +125,6 @@ class SNMPMonitor(BaseMonitor):
                     "error": str(e),
                     "reason": f"SNMP query failed: {str(e)}"
                 },
-                "message": f"SNMP check failed: {str(e)}"
             }
 
     async def _snmp_get_async(self, host: str, port: int, version: str, oid: str, timeout: int) -> Tuple[Any, Optional[str]]:

@@ -553,7 +553,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Insert theme toggle
-if (typeof insertThemeToggle === 'function') {
-    insertThemeToggle('settingsThemeToggle');
-}

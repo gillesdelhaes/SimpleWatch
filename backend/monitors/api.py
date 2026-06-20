@@ -16,10 +16,19 @@ class APIMonitor(BaseMonitor):
         {"key": "status_code", "label": "Status Code", "unit": "", "color": "#6366F1", "source": "metadata.status_code"},
     ]
 
+    def _parse_body(self, request_body: str):
+        """Return (json_data, raw_data) tuple for a request body string."""
+        if not request_body or not request_body.strip():
+            return None, None
+        try:
+            return json.loads(request_body), None
+        except json.JSONDecodeError:
+            return None, request_body
+
     def check(self) -> Dict[str, Any]:
         """Check if API endpoint responds correctly."""
         url = self.config.get("url")
-        method = self.config.get("method", "GET")
+        method = self.config.get("method", "GET").upper()
         headers = self.config.get("headers", {})
         request_body = self.config.get("request_body", "")
         expected_status_code = self.config.get("expected_status_code", 200)
@@ -29,81 +38,20 @@ class APIMonitor(BaseMonitor):
         try:
             start_time = time.time()
 
-            if method.upper() == "GET":
-                response = requests.get(
-                    url,
-                    headers=headers,
-                    timeout=timeout
+            if method in ("POST", "PUT", "PATCH"):
+                json_data, data = self._parse_body(request_body)
+                response = getattr(requests, method.lower())(
+                    url, headers=headers, json=json_data, data=data, timeout=timeout
                 )
-            elif method.upper() == "POST":
-                # Handle request body - try JSON first, fall back to raw data
-                json_data = None
-                data = None
-
-                if request_body and request_body.strip():
-                    try:
-                        json_data = json.loads(request_body)
-                    except json.JSONDecodeError:
-                        # Not valid JSON, send as raw data
-                        data = request_body
-
-                response = requests.post(
-                    url,
-                    headers=headers,
-                    json=json_data,
-                    data=data,
-                    timeout=timeout
-                )
-            elif method.upper() == "PUT":
-                # Handle request body for PUT
-                json_data = None
-                data = None
-
-                if request_body and request_body.strip():
-                    try:
-                        json_data = json.loads(request_body)
-                    except json.JSONDecodeError:
-                        data = request_body
-
-                response = requests.put(
-                    url,
-                    headers=headers,
-                    json=json_data,
-                    data=data,
-                    timeout=timeout
-                )
-            elif method.upper() == "PATCH":
-                # Handle request body for PATCH
-                json_data = None
-                data = None
-
-                if request_body and request_body.strip():
-                    try:
-                        json_data = json.loads(request_body)
-                    except json.JSONDecodeError:
-                        data = request_body
-
-                response = requests.patch(
-                    url,
-                    headers=headers,
-                    json=json_data,
-                    data=data,
-                    timeout=timeout
-                )
-            elif method.upper() == "DELETE":
-                response = requests.delete(
-                    url,
-                    headers=headers,
-                    timeout=timeout
-                )
+            elif method in ("GET", "DELETE"):
+                response = getattr(requests, method.lower())(url, headers=headers, timeout=timeout)
             else:
                 return {
                     "status": "down",
-                    "message": f"Unsupported HTTP method: {method}"
+                    "metadata": {"reason": f"Unsupported HTTP method: {method}"}
                 }
 
-            end_time = time.time()
-            response_time_ms = int((end_time - start_time) * 1000)
+            response_time_ms = int((time.time() - start_time) * 1000)
 
             if response.status_code != expected_status_code:
                 return {
@@ -112,39 +60,36 @@ class APIMonitor(BaseMonitor):
                     "metadata": {
                         "status_code": response.status_code,
                         "expected_status_code": expected_status_code,
-                        "url": url
-                    },
-                    "message": f"Expected status code {expected_status_code}, got {response.status_code}"
+                        "url": url,
+                        "reason": f"Expected {expected_status_code}, got {response.status_code}"
+                    }
                 }
 
             if json_path_validations:
                 try:
                     response_json = response.json()
-
                     for path, expected_value in json_path_validations.items():
                         keys = path.split(".")
                         value = response_json
                         for key in keys:
-                            value = value.get(key)
+                            value = value.get(key) if isinstance(value, dict) else None
                             if value is None:
                                 return {
                                     "status": "degraded",
                                     "response_time_ms": response_time_ms,
-                                    "message": f"JSON path '{path}' not found in response"
+                                    "metadata": {"reason": f"JSON path '{path}' not found in response"}
                                 }
-
                         if expected_value is not None and value != expected_value:
                             return {
                                 "status": "degraded",
                                 "response_time_ms": response_time_ms,
-                                "message": f"JSON path '{path}' expected '{expected_value}', got '{value}'"
+                                "metadata": {"reason": f"JSON path '{path}' expected '{expected_value}', got '{value}'"}
                             }
-
                 except json.JSONDecodeError:
                     return {
                         "status": "degraded",
                         "response_time_ms": response_time_ms,
-                        "message": "Response is not valid JSON"
+                        "metadata": {"reason": "Response is not valid JSON"}
                     }
 
             return {
@@ -152,37 +97,25 @@ class APIMonitor(BaseMonitor):
                 "response_time_ms": response_time_ms,
                 "metadata": {
                     "status_code": response.status_code,
-                    "url": url
-                },
-                "message": f"API responded with expected status code {expected_status_code}"
+                    "url": url,
+                    "reason": f"HTTP {response.status_code}"
+                }
             }
 
         except requests.exceptions.Timeout:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "timeout",
-                    "url": url
-                },
-                "message": f"API timed out after {timeout} seconds"
+                "metadata": {"error": "timeout", "url": url, "reason": f"Timed out after {timeout}s"}
             }
 
         except requests.exceptions.ConnectionError as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "connection_error",
-                    "url": url
-                },
-                "message": f"Connection failed: {str(e)}"
+                "metadata": {"error": "connection_error", "url": url, "reason": f"Connection failed: {str(e)}"}
             }
 
         except Exception as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "unknown_error",
-                    "url": url
-                },
-                "message": f"Check failed: {str(e)}"
+                "metadata": {"error": "unknown_error", "url": url, "reason": f"Check failed: {str(e)}"}
             }

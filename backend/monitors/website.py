@@ -16,15 +16,6 @@ class WebsiteMonitor(BaseMonitor):
     ]
 
     def _determine_status_from_http_code(self, status_code: int) -> str:
-        """
-        Determine service status from HTTP status code.
-
-        Args:
-            status_code: HTTP status code
-
-        Returns:
-            Status string: "operational", "degraded", or "down"
-        """
         if 200 <= status_code < 300:
             return "operational"
         elif 300 <= status_code < 400:
@@ -40,18 +31,14 @@ class WebsiteMonitor(BaseMonitor):
 
         try:
             start_time = time.time()
-
             response = requests.get(
                 url,
                 timeout=timeout,
                 allow_redirects=follow_redirects,
-                verify=True,  # Always verify SSL certificates
+                verify=True,
                 headers={"User-Agent": "SimpleWatch-Monitor/1.0"}
             )
-
-            end_time = time.time()
-            response_time_ms = int((end_time - start_time) * 1000)
-
+            response_time_ms = int((time.time() - start_time) * 1000)
             status = self._determine_status_from_http_code(response.status_code)
 
             return {
@@ -59,47 +46,31 @@ class WebsiteMonitor(BaseMonitor):
                 "response_time_ms": response_time_ms,
                 "metadata": {
                     "status_code": response.status_code,
-                    "url": url
-                },
-                "message": f"Website returned status code {response.status_code}"
+                    "url": url,
+                    "reason": f"HTTP {response.status_code}"
+                }
             }
 
         except requests.exceptions.Timeout:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "timeout",
-                    "url": url
-                },
-                "message": f"Website timed out after {timeout} seconds"
+                "metadata": {"error": "timeout", "url": url, "reason": f"Timed out after {timeout}s"}
             }
 
         except requests.exceptions.SSLError as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "ssl_error",
-                    "url": url
-                },
-                "message": f"SSL certificate verification failed: {str(e)}"
+                "metadata": {"error": "ssl_error", "url": url, "reason": f"SSL error: {str(e)}"}
             }
 
         except requests.exceptions.ConnectionError as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "connection_error",
-                    "url": url
-                },
-                "message": f"Connection failed: {str(e)}"
+                "metadata": {"error": "connection_error", "url": url, "reason": f"Connection failed: {str(e)}"}
             }
 
         except Exception as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "unknown_error",
-                    "url": url
-                },
-                "message": f"Check failed: {str(e)}"
+                "metadata": {"error": "unknown_error", "url": url, "reason": f"Check failed: {str(e)}"}
             }

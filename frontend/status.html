@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>System Status - SimpleWatch</title>
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="/static/css/status.css">
@@ -15,11 +16,12 @@
         <!-- Header with Overall System Status -->
         <header class="status-header">
             <div class="status-brand">
-                <h1 class="status-logo">SimpleWatch</h1>
+                <h1 class="status-logo">
+                    <span class="status-logo__simple">Simple</span><span class="status-logo__app">Watch</span>
+                </h1>
                 <p class="status-tagline">System Status</p>
             </div>
             <div class="status-header-controls">
-                <div id="themeToggleContainer"></div>
                 <div id="overallStatus" class="overall-status">
                     <div class="overall-status-indicator">
                         <div class="status-pulse"></div>

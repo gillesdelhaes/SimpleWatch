@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 from database import (
     Service, Monitor, StatusUpdate, Incident,
     SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog,
-    AISettings
+    AISettings, SQLALCHEMY_DATABASE_URL
 )
+from api.maintenance import is_service_in_maintenance
+from utils.service_status import get_service_current_status
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
     format_slack_payload, format_discord_payload, format_generic_payload,
@@ -87,42 +89,9 @@ def trigger_ai_analysis_background(db_url: str, incident_id: int):
 def calculate_service_status(db: Session, service_id: int) -> str:
     """
     Calculate overall service status by aggregating monitor statuses.
-    Single source of truth for service status determination.
-
     Returns: 'operational', 'degraded', 'down', or 'unknown'
     """
-    from api.dashboard import calculate_service_status_from_counts
-
-    monitors = db.query(Monitor).filter(
-        Monitor.service_id == service_id,
-        Monitor.is_active == True
-    ).all()
-
-    if not monitors:
-        return "unknown"
-
-    # Count monitor statuses
-    operational_count = 0
-    degraded_count = 0
-    down_count = 0
-
-    for monitor in monitors:
-        latest = db.query(StatusUpdate).filter(
-            StatusUpdate.monitor_id == monitor.id
-        ).order_by(StatusUpdate.timestamp.desc()).first()
-
-        if latest:
-            if latest.status == "operational":
-                operational_count += 1
-            elif latest.status == "degraded":
-                degraded_count += 1
-            elif latest.status == "down":
-                down_count += 1
-
-    # Use shared calculation logic from dashboard API
-    return calculate_service_status_from_counts(
-        operational_count, degraded_count, down_count
-    )
+    return get_service_current_status(db, service_id)["status"]
 
 
 def get_failing_monitor_ids(db: Session, service_id: int) -> List[int]:
@@ -190,7 +159,6 @@ def update_service_incidents(db: Session, service_id: int):
                 logger.info(f"Created incident for service {service_id} (severity: {current_status})")
 
                 # Trigger AI analysis in background
-                from database import SQLALCHEMY_DATABASE_URL
                 trigger_ai_analysis_background(SQLALCHEMY_DATABASE_URL, incident.id)
             elif ongoing.severity != current_status:
                 # Severity changed (e.g., degraded -> down or down -> degraded)
@@ -231,7 +199,6 @@ def should_send_notification(db: Session, service_id: int, new_status: str) -> b
     Returns: True if should notify
     """
     # Check if service is in maintenance - suppress all notifications during maintenance
-    from api.maintenance import is_service_in_maintenance
     if is_service_in_maintenance(db, service_id):
         logger.info(f"Skipping notification for service {service_id} - in maintenance window")
         return False
@@ -619,6 +586,3 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
 
     logger.info(f"Notification process completed for service {service.name}: {old_status} → {new_status}")
 
-
-# Backwards compatibility - alias for old function name
-determine_service_status = calculate_service_status

@@ -9,8 +9,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from sqlalchemy import text
 from database import init_db, SessionLocal
-from utils.db import create_default_admin, initialize_encryption_key
+from utils.db import initialize_encryption_key, initialize_jwt_secret
+from utils.auth import set_secret_key
+import scheduler as scheduler_module
 from scheduler import start_scheduler, stop_scheduler
 
 from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings, incidents, public_status, maintenance, ai, graphs, audit
@@ -34,6 +37,10 @@ async def lifespan(app: FastAPI):
     try:
         initialize_encryption_key(db)
         logger.info("Encryption key initialized")
+
+        jwt_secret = initialize_jwt_secret(db)
+        set_secret_key(jwt_secret)
+        logger.info("JWT secret initialized")
     finally:
         db.close()
 
@@ -144,7 +151,24 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint for Docker."""
+    """Health check endpoint for Docker. Returns 503 if DB or scheduler are unhealthy."""
+    errors = []
+
+    # Check DB connectivity
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+    except Exception as e:
+        errors.append(f"db: {e}")
+
+    # Check scheduler is running
+    sched = scheduler_module.scheduler
+    if sched is None or not sched.running:
+        errors.append("scheduler: not running")
+
+    if errors:
+        return JSONResponse(status_code=503, content={"status": "unhealthy", "errors": errors})
     return {"status": "healthy"}
 
 

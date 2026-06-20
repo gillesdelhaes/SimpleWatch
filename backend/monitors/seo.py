@@ -145,52 +145,37 @@ class SEOMonitor(BaseMonitor):
             metadata['warnings'] = warnings
             metadata['total_issues'] = len(issues)
             metadata['total_warnings'] = len(warnings)
+            # Score: start at 100, -20 per critical issue, -5 per warning, floor 0
+            metadata['score'] = max(0, 100 - len(issues) * 20 - len(warnings) * 5)
+            metadata['reason'] = message
 
             return {
                 "status": status,
                 "response_time_ms": response_time_ms,
-                "metadata": metadata,
-                "message": message
+                "metadata": metadata
             }
 
         except requests.exceptions.Timeout:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "timeout",
-                    "url": url
-                },
-                "message": f"Request timed out after {timeout_seconds} seconds"
+                "metadata": {"error": "timeout", "url": url, "reason": f"Timed out after {timeout_seconds}s"}
             }
 
         except requests.exceptions.ConnectionError:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "connection_error",
-                    "url": url
-                },
-                "message": "Failed to connect to URL"
+                "metadata": {"error": "connection_error", "url": url, "reason": "Failed to connect to URL"}
             }
 
         except requests.exceptions.HTTPError as e:
+            code = e.response.status_code if e.response else "unknown"
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "http_error",
-                    "url": url,
-                    "status_code": e.response.status_code if e.response else None
-                },
-                "message": f"HTTP error: {e.response.status_code if e.response else 'Unknown'}"
+                "metadata": {"error": "http_error", "url": url, "status_code": code, "reason": f"HTTP error: {code}"}
             }
 
         except Exception as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "check_failed",
-                    "url": url,
-                    "reason": str(e)
-                },
-                "message": f"Check failed: {str(e)}"
+                "metadata": {"error": "check_failed", "url": url, "reason": f"Check failed: {str(e)}"}
             }

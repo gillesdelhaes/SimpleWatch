@@ -15,13 +15,6 @@
   --maintenance-glow: rgba(139, 92, 246, 0.25);
 }
 
-[data-theme="dark"] {
-  --maintenance-primary: #a78bfa;
-  --maintenance-secondary: #8b5cf6;
-  --maintenance-bg: rgba(167, 139, 250, 0.12);
-  --maintenance-border: rgba(167, 139, 250, 0.4);
-  --maintenance-glow: rgba(167, 139, 250, 0.3);
-}
 
 /* ============================================
    Maintenance Badge (Dashboard)
@@ -53,11 +46,6 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
-[data-theme="dark"] .maintenance-badge-scheduled {
-  background: rgba(96, 165, 250, 0.1);
-  color: #60a5fa;
-  border-color: rgba(96, 165, 250, 0.4);
-}
 
 .maintenance-badge .icon {
   width: 0.75rem;
@@ -129,10 +117,6 @@
   animation: none;
 }
 
-[data-theme="dark"] .status-maintenance-banner.scheduled {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, transparent 100%);
-  border-color: rgba(96, 165, 250, 0.4);
-}
 
 @keyframes bannerGlow {
   0%, 100% { box-shadow: 0 0 0 transparent; }
@@ -154,9 +138,6 @@
   background: #3b82f6;
 }
 
-[data-theme="dark"] .status-maintenance-banner.scheduled .maintenance-banner-icon {
-  background: #60a5fa;
-}
 
 .maintenance-banner-icon .icon {
   width: 1.25rem;
@@ -182,9 +163,6 @@
   color: #3b82f6;
 }
 
-[data-theme="dark"] .status-maintenance-banner.scheduled .maintenance-banner-title {
-  color: #60a5fa;
-}
 
 .maintenance-banner-reason {
   font-size: 0.875rem;
@@ -452,9 +430,6 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-[data-theme="light"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(0);
-}
 
 .recurrence-options {
   display: grid;

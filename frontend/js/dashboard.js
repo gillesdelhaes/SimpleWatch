@@ -6,6 +6,11 @@
 requireAuth();
 
 const userInfo = getUserInfo();
+
+document.addEventListener('DOMContentLoaded', () => {
+    const emptyStateIcon = document.getElementById('emptyStateIcon');
+    if (emptyStateIcon) emptyStateIcon.innerHTML = icons.chart;
+});
 let statusPoller;
 let aiEnabled = false;
 let passiveMonitorTypes = new Set();
@@ -328,56 +333,73 @@ function createStatusWidget(service) {
     const showAiButton = aiEnabled && hasIssue && !hasPendingAnalysis;
     const showPendingIndicator = aiEnabled && hasIssue && hasPendingAnalysis;
 
+    const uptimePct = service.uptime ? Math.min(100, parseFloat(service.uptime.percentage)) : null;
+
     return `
         <div class="service-card${inMaintenance ? ' in-maintenance' : ''}" onclick="openMonitorModal(${service.service_id})">
             ${maintenanceBadge}
-            <div class="service-header">
-                <div class="service-name">${service.service}</div>
-                <div class="service-status-dot ${getStatusClass(service.status)}"></div>
+            <div class="sc-header">
+                <div class="sc-name">${service.service}</div>
+                <div class="status-indicator status-${getStatusClass(service.status)}">
+                    <span class="status-dot"></span>${getStatusText(service.status)}
+                </div>
             </div>
-            <div class="service-metrics">
-                ${service.monitor_count > 0 && monitorSummary ?
-                    `<div class="service-monitor-summary">
-                        <span class="monitors-info">${monitorSummary}</span>
-                        ${service.uptime ? `<span class="service-uptime">${service.uptime.percentage}% (${service.uptime.period_label})${renderSlaBadge(service.sla)}</span>` : ''}
-                    </div>` : ''}
-                <div class="metric-row">
-                    <span class="metric-label">Status</span>
-                    <span class="metric-value status ${getStatusClass(service.status)}">${getStatusText(service.status)}</span>
-                </div>
-                ${service.response_time_ms ? `
-                <div class="metric-row">
-                    <span class="metric-label">Avg Response</span>
-                    <span class="metric-value">${service.response_time_ms}ms</span>
-                </div>
-                ` : ''}
-                <div class="metric-row">
-                    <span class="metric-label">Last Check</span>
-                    <span class="metric-value">${formatTimestamp(service.timestamp)}</span>
-                </div>
-                ${showAiButton ? `
-                <button class="ai-analyze-btn" onclick="event.stopPropagation(); analyzeServiceWithAi(${service.service_id}, '${service.service}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                    Analyze with AI
-                </button>
-                ` : ''}
-                ${showPendingIndicator ? `
-                <div class="ai-analysis-available" onclick="event.stopPropagation(); openMonitorModal(${service.service_id})">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                    </svg>
-                    Analysis Available
-                </div>
-                ` : ''}
+            <div class="sc-monitors">
+                ${service.monitor_count > 0
+                    ? `<span class="sc-monitor-count">${service.monitor_count} monitor${service.monitor_count !== 1 ? 's' : ''}</span>${monitorSummary ? `<span class="sc-monitor-summary">${monitorSummary}</span>` : ''}`
+                    : '<span class="sc-no-monitors">No monitors</span>'}
             </div>
+            <div class="sc-footer">
+                ${uptimePct !== null ? `
+                <div class="sc-uptime-row">
+                    <div class="sc-uptime-bar"><div class="sc-uptime-fill" style="width:${uptimePct}%"></div></div>
+                    <span class="sc-uptime-pct">${service.uptime.percentage}%</span>
+                    ${renderSlaBadge(service.sla)}
+                </div>` : ''}
+                <div class="sc-meta">
+                    ${service.response_time_ms ? `<span class="sc-meta-item">${service.response_time_ms}ms</span>` : ''}
+                    <span class="sc-meta-item">${formatTimestamp(service.timestamp)}</span>
+                </div>
+            </div>
+            ${showAiButton ? `
+            <button class="ai-analyze-btn" onclick="event.stopPropagation(); analyzeServiceWithAi(${service.service_id}, '${service.service}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                Analyze with AI
+            </button>` : ''}
+            ${showPendingIndicator ? `
+            <div class="ai-analysis-available" onclick="event.stopPropagation(); openMonitorModal(${service.service_id})">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Analysis Available
+            </div>` : ''}
         </div>
     `;
 }
 
 let currentServiceData = [];
+
+function updateStatsStrip(services) {
+    const strip = document.getElementById('statsStrip');
+    if (!strip) return;
+    if (!services || services.length === 0) { strip.classList.add('hidden'); return; }
+
+    strip.classList.remove('hidden');
+    const op  = services.filter(s => s.status === 'operational').length;
+    const deg = services.filter(s => s.status === 'degraded').length;
+    const dn  = services.filter(s => s.status === 'down').length;
+
+    document.getElementById('statOpValue').textContent  = op;
+    document.getElementById('statOpSub').textContent    = `of ${services.length} service${services.length !== 1 ? 's' : ''}`;
+    document.getElementById('statDegValue').textContent = deg;
+    document.getElementById('statDownValue').textContent = dn;
+
+    const withUptime = services.filter(s => s.uptime && s.uptime.percentage != null);
+    if (withUptime.length > 0) {
+        const avg = (withUptime.reduce((s, x) => s + parseFloat(x.uptime.percentage), 0) / withUptime.length).toFixed(1);
+        document.getElementById('statUptimeValue').textContent = `${avg}%`;
+    } else {
+        document.getElementById('statUptimeValue').textContent = '—';
+    }
+}
 
 function getMonitorTypeName(type) {
     const monitorPlugin = window.monitorRegistry?.get(type);
@@ -890,6 +912,8 @@ async function loadDashboard() {
         const dashboardGrid = document.getElementById('dashboardGrid');
         const emptyState = document.getElementById('emptyState');
 
+        updateStatsStrip(data.services);
+
         if (data.services.length === 0) {
             dashboardGrid.innerHTML = '';
             emptyState.classList.remove('hidden');
@@ -941,18 +965,23 @@ async function loadDashboard() {
 
 function toggleFilterPanel() {
     const panel = document.getElementById('filterPanel');
-    const isOpen = !panel.classList.contains('hidden');
+    const btn   = document.getElementById('filterButton');
+    const isOpen = panel.classList.contains('open');
 
     if (isOpen) {
-        panel.classList.add('hidden');
+        panel.classList.remove('open');
+        btn.classList.remove('active');
     } else {
-        panel.classList.remove('hidden');
         renderFilterPanel();
+        panel.classList.add('open');
+        btn.classList.add('active');
     }
 }
 
 function closeFilterPanel() {
-    document.getElementById('filterPanel').classList.add('hidden');
+    document.getElementById('filterPanel').classList.remove('open');
+    const btn = document.getElementById('filterButton');
+    if (btn) btn.classList.remove('active');
 }
 
 function renderFilterPanel() {
@@ -960,48 +989,38 @@ function renderFilterPanel() {
     const categories = getUniqueCategories(currentServiceData || []);
 
     panel.innerHTML = `
-        <div class="filter-panel-header">
-            <span class="filter-panel-title">Sort & Filter</span>
-            <button class="filter-panel-close" onclick="closeFilterPanel()">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
+        <div class="filter-bar-inner">
 
-        <div class="filter-section">
-            <div class="filter-section-label">Sort By</div>
-            <div class="filter-sort-options">
-                ${Object.entries(SORT_OPTIONS).map(([key, opt]) => `
-                    <label class="filter-radio ${dashboardPrefs.sort === key ? 'active' : ''}">
-                        <input type="radio" name="sort" value="${key}" ${dashboardPrefs.sort === key ? 'checked' : ''} onchange="setSort('${key}')">
-                        <span>${opt.label}</span>
-                    </label>
-                `).join('')}
+            <div class="filter-bar-section">
+                <div class="filter-bar-label">Sort By</div>
+                <div class="filter-sort-options">
+                    ${Object.entries(SORT_OPTIONS).map(([key, opt]) => `
+                        <label class="filter-radio ${dashboardPrefs.sort === key ? 'active' : ''}">
+                            <input type="radio" name="sort" value="${key}" ${dashboardPrefs.sort === key ? 'checked' : ''} onchange="setSort('${key}')">
+                            <span>${opt.label}</span>
+                        </label>
+                    `).join('')}
+                </div>
             </div>
-        </div>
 
-        <div class="filter-section">
-            <div class="filter-section-label">Status</div>
-            <div class="filter-status-toggles">
-                <button class="filter-status-chip status-operational ${dashboardPrefs.statusFilters.includes('operational') ? 'active' : ''}" onclick="toggleStatusFilter('operational')">
-                    <span class="filter-chip-dot"></span>
-                    Operational
-                </button>
-                <button class="filter-status-chip status-degraded ${dashboardPrefs.statusFilters.includes('degraded') ? 'active' : ''}" onclick="toggleStatusFilter('degraded')">
-                    <span class="filter-chip-dot"></span>
-                    Degraded
-                </button>
-                <button class="filter-status-chip status-down ${dashboardPrefs.statusFilters.includes('down') ? 'active' : ''}" onclick="toggleStatusFilter('down')">
-                    <span class="filter-chip-dot"></span>
-                    Down
-                </button>
+            <div class="filter-bar-section">
+                <div class="filter-bar-label">Status</div>
+                <div class="filter-status-toggles">
+                    <button class="filter-status-chip status-operational ${dashboardPrefs.statusFilters.includes('operational') ? 'active' : ''}" onclick="toggleStatusFilter('operational')">
+                        <span class="filter-chip-dot"></span>Operational
+                    </button>
+                    <button class="filter-status-chip status-degraded ${dashboardPrefs.statusFilters.includes('degraded') ? 'active' : ''}" onclick="toggleStatusFilter('degraded')">
+                        <span class="filter-chip-dot"></span>Degraded
+                    </button>
+                    <button class="filter-status-chip status-down ${dashboardPrefs.statusFilters.includes('down') ? 'active' : ''}" onclick="toggleStatusFilter('down')">
+                        <span class="filter-chip-dot"></span>Down
+                    </button>
+                </div>
             </div>
-        </div>
 
-        ${categories.length > 0 ? `
-            <div class="filter-section">
-                <div class="filter-section-label">Categories</div>
+            ${categories.length > 0 ? `
+            <div class="filter-bar-section filter-bar-cats">
+                <div class="filter-bar-label">Category</div>
                 <div class="filter-category-list">
                     ${categories.map(cat => `
                         <label class="filter-checkbox ${dashboardPrefs.categoryFilters.includes(cat) ? 'active' : ''}">
@@ -1010,12 +1029,13 @@ function renderFilterPanel() {
                         </label>
                     `).join('')}
                 </div>
-                <div class="filter-category-hint">Leave all unchecked to show all categories</div>
             </div>
-        ` : ''}
+            ` : ''}
 
-        <div class="filter-panel-footer">
-            <button class="filter-reset-link" onclick="resetFilters()">Reset to Default</button>
+            <div class="filter-bar-section filter-bar-reset-section">
+                <button class="filter-reset-link" onclick="resetFilters()">↺ Reset</button>
+            </div>
+
         </div>
     `;
 }
@@ -1340,8 +1360,8 @@ window.addEventListener('beforeunload', () => {
 document.addEventListener('click', (e) => {
     const headerControls = document.querySelector('.header-controls');
     const filterPanel = document.getElementById('filterPanel');
-    if (filterPanel && !filterPanel.classList.contains('hidden')) {
-        if (!headerControls.contains(e.target)) {
+    if (filterPanel && filterPanel.classList.contains('open')) {
+        if (!headerControls.contains(e.target) && !filterPanel.contains(e.target)) {
             closeFilterPanel();
         }
     }

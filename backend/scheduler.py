@@ -5,6 +5,7 @@ import logging
 import os
 import importlib
 import inspect
+from concurrent.futures import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
@@ -97,8 +98,10 @@ def check_monitor(monitor_id: int):
 
         config = json.loads(monitor.config_json)
 
-        # Add monitor_id to config so monitors can access their database record if needed
         config['monitor_id'] = monitor.id
+        # Deadman monitor reads last_check_at instead of opening a second DB session
+        if monitor.last_check_at:
+            config['last_check_at'] = monitor.last_check_at.isoformat()
 
         # Get monitor class from registry
         monitor_class = MONITOR_CLASSES.get(monitor.monitor_type)
@@ -175,16 +178,18 @@ def monitor_scheduler_job():
         if due_monitors:
             logger.info(f"Found {len(due_monitors)} monitors due for checking")
 
-        for monitor in due_monitors:
-            try:
-                check_monitor(monitor.id)
-            except Exception as e:
-                logger.error(f"Failed to check monitor {monitor.id}: {e}")
+        monitor_ids = [m.id for m in due_monitors]
 
     except Exception as e:
         logger.error(f"Error in monitor scheduler job: {e}")
+        return
     finally:
         db.close()
+
+    # Run checks in parallel — each check manages its own DB session
+    with ThreadPoolExecutor(max_workers=20) as pool:
+        for monitor_id in monitor_ids:
+            pool.submit(check_monitor, monitor_id)
 
 
 def initialize_monitors():

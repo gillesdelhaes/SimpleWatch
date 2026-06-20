@@ -1,244 +1,357 @@
-// Shared Navigation Component
+/**
+ * SimpleWatch — Sidebar navigation
+ * Replaces the <div id="navigation" data-page="..."> placeholder
+ * with the full app shell: sidebar + main-area (topbar + page content).
+ */
 
-function createNavigation(activePage) {
-    const userInfo = getUserInfo();
+// ── Page metadata ──────────────────────────────────────────────────────────────
 
-    const nav = `
-        <nav style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);">
-            <div style="max-width: 1400px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; height: 4rem;">
-                <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                    SimpleWatch
-                </div>
-                <div style="display: flex; align-items: center; gap: 2rem;">
-                    <a href="/static/dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a>
-                    <a href="/static/services.html" class="nav-link ${activePage === 'services' ? 'active' : ''}">Services</a>
-                    <a href="/static/incidents.html" class="nav-link ${activePage === 'incidents' ? 'active' : ''}">Incidents</a>
-                    <a href="/static/notifications.html" class="nav-link ${activePage === 'notifications' ? 'active' : ''}">Notifications</a>
-                    <a href="/static/settings.html" class="nav-link ${activePage === 'settings' ? 'active' : ''}">Settings</a>
-                    ${userInfo.isAdmin ? `<a href="/static/users.html" class="nav-link ${activePage === 'users' ? 'active' : ''}">Users</a>` : ''}
-                    <div id="aiStatusIndicator" title="AI SRE Companion" style="cursor: pointer; display: none;"></div>
-                    <div id="navThemeToggle"></div>
-                    <span style="color: var(--text-tertiary); font-family: var(--font-mono); font-size: 0.875rem;">${userInfo.username}</span>
-                    <button onclick="logout()" style="color: var(--status-down); background: none; border: none; font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;">Logout</button>
-                </div>
-            </div>
-        </nav>
-        <style>
-            .nav-link {
-                color: var(--text-secondary);
-                text-decoration: none;
-                font-weight: 600;
-                font-size: 0.875rem;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                transition: color var(--transition-normal);
-                position: relative;
-            }
-            .nav-link:hover {
-                color: var(--accent-primary);
-            }
-            .nav-link.active {
-                color: var(--accent-primary);
-            }
-            .nav-link.active::after {
-                content: '';
-                position: absolute;
-                bottom: -1.25rem;
-                left: 0;
-                right: 0;
-                height: 2px;
-                background: var(--accent-primary);
-            }
-        </style>
-    `;
+const PAGE_META = {
+  dashboard:     { title: 'Dashboard',      icon: 'dashboard' },
+  services:      { title: 'Services',       icon: 'services'  },
+  incidents:     { title: 'Incidents',      icon: 'incidents' },
+  notifications: { title: 'Notifications',  icon: 'bell'      },
+  settings:      { title: 'Settings',       icon: 'settings'  },
+  users:         { title: 'Users',          icon: 'users'     },
+  status:        { title: 'Status Page',    icon: null        }, // public page, no shell
+};
 
-    return nav;
+function getPageTitle(page) {
+  return PAGE_META[page]?.title ?? page;
 }
 
-/**
- * Update AI status indicator in navigation
- */
+// ── SVG nav icons ──────────────────────────────────────────────────────────────
+
+const NAV_ICONS = {
+  dashboard: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="1.5" y="1.5" width="6" height="6" rx="1.2"/>
+    <rect x="10.5" y="1.5" width="6" height="6" rx="1.2"/>
+    <rect x="1.5" y="10.5" width="6" height="6" rx="1.2"/>
+    <rect x="10.5" y="10.5" width="6" height="6" rx="1.2"/>
+  </svg>`,
+
+  services: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="1.5" y="1.5" width="6.5" height="6.5" rx="1.5"/>
+    <rect x="10" y="1.5" width="6.5" height="6.5" rx="1.5"/>
+    <rect x="1.5" y="10" width="6.5" height="6.5" rx="1.5"/>
+    <path d="M13.25 10v6M10 13.25h6"/>
+  </svg>`,
+
+  incidents: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 13l3.5-5 3 3 3-4.5 4 5.5"/>
+  </svg>`,
+
+  bell: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 2a5.5 5.5 0 0 1 5.5 5.5c0 3 1.5 4.5 1.5 4.5H2s1.5-1.5 1.5-4.5A5.5 5.5 0 0 1 9 2z"/>
+    <path d="M7.5 14.5a1.5 1.5 0 0 0 3 0"/>
+  </svg>`,
+
+  settings: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>`,
+
+  users: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="7" cy="6" r="3"/>
+    <path d="M1.5 15c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5"/>
+    <path d="M13 4a3 3 0 0 1 0 6M16.5 15c0-2-1.12-3.75-2.75-4.65"/>
+  </svg>`,
+
+  logout: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>
+    <path d="M11 11l3-3-3-3M14 8H6"/>
+  </svg>`,
+
+};
+
+// ── Nav item definition ────────────────────────────────────────────────────────
+
+const NAV_MAIN = [
+  { page: 'dashboard',     href: '/static/dashboard.html',     label: 'Dashboard',     icon: 'dashboard' },
+  { page: 'services',      href: '/static/services.html',      label: 'Services',      icon: 'services'  },
+  { page: 'incidents',     href: '/static/incidents.html',     label: 'Incidents',     icon: 'incidents' },
+  { page: 'notifications', href: '/static/notifications.html', label: 'Notifications', icon: 'bell'      },
+];
+
+const NAV_SYSTEM = [
+  { page: 'settings', href: '/static/settings.html', label: 'Settings', icon: 'settings' },
+];
+
+// ── HTML builders ─────────────────────────────────────────────────────────────
+
+function buildNavItems(items, activePage) {
+  return items.map(item => {
+    const active = item.page === activePage ? ' active' : '';
+    return `
+      <a class="nav-item${active}" href="${item.href}">
+        ${NAV_ICONS[item.icon] || ''}
+        ${item.label}
+      </a>`;
+  }).join('');
+}
+
+function buildSidebar(activePage, userInfo) {
+  const initial = (userInfo.username || 'A').charAt(0).toUpperCase();
+  const rolePill = userInfo.isAdmin ? 'Admin' : 'User';
+  const showUsers = userInfo.isAdmin;
+
+  return `
+<aside class="sidebar" id="appSidebar">
+  <div class="sidebar__rule"></div>
+  <div class="sidebar__dots"></div>
+
+  <a class="sidebar__wordmark" href="/static/dashboard.html">
+    <span class="w-simple">Simple</span><span class="w-app">Watch</span>
+  </a>
+
+  <nav class="sidebar__nav">
+    ${buildNavItems(NAV_MAIN, activePage)}
+
+    ${showUsers ? `
+    <a class="nav-item${activePage === 'users' ? ' active' : ''}" href="/static/users.html">
+      ${NAV_ICONS.users}
+      Users
+    </a>` : ''}
+
+    <span class="nav-section-label">System</span>
+    ${buildNavItems(NAV_SYSTEM, activePage)}
+  </nav>
+
+  <div class="sidebar__bottom">
+    <div class="sidebar__user">
+      <div class="sidebar__avatar">${initial}</div>
+      <div class="sidebar__user-info">
+        <span class="sidebar__username">${userInfo.username || 'Admin'}</span>
+        <span class="sidebar__role">${rolePill}</span>
+      </div>
+      <button class="sidebar__logout" onclick="logout()" title="Sign out">
+        ${NAV_ICONS.logout}
+      </button>
+    </div>
+    <div class="sidebar__ai-indicator" id="sidebarAiIndicator" style="display:none;" onclick="toggleAIStatusPopup()">
+      <span class="sidebar__ai-dot" id="sidebarAiDot"></span>
+      <span class="sidebar__ai-label" id="sidebarAiLabel">AI SRE</span>
+    </div>
+  </div>
+</aside>`;
+}
+
+function buildTopbar(pageTitle) {
+  return `
+<header class="topbar" id="appTopbar">
+  <h1 class="topbar__title">${pageTitle}</h1>
+</header>`;
+}
+
+// ── AI SRE indicator update ────────────────────────────────────────────────────
+
 function updateAIStatusIndicator() {
-    const indicator = document.getElementById('aiStatusIndicator');
-    if (!indicator) return;
+  const indicator = document.getElementById('sidebarAiIndicator');
+  const dot       = document.getElementById('sidebarAiDot');
+  const label     = document.getElementById('sidebarAiLabel');
+  if (!indicator) return;
 
-    try {
-        const statusStr = localStorage.getItem('ai_status');
-        if (!statusStr) {
-            indicator.style.display = 'none';
-            return;
-        }
+  try {
+    const statusStr = localStorage.getItem('ai_status');
+    if (!statusStr) { indicator.style.display = 'none'; return; }
 
-        const status = JSON.parse(statusStr);
+    const status = JSON.parse(statusStr);
+    if (!status.enabled) { indicator.style.display = 'none'; return; }
 
-        if (!status.enabled) {
-            indicator.style.display = 'none';
-            return;
-        }
+    indicator.style.display = 'flex';
 
-        // Show indicator
-        indicator.style.display = 'flex';
-        indicator.style.alignItems = 'center';
-        indicator.style.gap = '0.375rem';
-        indicator.style.position = 'relative';
-
-        // Determine color based on connection status
-        let color;
-        if (status.connected === true) {
-            color = 'var(--status-operational)';
-        } else if (status.connected === false) {
-            color = 'var(--status-down)';
-        } else {
-            color = 'var(--status-degraded)';
-        }
-
-        indicator.innerHTML = `
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="4" y="6" width="16" height="14" rx="3" ry="3"/>
-                <circle cx="9" cy="12" r="1.5" fill="${color}" stroke="none"/>
-                <circle cx="15" cy="12" r="1.5" fill="${color}" stroke="none"/>
-                <path d="M9 16h6" stroke-width="2"/>
-                <path d="M12 2v4"/>
-                <circle cx="12" cy="2" r="1" fill="${color}" stroke="none"/>
-                <path d="M2 11h2"/>
-                <path d="M20 11h2"/>
-            </svg>
-        `;
-
-        // Click to toggle popup
-        indicator.onclick = (e) => {
-            e.stopPropagation();
-            toggleAIStatusPopup(status);
-        };
-
-    } catch (error) {
-        console.error('Error updating AI status indicator:', error);
-        indicator.style.display = 'none';
-    }
-}
-
-/**
- * Toggle AI status popup
- */
-function toggleAIStatusPopup(status) {
-    // Remove existing popup if any
-    const existingPopup = document.getElementById('aiStatusPopup');
-    if (existingPopup) {
-        existingPopup.remove();
-        return;
-    }
-
-    const indicator = document.getElementById('aiStatusIndicator');
-    if (!indicator) return;
-
-    // Determine status info
-    let statusText, statusColor, statusDot;
     if (status.connected === true) {
-        statusText = 'Connected';
-        statusColor = 'var(--status-operational)';
-        statusDot = 'ai-status-connected';
+      dot.style.background = '#00C896';
+      label.textContent = `AI SRE · ${status.model || 'Connected'}`;
     } else if (status.connected === false) {
-        statusText = 'Disconnected';
-        statusColor = 'var(--status-down)';
-        statusDot = 'ai-status-disconnected';
+      dot.style.background = '#EF4444';
+      label.textContent = 'AI SRE · Disconnected';
     } else {
-        statusText = 'Unknown';
-        statusColor = 'var(--status-degraded)';
-        statusDot = 'ai-status-unknown';
+      dot.style.background = '#F59E0B';
+      label.textContent = 'AI SRE · Unknown';
     }
-
-    // Format last query time
-    let lastQueryText = 'Never';
-    if (status.lastQueryAt) {
-        const lastQuery = new Date(status.lastQueryAt);
-        lastQueryText = formatRelativeTime(lastQuery);
-    }
-
-    // Create popup
-    const popup = document.createElement('div');
-    popup.id = 'aiStatusPopup';
-    popup.className = 'ai-status-popup';
-    popup.innerHTML = `
-        <div class="ai-status-popup-header">
-            <span class="ai-status-popup-title">AI SRE Companion</span>
-            <span class="ai-status-dot ${statusDot}"></span>
-        </div>
-        <div class="ai-status-popup-content">
-            <div class="ai-status-row">
-                <span class="ai-status-label">Status</span>
-                <span class="ai-status-value" style="color: ${statusColor}">${statusText}</span>
-            </div>
-            ${status.provider ? `
-            <div class="ai-status-row">
-                <span class="ai-status-label">Provider</span>
-                <span class="ai-status-value">${status.provider}</span>
-            </div>
-            ` : ''}
-            ${status.model ? `
-            <div class="ai-status-row">
-                <span class="ai-status-label">Model</span>
-                <span class="ai-status-value">${status.model}</span>
-            </div>
-            ` : ''}
-            <div class="ai-status-row">
-                <span class="ai-status-label">Last Query</span>
-                <span class="ai-status-value">${lastQueryText}</span>
-            </div>
-        </div>
-        <a href="/static/settings.html" class="ai-status-popup-link">Configure Settings</a>
-    `;
-
-    indicator.appendChild(popup);
-
-    // Close popup when clicking outside
-    setTimeout(() => {
-        document.addEventListener('click', closeAIStatusPopupOnOutsideClick);
-    }, 0);
+  } catch {
+    indicator.style.display = 'none';
+  }
 }
 
-/**
- * Close popup when clicking outside
- */
-function closeAIStatusPopupOnOutsideClick(e) {
-    const popup = document.getElementById('aiStatusPopup');
-    const indicator = document.getElementById('aiStatusIndicator');
-    if (popup && indicator && !indicator.contains(e.target)) {
-        popup.remove();
-        document.removeEventListener('click', closeAIStatusPopupOnOutsideClick);
-    }
+// Keep legacy export name so existing pages that call window.updateAIStatusIndicator still work
+window.updateAIStatusIndicator = updateAIStatusIndicator;
+
+// ── AI status popup (appears to the right of the sidebar) ─────────────────────
+
+function toggleAIStatusPopup() {
+  const existing = document.getElementById('aiStatusPopup');
+  if (existing) {
+    existing.remove();
+    document.removeEventListener('click', _closeAIPopupOutside);
+    return;
+  }
+
+  const statusStr = localStorage.getItem('ai_status');
+  if (!statusStr) return;
+
+  let status;
+  try { status = JSON.parse(statusStr); } catch { return; }
+  if (!status.enabled) return;
+
+  const indicator = document.getElementById('sidebarAiIndicator');
+  if (!indicator) return;
+
+  const rect = indicator.getBoundingClientRect();
+
+  // Determine status display values
+  let statusText, statusColor, dotClass;
+  if (status.connected === true) {
+    statusText = 'Connected';   statusColor = 'var(--status-operational)'; dotClass = 'ai-status-connected';
+  } else if (status.connected === false) {
+    statusText = 'Disconnected'; statusColor = 'var(--status-down)';        dotClass = 'ai-status-disconnected';
+  } else {
+    statusText = 'Unknown';     statusColor = 'var(--status-degraded)';     dotClass = 'ai-status-unknown';
+  }
+
+  const lastQueryText = status.lastQueryAt
+    ? formatRelativeTime(status.lastQueryAt)
+    : 'Never';
+
+  const popup = document.createElement('div');
+  popup.id = 'aiStatusPopup';
+  popup.className = 'ai-status-popup ai-status-popup--sidebar';
+  // Position to the right of the sidebar, aligned with the indicator
+  popup.style.cssText = `
+    position: fixed;
+    left: ${Math.round(rect.right + 10)}px;
+    bottom: ${Math.round(window.innerHeight - rect.bottom)}px;
+    z-index: 200;
+  `;
+
+  popup.innerHTML = `
+    <div class="ai-status-popup-header">
+      <span class="ai-status-popup-title">AI SRE Companion</span>
+      <span class="ai-status-dot ${dotClass}"></span>
+    </div>
+    <div class="ai-status-popup-content">
+      <div class="ai-status-row">
+        <span class="ai-status-label">Status</span>
+        <span class="ai-status-value" style="color:${statusColor}">${statusText}</span>
+      </div>
+      ${status.provider ? `
+      <div class="ai-status-row">
+        <span class="ai-status-label">Provider</span>
+        <span class="ai-status-value">${status.provider}</span>
+      </div>` : ''}
+      ${status.model ? `
+      <div class="ai-status-row">
+        <span class="ai-status-label">Model</span>
+        <span class="ai-status-value">${status.model}</span>
+      </div>` : ''}
+      <div class="ai-status-row">
+        <span class="ai-status-label">Last Query</span>
+        <span class="ai-status-value">${lastQueryText}</span>
+      </div>
+    </div>
+    <a href="/static/settings.html" class="ai-status-popup-link">Configure Settings →</a>
+  `;
+
+  document.body.appendChild(popup);
+
+  // Close on outside click (deferred so this click doesn't immediately close it)
+  setTimeout(() => {
+    document.addEventListener('click', _closeAIPopupOutside);
+  }, 0);
 }
 
-/**
- * Format relative time (e.g., "2 minutes ago")
- */
-function formatRelativeTime(date) {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
-    if (diffSec < 60) return 'Just now';
-    if (diffMin < 60) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
-    if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
-    if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString();
+function _closeAIPopupOutside(e) {
+  const popup     = document.getElementById('aiStatusPopup');
+  const indicator = document.getElementById('sidebarAiIndicator');
+  if (popup && !popup.contains(e.target) && indicator && !indicator.contains(e.target)) {
+    popup.remove();
+    document.removeEventListener('click', _closeAIPopupOutside);
+  }
 }
 
-// Insert navigation on page load
+window.toggleAIStatusPopup = toggleAIStatusPopup;
+
+// ── Format relative time (used by AI popup) ───────────────────────────────────
+// Accepts an ISO string. Appends 'Z' if the string has no timezone marker so
+// naive UTC timestamps from the server are not misread as local time.
+
+function formatRelativeTime(isoString) {
+  if (!isoString) return 'Never';
+
+  let str = isoString;
+  if (typeof str === 'string' && !str.endsWith('Z') && !str.includes('+') && !str.includes('-', 10)) {
+    str += 'Z';
+  }
+
+  const date    = new Date(str);
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (isNaN(diffSec) || diffSec < 0) return 'Just now';
+  if (diffSec < 60)                  return 'Just now';
+  if (diffSec < 3600)                return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400)               return `${Math.floor(diffSec / 3600)}h ago`;
+  if (diffSec < 86400 * 7)           return `${Math.floor(diffSec / 86400)}d ago`;
+
+  return date.toLocaleString('default', {
+    month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit'
+  });
+}
+
+window.formatRelativeTime = formatRelativeTime;
+
+// ── DOM injection ──────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
-    const navPlaceholder = document.getElementById('navigation');
-    if (navPlaceholder && navPlaceholder.dataset.page) {
-        navPlaceholder.outerHTML = createNavigation(navPlaceholder.dataset.page);
-        // Insert theme toggle after navigation is created
-        if (typeof insertThemeToggle === 'function') {
-            insertThemeToggle('navThemeToggle');
-        }
-        // Update AI status indicator
-        updateAIStatusIndicator();
-    }
+  const placeholder = document.getElementById('navigation');
+  if (!placeholder) return;
+
+  const activePage = placeholder.dataset.page || '';
+  const pageTitle  = placeholder.dataset.title || getPageTitle(activePage);
+
+  // Public pages (status) get no sidebar
+  if (activePage === 'status') {
+    placeholder.remove();
+    return;
+  }
+
+  const userInfo = (typeof getUserInfo === 'function') ? getUserInfo() : { username: '', isAdmin: false };
+
+  // Build sidebar element
+  const sidebarWrap = document.createElement('div');
+  sidebarWrap.innerHTML = buildSidebar(activePage, userInfo).trim();
+  const sidebar = sidebarWrap.firstElementChild;
+
+  // Collect all body siblings that come after the placeholder
+  const siblings = [];
+  let sibling = placeholder.nextSibling;
+  while (sibling) {
+    siblings.push(sibling);
+    sibling = sibling.nextSibling;
+  }
+
+  // Build main-area
+  const mainArea = document.createElement('div');
+  mainArea.className = 'main-area';
+  mainArea.innerHTML = buildTopbar(pageTitle);
+
+  // Content wrapper (replaces .main-container role)
+  const pageContent = document.createElement('div');
+  pageContent.className = 'page-content';
+  siblings.forEach(node => pageContent.appendChild(node));
+  mainArea.appendChild(pageContent);
+
+  // Replace placeholder with sidebar + main-area
+  placeholder.replaceWith(sidebar, mainArea);
+
+  // Mark body as app-layout
+  document.body.classList.add('app-layout');
+
+  // Update AI indicator
+  updateAIStatusIndicator();
+
 });
 
-// Export for use by other scripts
-window.updateAIStatusIndicator = updateAIStatusIndicator;
+// ── Legacy createNavigation stub (called by nothing, but guards against errors) ─
+window.createNavigation = function() { return ''; };

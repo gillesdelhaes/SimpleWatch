@@ -4,51 +4,55 @@
  */
 
 requireAuth();
-insertThemeToggle('settingsThemeToggle');
 
 const userInfo = getUserInfo();
 let currentApiKey = '';
 let keyVisible = false;
 
-// Inject icons
+function injectIcon(id, icon) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = icon;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    const warningIcon = document.getElementById('warningIcon');
-    if (warningIcon) {
-        warningIcon.innerHTML = icons.alertTriangle;
-    }
+    // Icons
+    injectIcon('warningIcon', icons.alertTriangle);
+    injectIcon('zapIcon', icons.zap);
+    injectIcon('keyIcon', icons.key);
+    injectIcon('databaseIcon', icons.database);
+    injectIcon('infoCircleIcon', icons.infoCircle);
+    injectIcon('warningTriangleIcon', icons.alertTriangle);
+    injectIcon('modalCloseIcon', icons.x);
+    injectIcon('backupIcon', icons.folder);
+    injectIcon('exportIcon', icons.download);
+    injectIcon('importIcon', icons.upload);
+    injectIcon('downloadBtnIcon', icons.download);
+    injectIcon('uploadBtnIcon', icons.upload);
+    injectIcon('exportModalCloseIcon', icons.x);
+    injectIcon('exportBtnIcon', icons.download);
+    injectIcon('importModalCloseIcon', icons.x);
+    injectIcon('uploadAreaIcon', icons.upload);
+    injectIcon('fileCheckIcon', icons.checkCircle);
+    injectIcon('fileClearIcon', icons.x);
+    injectIcon('importInfoIcon', icons.info);
+    injectIcon('importValidateBtnIcon', icons.check);
+    injectIcon('importExecuteBtnIcon', icons.upload);
+    injectIcon('auditLogIcon', icons.clipboard);
+    injectIcon('auditInfoIcon', icons.infoCircle);
+    injectIcon('auditExportBtnIcon', icons.download);
+    injectIcon('statusPageIcon', icons.globe);
 
-    const zapIcon = document.getElementById('zapIcon');
-    if (zapIcon) {
-        zapIcon.innerHTML = icons.zap;
-    }
-
-    const keyIcon = document.getElementById('keyIcon');
-    if (keyIcon) {
-        keyIcon.innerHTML = icons.key;
-    }
-
-    const databaseIcon = document.getElementById('databaseIcon');
-    if (databaseIcon) {
-        databaseIcon.innerHTML = icons.database;
-    }
-
-    const infoCircleIcon = document.getElementById('infoCircleIcon');
-    if (infoCircleIcon) {
-        infoCircleIcon.innerHTML = icons.infoCircle;
-    }
-
-    const warningTriangleIcon = document.getElementById('warningTriangleIcon');
-    if (warningTriangleIcon) {
-        warningTriangleIcon.innerHTML = icons.alertTriangle;
-    }
-
-    const modalCloseIcon = document.getElementById('modalCloseIcon');
-    if (modalCloseIcon) {
-        modalCloseIcon.innerHTML = icons.x;
-    }
-
-    // Load current retention settings
+    // Init
     loadRetentionSettings();
+    loadAuditLogCount();
+    loadStatusPageBannerSettings();
+
+    // Banner live preview
+    document.getElementById('bannerText')?.addEventListener('input', () => {
+        updateBannerCharCount();
+        updateBannerPreview();
+    });
+    document.getElementById('bannerSeverity')?.addEventListener('change', updateBannerPreview);
 });
 
 async function loadUserInfo() {
@@ -221,33 +225,6 @@ async function loadAllServices() {
 // Initialize on page load
 loadAllServices();
 
-// Inject icons for backup section
-document.addEventListener('DOMContentLoaded', () => {
-    const backupIcon = document.getElementById('backupIcon');
-    if (backupIcon) {
-        backupIcon.innerHTML = icons.folder;
-    }
-
-    const exportIcon = document.getElementById('exportIcon');
-    if (exportIcon) {
-        exportIcon.innerHTML = icons.download;
-    }
-
-    const importIcon = document.getElementById('importIcon');
-    if (importIcon) {
-        importIcon.innerHTML = icons.upload;
-    }
-
-    const downloadBtnIcon = document.getElementById('downloadBtnIcon');
-    if (downloadBtnIcon) {
-        downloadBtnIcon.innerHTML = icons.download;
-    }
-
-    const uploadBtnIcon = document.getElementById('uploadBtnIcon');
-    if (uploadBtnIcon) {
-        uploadBtnIcon.innerHTML = icons.upload;
-    }
-});
 
 // ====================================================================
 // Export Modal
@@ -287,17 +264,6 @@ async function showExportModal() {
 
         // Select all by default
         allServices.forEach(s => selectedExportServices.add(s.id));
-    }
-
-    // Inject icons
-    const exportModalCloseIcon = document.getElementById('exportModalCloseIcon');
-    if (exportModalCloseIcon) {
-        exportModalCloseIcon.innerHTML = icons.x;
-    }
-
-    const exportBtnIcon = document.getElementById('exportBtnIcon');
-    if (exportBtnIcon) {
-        exportBtnIcon.innerHTML = icons.download;
     }
 
     // Show modal
@@ -388,42 +354,6 @@ function showImportModal() {
     document.getElementById('importValidateBtn').classList.add('hidden');
     document.getElementById('importExecuteBtn').classList.add('hidden');
     document.getElementById('importCancelBtn').textContent = 'Cancel';
-
-    // Inject icons
-    const importModalCloseIcon = document.getElementById('importModalCloseIcon');
-    if (importModalCloseIcon) {
-        importModalCloseIcon.innerHTML = icons.x;
-    }
-
-    const uploadAreaIcon = document.getElementById('uploadAreaIcon');
-    if (uploadAreaIcon) {
-        uploadAreaIcon.innerHTML = icons.upload;
-    }
-
-    const fileCheckIcon = document.getElementById('fileCheckIcon');
-    if (fileCheckIcon) {
-        fileCheckIcon.innerHTML = icons.checkCircle;
-    }
-
-    const fileClearIcon = document.getElementById('fileClearIcon');
-    if (fileClearIcon) {
-        fileClearIcon.innerHTML = icons.x;
-    }
-
-    const importInfoIcon = document.getElementById('importInfoIcon');
-    if (importInfoIcon) {
-        importInfoIcon.innerHTML = icons.info;
-    }
-
-    const importValidateBtnIcon = document.getElementById('importValidateBtnIcon');
-    if (importValidateBtnIcon) {
-        importValidateBtnIcon.innerHTML = icons.check;
-    }
-
-    const importExecuteBtnIcon = document.getElementById('importExecuteBtnIcon');
-    if (importExecuteBtnIcon) {
-        importExecuteBtnIcon.innerHTML = icons.upload;
-    }
 
     // Setup file input
     const fileInput = document.getElementById('importFileInput');
@@ -731,25 +661,6 @@ async function exportAuditLog() {
     }
 }
 
-// Initialize audit log section
-document.addEventListener('DOMContentLoaded', () => {
-    const auditLogIcon = document.getElementById('auditLogIcon');
-    if (auditLogIcon) {
-        auditLogIcon.innerHTML = icons.clipboard || icons.file || icons.list;
-    }
-
-    const auditInfoIcon = document.getElementById('auditInfoIcon');
-    if (auditInfoIcon) {
-        auditInfoIcon.innerHTML = icons.infoCircle;
-    }
-
-    const auditExportBtnIcon = document.getElementById('auditExportBtnIcon');
-    if (auditExportBtnIcon) {
-        auditExportBtnIcon.innerHTML = icons.download;
-    }
-
-    loadAuditLogCount();
-});
 
 // ====================================================================
 // Status Page Banner Settings
@@ -840,29 +751,3 @@ async function clearStatusPageBanner() {
     await saveStatusPageBanner();
 }
 
-// Initialize banner settings
-document.addEventListener('DOMContentLoaded', () => {
-    // Inject status page icon
-    const statusPageIcon = document.getElementById('statusPageIcon');
-    if (statusPageIcon) {
-        statusPageIcon.innerHTML = icons.globe;
-    }
-
-    // Load banner settings
-    loadStatusPageBannerSettings();
-
-    // Setup event listeners for live preview
-    const bannerText = document.getElementById('bannerText');
-    const bannerSeverity = document.getElementById('bannerSeverity');
-
-    if (bannerText) {
-        bannerText.addEventListener('input', () => {
-            updateBannerCharCount();
-            updateBannerPreview();
-        });
-    }
-
-    if (bannerSeverity) {
-        bannerSeverity.addEventListener('change', updateBannerPreview);
-    }
-});
