@@ -35,10 +35,10 @@ async function loadServices() {
             <div class="service-card${!service.is_active ? ' paused' : ''}"${!service.is_active ? ' title="This service is paused"' : ''}>
                 <div class="service-header">
                     <div style="flex: 1;">
-                        <h3 class="service-title">${service.name}</h3>
-                        ${service.description ? `<p class="service-description">${service.description}</p>` : ''}
+                        <h3 class="service-title">${escapeHtml(service.name)}</h3>
+                        ${service.description ? `<p class="service-description">${escapeHtml(service.description)}</p>` : ''}
                         <div class="service-meta">
-                            ${service.category ? `<span style="display: inline-flex; align-items: baseline; gap: 0.25rem;"><span class="icon" style="width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center;">${icons.folder}</span><span style="line-height: 1;">${service.category}</span></span>` : ''}
+                            ${service.category ? `<span style="display: inline-flex; align-items: baseline; gap: 0.25rem;"><span class="icon" style="width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center;">${icons.folder}</span><span style="line-height: 1;">${escapeHtml(service.category)}</span></span>` : ''}
                             <span style="display: inline-flex; align-items: baseline; gap: 0.25rem;"><span class="icon" style="width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; align-items: center;">${icons.search}</span><span style="line-height: 1;">${serviceMonitors.length} monitor${serviceMonitors.length !== 1 ? 's' : ''}</span></span>
                         </div>
                     </div>

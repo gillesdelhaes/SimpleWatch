@@ -339,7 +339,7 @@ function createStatusWidget(service) {
         <div class="service-card${inMaintenance ? ' in-maintenance' : ''}" onclick="openMonitorModal(${service.service_id})">
             ${maintenanceBadge}
             <div class="sc-header">
-                <div class="sc-name">${service.service}</div>
+                <div class="sc-name">${escapeHtml(service.service)}</div>
                 <div class="status-indicator status-${getStatusClass(service.status)}">
                     <span class="status-dot"></span>${getStatusText(service.status)}
                 </div>

@@ -8,6 +8,7 @@ from database import get_db, Service, StatusUpdate, Monitor
 from models import ServiceCreate, ServiceResponse
 from api.auth import get_current_user
 from utils.audit import log_action
+from scheduler import MONITOR_CLASSES
 from typing import List, Optional
 from datetime import datetime, timedelta
 import json
@@ -290,6 +291,13 @@ async def import_services(
 
             # Create monitors
             monitors_created = 0
+            invalid_types = [
+                m["type"] for m in service_data.get("monitors", [])
+                if m.get("type") not in MONITOR_CLASSES
+            ]
+            if invalid_types:
+                raise ValueError(f"Unknown monitor type(s): {', '.join(invalid_types)}")
+
             for monitor_data in service_data.get("monitors", []):
                 new_monitor = Monitor(
                     service_id=new_service.id,

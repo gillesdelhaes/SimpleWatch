@@ -108,6 +108,10 @@ def create_maintenance_window(
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
+    valid_recurrence_types = ['none', 'daily', 'weekly', 'monthly', 'monthly_weekday']
+    if window.recurrence_type not in valid_recurrence_types:
+        raise HTTPException(status_code=400, detail=f"Invalid recurrence_type. Must be one of: {', '.join(valid_recurrence_types)}")
+
     # Convert to naive UTC for consistent comparison
     start_time = to_naive_utc(window.start_time)
     end_time = to_naive_utc(window.end_time)
@@ -172,6 +176,9 @@ def update_maintenance_window(
     if update.end_time is not None:
         mw.end_time = to_naive_utc(update.end_time)
     if update.recurrence_type is not None:
+        valid_recurrence_types = ['none', 'daily', 'weekly', 'monthly', 'monthly_weekday']
+        if update.recurrence_type not in valid_recurrence_types:
+            raise HTTPException(status_code=400, detail=f"Invalid recurrence_type. Must be one of: {', '.join(valid_recurrence_types)}")
         mw.recurrence_type = update.recurrence_type
     if update.recurrence_config is not None:
         mw.recurrence_config = json.dumps(update.recurrence_config)
