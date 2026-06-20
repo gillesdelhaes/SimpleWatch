@@ -2,7 +2,7 @@
 Database utility functions.
 """
 from sqlalchemy.orm import Session
-from database import User, Service, EncryptionKey
+from database import User, Service, EncryptionKey, AppSettings
 from utils.auth import hash_password, generate_api_key
 from cryptography.fernet import Fernet
 import os
@@ -78,6 +78,31 @@ def initialize_encryption_key(db: Session):
         print("Encryption key auto-generated and stored in database")
         return new_key.decode()
     return existing_key.key_value
+
+
+def initialize_jwt_secret(db: Session) -> str:
+    """
+    Load or generate the JWT signing secret.
+    On first startup, generates a random secret and persists it to AppSettings
+    so it survives container restarts. Respects SECRET_KEY env var if set.
+    """
+    import os
+    import secrets as sec_module
+
+    # Env var wins (advanced deployments can pin the key explicitly)
+    env_key = os.getenv("SECRET_KEY")
+    if env_key:
+        return env_key
+
+    existing = db.query(AppSettings).filter(AppSettings.key == "jwt_secret").first()
+    if existing:
+        return existing.value
+
+    new_secret = sec_module.token_urlsafe(32)
+    db.add(AppSettings(key="jwt_secret", value=new_secret))
+    db.commit()
+    print("JWT secret auto-generated and stored in database")
+    return new_secret
 
 
 def get_encryption_key(db: Session) -> str:

@@ -10,7 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from database import init_db, SessionLocal
-from utils.db import create_default_admin, initialize_encryption_key
+from utils.db import create_default_admin, initialize_encryption_key, initialize_jwt_secret
+from utils.auth import set_secret_key
 from scheduler import start_scheduler, stop_scheduler
 
 from api import auth, dashboard, services, users, monitors, monitor_ingestion, notifications, setup, settings, incidents, public_status, maintenance, ai, graphs, audit
@@ -34,6 +35,10 @@ async def lifespan(app: FastAPI):
     try:
         initialize_encryption_key(db)
         logger.info("Encryption key initialized")
+
+        jwt_secret = initialize_jwt_secret(db)
+        set_secret_key(jwt_secret)
+        logger.info("JWT secret initialized")
     finally:
         db.close()
 

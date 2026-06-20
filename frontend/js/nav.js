@@ -62,10 +62,6 @@ const NAV_ICONS = {
     <path d="M11 11l3-3-3-3M14 8H6"/>
   </svg>`,
 
-  search: `<svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-    <circle cx="8" cy="8" r="5.5"/>
-    <path d="M12.5 12.5L16 16"/>
-  </svg>`,
 };
 
 // ── Nav item definition ────────────────────────────────────────────────────────
@@ -144,10 +140,6 @@ function buildTopbar(pageTitle) {
   return `
 <header class="topbar" id="appTopbar">
   <h1 class="topbar__title">${pageTitle}</h1>
-  <div class="topbar__search">
-    <span class="topbar__search-icon">${NAV_ICONS.search}</span>
-    <input type="text" id="topbarSearch" placeholder="Search…" autocomplete="off" />
-  </div>
 </header>`;
 }
 
@@ -359,16 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Update AI indicator
   updateAIStatusIndicator();
 
-  // Topbar search: navigate on Enter
-  const searchInput = document.getElementById('topbarSearch');
-  if (searchInput) {
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const q = searchInput.value.trim();
-        if (q) window.location.href = `/static/services.html?q=${encodeURIComponent(q)}`;
-      }
-    });
-  }
 });
 
 // ── Legacy createNavigation stub (called by nothing, but guards against errors) ─

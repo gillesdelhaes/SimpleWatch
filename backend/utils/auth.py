@@ -8,9 +8,16 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
 
-SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
+# Prefer an explicit env var; if absent, startup must call set_secret_key() to load from DB.
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+
+
+def set_secret_key(key: str) -> None:
+    """Set the JWT secret key at startup (loaded from AppSettings)."""
+    global SECRET_KEY
+    SECRET_KEY = key
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
