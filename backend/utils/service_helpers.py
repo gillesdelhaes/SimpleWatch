@@ -256,7 +256,7 @@ def get_affected_monitors(db: Session, service_id: int) -> List[dict]:
                 "name": config.get("name", f"{monitor.monitor_type.title()} Monitor"),
                 "type": monitor.monitor_type,
                 "status": latest.status,
-                "error": metadata.get("error", "Unknown error")
+                "error": metadata.get("reason") or metadata.get("error", "Unknown error")
             })
 
     return affected
