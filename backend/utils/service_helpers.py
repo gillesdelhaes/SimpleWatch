@@ -87,42 +87,10 @@ def trigger_ai_analysis_background(db_url: str, incident_id: int):
 def calculate_service_status(db: Session, service_id: int) -> str:
     """
     Calculate overall service status by aggregating monitor statuses.
-    Single source of truth for service status determination.
-
     Returns: 'operational', 'degraded', 'down', or 'unknown'
     """
-    from api.dashboard import calculate_service_status_from_counts
-
-    monitors = db.query(Monitor).filter(
-        Monitor.service_id == service_id,
-        Monitor.is_active == True
-    ).all()
-
-    if not monitors:
-        return "unknown"
-
-    # Count monitor statuses
-    operational_count = 0
-    degraded_count = 0
-    down_count = 0
-
-    for monitor in monitors:
-        latest = db.query(StatusUpdate).filter(
-            StatusUpdate.monitor_id == monitor.id
-        ).order_by(StatusUpdate.timestamp.desc()).first()
-
-        if latest:
-            if latest.status == "operational":
-                operational_count += 1
-            elif latest.status == "degraded":
-                degraded_count += 1
-            elif latest.status == "down":
-                down_count += 1
-
-    # Use shared calculation logic from dashboard API
-    return calculate_service_status_from_counts(
-        operational_count, degraded_count, down_count
-    )
+    from utils.service_status import get_service_current_status
+    return get_service_current_status(db, service_id)["status"]
 
 
 def get_failing_monitor_ids(db: Session, service_id: int) -> List[int]:
