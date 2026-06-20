@@ -22,67 +22,38 @@ class PortMonitor(BaseMonitor):
 
         try:
             start_time = time.time()
-
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(timeout)
-
             result = sock.connect_ex((host, port))
-
-            end_time = time.time()
-            connection_time_ms = int((end_time - start_time) * 1000)
-
+            connection_time_ms = int((time.time() - start_time) * 1000)
             sock.close()
 
             if result == 0:
                 return {
                     "status": "operational",
                     "response_time_ms": connection_time_ms,
-                    "metadata": {
-                        "host": host,
-                        "port": port
-                    },
-                    "message": f"Port {port} on {host} is open"
+                    "metadata": {"host": host, "port": port, "reason": f"Port {port} on {host} is open"}
                 }
             else:
                 return {
                     "status": "down",
-                    "metadata": {
-                        "host": host,
-                        "port": port,
-                        "error_code": result
-                    },
-                    "message": f"Port {port} on {host} is closed or unreachable"
+                    "metadata": {"host": host, "port": port, "error_code": result, "reason": f"Port {port} on {host} is closed or unreachable"}
                 }
 
         except socket.timeout:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "timeout",
-                    "host": host,
-                    "port": port
-                },
-                "message": f"Connection to {host}:{port} timed out after {timeout} seconds"
+                "metadata": {"error": "timeout", "host": host, "port": port, "reason": f"Connection to {host}:{port} timed out after {timeout}s"}
             }
 
         except socket.gaierror as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "dns_resolution_failed",
-                    "host": host,
-                    "port": port
-                },
-                "message": f"DNS resolution failed for {host}: {str(e)}"
+                "metadata": {"error": "dns_resolution_failed", "host": host, "port": port, "reason": f"DNS resolution failed for {host}: {str(e)}"}
             }
 
         except Exception as e:
             return {
                 "status": "down",
-                "metadata": {
-                    "error": "unknown_error",
-                    "host": host,
-                    "port": port
-                },
-                "message": f"Check failed: {str(e)}"
+                "metadata": {"error": "unknown_error", "host": host, "port": port, "reason": f"Check failed: {str(e)}"}
             }

@@ -37,15 +37,6 @@ def generate_api_key() -> str:
     return secrets.token_urlsafe(32)
 
 
-def hash_api_key(api_key: str) -> str:
-    """Hash an API key for storage."""
-    return pwd_context.hash(api_key)
-
-
-def verify_api_key(plain_api_key: str, hashed_api_key: str) -> bool:
-    """Verify an API key against a hash."""
-    return pwd_context.verify(plain_api_key, hashed_api_key)
-
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token."""

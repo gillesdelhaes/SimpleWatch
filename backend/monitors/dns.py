@@ -97,9 +97,9 @@ class DNSMonitor(BaseMonitor):
                     "record_type": record_type,
                     "resolved_values": resolved_values,
                     "expected_value": expected_value,
-                    "nameserver": nameserver or "system default"
-                },
-                "message": message
+                    "nameserver": nameserver or "system default",
+                    "reason": message
+                }
             }
 
         except dns.resolver.NXDOMAIN:
@@ -108,9 +108,9 @@ class DNSMonitor(BaseMonitor):
                 "metadata": {
                     "error": "nxdomain",
                     "hostname": hostname,
-                    "record_type": record_type
-                },
-                "message": f"Domain {hostname} does not exist (NXDOMAIN)"
+                    "record_type": record_type,
+                    "reason": f"Domain {hostname} does not exist (NXDOMAIN)"
+                }
             }
 
         except dns.resolver.NoAnswer:
@@ -119,9 +119,9 @@ class DNSMonitor(BaseMonitor):
                 "metadata": {
                     "error": "no_answer",
                     "hostname": hostname,
-                    "record_type": record_type
-                },
-                "message": f"No {record_type} records found for {hostname}"
+                    "record_type": record_type,
+                    "reason": f"No {record_type} records found for {hostname}"
+                }
             }
 
         except dns.resolver.Timeout:
@@ -130,9 +130,9 @@ class DNSMonitor(BaseMonitor):
                 "metadata": {
                     "error": "timeout",
                     "hostname": hostname,
-                    "record_type": record_type
-                },
-                "message": f"DNS query timed out after {timeout_seconds} seconds"
+                    "record_type": record_type,
+                    "reason": f"DNS query timed out after {timeout_seconds}s"
+                }
             }
 
         except dns.exception.DNSException as e:
@@ -141,9 +141,9 @@ class DNSMonitor(BaseMonitor):
                 "metadata": {
                     "error": "dns_error",
                     "hostname": hostname,
-                    "record_type": record_type
-                },
-                "message": f"DNS error: {str(e)}"
+                    "record_type": record_type,
+                    "reason": f"DNS error: {str(e)}"
+                }
             }
 
         except Exception as e:
@@ -152,7 +152,7 @@ class DNSMonitor(BaseMonitor):
                 "metadata": {
                     "error": "unknown_error",
                     "hostname": hostname,
-                    "record_type": record_type
-                },
-                "message": f"Check failed: {str(e)}"
+                    "record_type": record_type,
+                    "reason": f"Check failed: {str(e)}"
+                }
             }

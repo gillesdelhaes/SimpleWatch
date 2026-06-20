@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 
 from sqlalchemy import text
 from database import init_db, SessionLocal
-from utils.db import create_default_admin, initialize_encryption_key, initialize_jwt_secret
+from utils.db import initialize_encryption_key, initialize_jwt_secret
 from utils.auth import set_secret_key
 import scheduler as scheduler_module
 from scheduler import start_scheduler, stop_scheduler

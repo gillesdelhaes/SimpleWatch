@@ -3,30 +3,8 @@ Database utility functions.
 """
 from sqlalchemy.orm import Session
 from database import User, Service, EncryptionKey, AppSettings
-from utils.auth import hash_password, generate_api_key
 from cryptography.fernet import Fernet
-import os
 
-
-def create_default_admin(db: Session):
-    """Create default admin user if not exists."""
-    admin_username = os.getenv("ADMIN_USERNAME", "admin")
-    admin_password = os.getenv("ADMIN_PASSWORD", "changeme")
-
-    existing_admin = db.query(User).filter(User.username == admin_username).first()
-    if not existing_admin:
-        admin_user = User(
-            username=admin_username,
-            password_hash=hash_password(admin_password),
-            email="admin@simplewatch.local",
-            api_key=generate_api_key(),
-            is_admin=True
-        )
-        db.add(admin_user)
-        db.commit()
-        print(f"Default admin user created: {admin_username}")
-        return admin_user
-    return existing_admin
 
 
 def get_user_by_api_key(db: Session, api_key: str):
@@ -43,21 +21,6 @@ def get_service_by_name(db: Session, name: str):
     """Get service by name."""
     return db.query(Service).filter(Service.name == name).first()
 
-
-def create_service_if_not_exists(db: Session, name: str, description: str = None, created_by: int = None):
-    """Create a service if it doesn't already exist."""
-    service = get_service_by_name(db, name)
-    if not service:
-        service = Service(
-            name=name,
-            description=description,
-            created_by=created_by,
-            is_active=True
-        )
-        db.add(service)
-        db.commit()
-        db.refresh(service)
-    return service
 
 
 def initialize_encryption_key(db: Session):

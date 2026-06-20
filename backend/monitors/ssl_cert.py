@@ -75,7 +75,6 @@ class SSLCertMonitor(BaseMonitor):
                     "issuer": cert.get('issuer', [[('organizationName', 'Unknown')]])[0][0][1],
                     "reason": message
                 },
-                "message": message
             }
 
         except ssl.SSLError as e:
@@ -88,7 +87,6 @@ class SSLCertMonitor(BaseMonitor):
                     "port": port,
                     "reason": message
                 },
-                "message": message
             }
 
         except socket.timeout:
@@ -101,7 +99,6 @@ class SSLCertMonitor(BaseMonitor):
                     "port": port,
                     "reason": message
                 },
-                "message": message
             }
 
         except socket.gaierror as e:
@@ -114,7 +111,6 @@ class SSLCertMonitor(BaseMonitor):
                     "port": port,
                     "reason": message
                 },
-                "message": message
             }
 
         except Exception as e:
@@ -127,5 +123,4 @@ class SSLCertMonitor(BaseMonitor):
                     "port": port,
                     "reason": message
                 },
-                "message": message
             }

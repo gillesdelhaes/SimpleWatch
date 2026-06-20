@@ -98,8 +98,10 @@ def check_monitor(monitor_id: int):
 
         config = json.loads(monitor.config_json)
 
-        # Add monitor_id to config so monitors can access their database record if needed
         config['monitor_id'] = monitor.id
+        # Deadman monitor reads last_check_at instead of opening a second DB session
+        if monitor.last_check_at:
+            config['last_check_at'] = monitor.last_check_at.isoformat()
 
         # Get monitor class from registry
         monitor_class = MONITOR_CLASSES.get(monitor.monitor_type)

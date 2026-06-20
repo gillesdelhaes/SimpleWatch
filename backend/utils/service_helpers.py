@@ -619,6 +619,3 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
 
     logger.info(f"Notification process completed for service {service.name}: {old_status} → {new_status}")
 
-
-# Backwards compatibility - alias for old function name
-determine_service_status = calculate_service_status

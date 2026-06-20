@@ -4,7 +4,6 @@ Deadman (heartbeat) monitor implementation.
 from typing import Dict, Any
 from datetime import datetime, timedelta
 from monitors.base import BaseMonitor
-from database import SessionLocal, Monitor
 
 
 class DeadmanMonitor(BaseMonitor):
@@ -19,91 +18,53 @@ class DeadmanMonitor(BaseMonitor):
         {"key": "hours_since_heartbeat", "label": "Hours Since Heartbeat", "unit": "h", "color": "#F59E0B", "source": "metadata.hours_since_heartbeat"},
     ]
 
-    def __init__(self, config: Dict[str, Any]):
-        """
-        Initialize deadman monitor.
-
-        Args:
-            config: Monitor configuration with expected_interval_hours, grace_period_hours,
-                   and monitor_id (for retrieving last heartbeat from database)
-        """
-        super().__init__(config)
-
     def check(self) -> Dict[str, Any]:
-        """
-        Check if heartbeat was received within expected interval.
-
-        Returns:
-            Dictionary with check results
-        """
-        # Retrieve last_check_at from database
-        monitor_id = self.config.get('monitor_id')
-        db = SessionLocal()
-        try:
-            monitor = db.query(Monitor).filter(Monitor.id == monitor_id).first()
-            last_heartbeat = monitor.last_check_at if monitor else None
-        finally:
-            db.close()
+        """Check if heartbeat was received within expected interval."""
+        # last_check_at is injected by the scheduler alongside monitor_id
+        last_heartbeat = self.config.get("last_check_at")
+        if isinstance(last_heartbeat, str):
+            last_heartbeat = datetime.fromisoformat(last_heartbeat)
 
         expected_interval_hours = self.config.get("expected_interval_hours", 24)
         grace_period_hours = self.config.get("grace_period_hours", 1)
 
-        # If no heartbeat received yet, status is down
         if not last_heartbeat:
             return {
                 "status": "down",
-                "message": "No heartbeat received yet",
                 "metadata": {
                     "expected_interval_hours": expected_interval_hours,
                     "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": None
+                    "last_heartbeat": None,
+                    "reason": "No heartbeat received yet"
                 }
             }
 
         now = datetime.utcnow()
-        time_since_last_heartbeat = now - last_heartbeat
+        time_since = now - last_heartbeat
+        total_allowed = timedelta(hours=expected_interval_hours) + timedelta(hours=grace_period_hours)
+        degraded_threshold = timedelta(hours=expected_interval_hours) * 0.8
+        hours_since = time_since.total_seconds() / 3600
 
-        # Calculate thresholds
-        expected_interval = timedelta(hours=expected_interval_hours)
-        grace_period = timedelta(hours=grace_period_hours)
-        total_allowed_time = expected_interval + grace_period
-        degraded_threshold = expected_interval * 0.8  # 80% of expected interval
+        base_meta = {
+            "expected_interval_hours": expected_interval_hours,
+            "grace_period_hours": grace_period_hours,
+            "last_heartbeat": last_heartbeat.isoformat(),
+            "hours_since_heartbeat": hours_since
+        }
 
-        # Determine status based on time elapsed
-        if time_since_last_heartbeat > total_allowed_time:
-            # Grace period exceeded - DOWN
-            hours_overdue = (time_since_last_heartbeat - total_allowed_time).total_seconds() / 3600
+        if time_since > total_allowed:
+            hours_overdue = (time_since - total_allowed).total_seconds() / 3600
             return {
                 "status": "down",
-                "message": f"No heartbeat for {time_since_last_heartbeat.total_seconds() / 3600:.1f} hours ({hours_overdue:.1f}h overdue)",
-                "metadata": {
-                    "expected_interval_hours": expected_interval_hours,
-                    "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": last_heartbeat.isoformat(),
-                    "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
-                }
+                "metadata": {**base_meta, "reason": f"No heartbeat for {hours_since:.1f}h ({hours_overdue:.1f}h overdue)"}
             }
-        elif time_since_last_heartbeat > degraded_threshold:
-            # Approaching deadline - DEGRADED
+        elif time_since > degraded_threshold:
             return {
                 "status": "degraded",
-                "message": f"Heartbeat due soon (last: {time_since_last_heartbeat.total_seconds() / 3600:.1f}h ago)",
-                "metadata": {
-                    "expected_interval_hours": expected_interval_hours,
-                    "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": last_heartbeat.isoformat(),
-                    "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
-                }
+                "metadata": {**base_meta, "reason": f"Heartbeat due soon (last: {hours_since:.1f}h ago)"}
             }
         else:
-            # Within expected interval - OPERATIONAL
             return {
                 "status": "operational",
-                "message": f"Heartbeat received {time_since_last_heartbeat.total_seconds() / 3600:.1f}h ago",
-                "metadata": {
-                    "expected_interval_hours": expected_interval_hours,
-                    "grace_period_hours": grace_period_hours,
-                    "last_heartbeat": last_heartbeat.isoformat(),
-                    "hours_since_heartbeat": time_since_last_heartbeat.total_seconds() / 3600
-                }
+                "metadata": {**base_meta, "reason": f"Heartbeat received {hours_since:.1f}h ago"}
             }

@@ -34,12 +34,9 @@ def create_service(
     current_user = Depends(get_current_user)
 ):
     """Create a new service."""
-    existing = db.query(Service).filter(
-        Service.name == service.name,
-        Service.is_active == True
-    ).first()
+    existing = db.query(Service).filter(Service.name == service.name).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Service already exists")
+        raise HTTPException(status_code=400, detail="A service with this name already exists")
 
     new_service = Service(
         name=service.name,

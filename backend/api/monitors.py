@@ -14,6 +14,8 @@ import logging
 
 # Import auto-discovered monitor classes from scheduler
 from scheduler import MONITOR_CLASSES
+from utils.service_helpers import send_service_notification, update_service_incidents, calculate_service_status
+from database import ServiceNotificationSettings
 
 logger = logging.getLogger(__name__)
 
@@ -345,6 +347,16 @@ def check_monitor_now(
     # Update next_check_at (reset the interval timer)
     monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
     db.commit()
+
+    # Trigger notifications and incident tracking, same as the scheduler does
+    new_service_status = calculate_service_status(db, monitor.service_id)
+    settings = db.query(ServiceNotificationSettings).filter(
+        ServiceNotificationSettings.service_id == monitor.service_id
+    ).first()
+    old_service_status = settings.last_notified_status if settings else "unknown"
+    if new_service_status != old_service_status:
+        send_service_notification(db, monitor.service_id, old_service_status, new_service_status)
+    update_service_incidents(db, monitor.service_id)
 
     config_data = json.loads(monitor.config_json) if monitor.config_json else {}
     monitor_name = config_data.get("name") or config_data.get("url") or config_data.get("host") or monitor.monitor_type
