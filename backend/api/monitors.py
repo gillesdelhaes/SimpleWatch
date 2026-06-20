@@ -344,7 +344,9 @@ def check_monitor_now(
     )
     db.add(status_update)
 
-    # Update next_check_at (reset the interval timer)
+    # Update timestamps — skip last_check_at for deadman monitors (managed by heartbeat API)
+    if monitor.monitor_type != "deadman":
+        monitor.last_check_at = datetime.utcnow()
     monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
     db.commit()
 
