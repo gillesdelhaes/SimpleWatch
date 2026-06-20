@@ -39,8 +39,7 @@ class BaseMonitor(ABC):
             {
                 "status": "operational|degraded|down",
                 "response_time_ms": int (optional),
-                "metadata": dict (optional),
-                "message": str (optional)
+                "metadata": {"reason": str, ...} (optional)
             }
         """
         pass

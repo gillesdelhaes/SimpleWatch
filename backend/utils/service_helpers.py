@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 from database import (
     Service, Monitor, StatusUpdate, Incident,
     SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog,
-    AISettings
+    AISettings, SQLALCHEMY_DATABASE_URL
 )
+from api.maintenance import is_service_in_maintenance
+from utils.service_status import get_service_current_status
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
     format_slack_payload, format_discord_payload, format_generic_payload,
@@ -89,7 +91,6 @@ def calculate_service_status(db: Session, service_id: int) -> str:
     Calculate overall service status by aggregating monitor statuses.
     Returns: 'operational', 'degraded', 'down', or 'unknown'
     """
-    from utils.service_status import get_service_current_status
     return get_service_current_status(db, service_id)["status"]
 
 
@@ -158,7 +159,6 @@ def update_service_incidents(db: Session, service_id: int):
                 logger.info(f"Created incident for service {service_id} (severity: {current_status})")
 
                 # Trigger AI analysis in background
-                from database import SQLALCHEMY_DATABASE_URL
                 trigger_ai_analysis_background(SQLALCHEMY_DATABASE_URL, incident.id)
             elif ongoing.severity != current_status:
                 # Severity changed (e.g., degraded -> down or down -> degraded)
@@ -199,7 +199,6 @@ def should_send_notification(db: Session, service_id: int, new_status: str) -> b
     Returns: True if should notify
     """
     # Check if service is in maintenance - suppress all notifications during maintenance
-    from api.maintenance import is_service_in_maintenance
     if is_service_in_maintenance(db, service_id):
         logger.info(f"Skipping notification for service {service_id} - in maintenance window")
         return False

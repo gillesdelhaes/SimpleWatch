@@ -5,10 +5,12 @@ All status is derived from monitors - no arbitrary status updates allowed.
 """
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from database import get_db, StatusUpdate, Service, User
+from database import get_db, StatusUpdate, Service, User, Monitor
 from models import StatusResponse
 from api.auth import get_current_user
+from api.maintenance import get_service_maintenance_info
 from utils.service_status import calculate_service_status_from_counts
+from utils.db import get_service_by_name
 from datetime import datetime
 import json
 from typing import List, Optional
@@ -26,13 +28,10 @@ def get_all_status(
     db: Session = Depends(get_db)
 ):
     """Get current status for all services with aggregated monitor status."""
-    from database import Monitor
-
     services = db.query(Service).filter(Service.is_active == True).all()
 
     result = []
     for service in services:
-        # Get all active monitors for this service
         monitors = db.query(Monitor).filter(
             Monitor.service_id == service.id,
             Monitor.is_active == True
@@ -147,8 +146,6 @@ def get_all_status(
                 "error_budget_seconds": service.cached_sla_error_budget_seconds
             }
 
-        # Get maintenance info
-        from api.maintenance import get_service_maintenance_info
         maintenance_info = get_service_maintenance_info(db, service.id)
 
         # Include service if it has monitors or has been checked
