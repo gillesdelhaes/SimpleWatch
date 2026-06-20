@@ -164,8 +164,9 @@ def create_notification_channel(
 ):
     """Create a new notification channel."""
     # Validate channel type
-    if channel_data.channel_type not in ['slack', 'discord', 'generic']:
-        raise HTTPException(status_code=400, detail="Invalid channel_type. Must be 'slack', 'discord', or 'generic'")
+    valid_types = ['slack', 'discord', 'teams', 'pagerduty', 'opsgenie', 'telegram', 'ntfy', 'matrix', 'generic']
+    if channel_data.channel_type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Invalid channel_type. Must be one of: {', '.join(valid_types)}")
 
     # Validate generic webhook has template
     if channel_data.channel_type == 'generic' and not channel_data.custom_payload_template:
