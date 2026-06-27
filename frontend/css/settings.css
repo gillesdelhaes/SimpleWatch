@@ -334,12 +334,17 @@
     font-size: 15px;
     font-weight: 600;
     color: var(--ink-800);
-    width: 64px;
+    width: 80px;
     text-align: center;
     font-family: var(--font-mono);
 }
 
 .retention-input::placeholder { color: var(--ink-400); }
+
+/* Hide browser number spinners — they eat into the fixed width and clip 3-digit values */
+.retention-input::-webkit-outer-spin-button,
+.retention-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.retention-input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
 .retention-unit {
     font-size: 13px;
