@@ -21,9 +21,8 @@ async function checkAiStatus() {
             const headerBtn = document.getElementById('generateReportHeaderBtn');
             if (headerBtn) headerBtn.style.display = 'flex';
 
-            // Show action history section
-            const historySection = document.getElementById('aiActionHistorySection');
-            if (historySection) historySection.style.display = 'block';
+            // Pre-load action history so renderActionHistoryTable decides which view to show
+            await loadActionHistory();
 
             // Populate report modal service dropdown
             const select = document.getElementById('reportServiceSelect');
@@ -59,9 +58,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadServices();
     await loadIncidents();
     await loadStats();
-
-    // Expand incident log by default
-    toggleIncidentLog();
 });
 
 async function loadServices() {
@@ -229,17 +225,24 @@ async function renderCharts(timeWindow) {
 }
 
 function renderIncidentsTable(incidents) {
+    const section = document.getElementById('incidentLogSection');
+    const emptyState = document.getElementById('incidentsEmptyState');
     const container = document.getElementById('incidentsTable');
 
     if (incidents.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon" id="checkCircleIcon"></div>
-                <div class="empty-state-title">No incidents found</div>
-                <div class="empty-state-text">All services are running smoothly in this time period</div>
-            </div>
-        `;
+        section.style.display = 'none';
+        emptyState.style.display = 'block';
+        const iconEl = document.getElementById('incidentEmptyIcon');
+        if (iconEl) iconEl.innerHTML = `<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#10B981;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
         return;
+    }
+
+    emptyState.style.display = 'none';
+    section.style.display = 'block';
+    if (!incidentLogExpanded) {
+        incidentLogExpanded = true;
+        section.querySelector('.collapsible-content').classList.add('expanded');
+        section.querySelector('.collapsible-header').classList.add('open');
     }
 
     container.innerHTML = `
@@ -558,16 +561,28 @@ async function loadActionHistory(offset = 0) {
 }
 
 function renderActionHistoryTable(actions) {
+    const section = document.getElementById('aiActionHistorySection');
+    const emptyState = document.getElementById('aiActionEmptyState');
     const container = document.getElementById('actionHistoryTable');
 
     if (!actions || actions.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state" style="padding: 2rem;">
-                <div class="empty-state-title">No AI actions recorded</div>
-                <div class="empty-state-text">AI suggestions and their outcomes will appear here</div>
-            </div>
-        `;
+        if (section) section.style.display = 'none';
+        if (emptyState) {
+            emptyState.style.display = 'block';
+            const iconEl = document.getElementById('aiEmptyIcon');
+            if (iconEl) iconEl.innerHTML = `<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.35;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>`;
+        }
         return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (section) {
+        section.style.display = 'block';
+        if (!actionHistoryExpanded) {
+            actionHistoryExpanded = true;
+            section.querySelector('.collapsible-content').classList.add('expanded');
+            section.querySelector('.collapsible-header').classList.add('open');
+        }
     }
 
     container.innerHTML = `
@@ -670,24 +685,20 @@ function formatExecutedBy(executedBy) {
 function toggleIncidentLog() {
     const section = document.getElementById('incidentLogSection');
     incidentLogExpanded = !incidentLogExpanded;
-
-    if (incidentLogExpanded) {
-        section.classList.add('expanded');
-    } else {
-        section.classList.remove('expanded');
-    }
+    const content = section.querySelector('.collapsible-content');
+    const header = section.querySelector('.collapsible-header');
+    content.classList.toggle('expanded', incidentLogExpanded);
+    header.classList.toggle('open', incidentLogExpanded);
 }
 
 function toggleActionHistory() {
     const section = document.getElementById('aiActionHistorySection');
     actionHistoryExpanded = !actionHistoryExpanded;
-
-    if (actionHistoryExpanded) {
-        section.classList.add('expanded');
-        loadActionHistory();
-    } else {
-        section.classList.remove('expanded');
-    }
+    const content = section.querySelector('.collapsible-content');
+    const header = section.querySelector('.collapsible-header');
+    content.classList.toggle('expanded', actionHistoryExpanded);
+    header.classList.toggle('open', actionHistoryExpanded);
+    if (actionHistoryExpanded) loadActionHistory();
 }
 
 async function exportActionHistoryCSV() {

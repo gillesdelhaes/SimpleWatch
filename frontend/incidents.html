@@ -86,8 +86,8 @@
             </div>
         </div>
 
-        <!-- Incidents Table (Collapsible) -->
-        <div class="page-section" id="incidentLogSection">
+        <!-- Incidents Table (Collapsible — hidden when empty) -->
+        <div class="page-section" id="incidentLogSection" style="display:none;">
             <div class="collapsible-header" onclick="toggleIncidentLog()">
                 <div class="collapsible-header-left">
                     <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,8 +103,17 @@
             </div>
         </div>
 
-        <!-- AI Action History (Collapsible) -->
-        <div class="page-section" id="aiActionHistorySection" style="display: none;">
+        <!-- Incidents empty state (shown when no incidents) -->
+        <div class="page-section" id="incidentsEmptyState" style="display:none;">
+            <div class="empty-state">
+                <div class="empty-state-icon" id="incidentEmptyIcon"></div>
+                <div class="empty-state-title">No incidents found</div>
+                <div class="empty-state-text">All services are running smoothly in this time period</div>
+            </div>
+        </div>
+
+        <!-- AI Action History (Collapsible — hidden when empty or AI disabled) -->
+        <div class="page-section" id="aiActionHistorySection" style="display:none;">
             <div class="collapsible-header" onclick="toggleActionHistory()">
                 <div class="collapsible-header-left">
                     <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,6 +142,15 @@
                     <div id="actionHistoryTable"></div>
                     <div id="actionHistoryPagination" class="pagination-controls" style="display: none;"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- AI Action History empty state (shown when AI enabled but no history yet) -->
+        <div class="page-section" id="aiActionEmptyState" style="display:none;">
+            <div class="empty-state">
+                <div class="empty-state-icon" id="aiEmptyIcon"></div>
+                <div class="empty-state-title">No AI actions recorded</div>
+                <div class="empty-state-text">AI suggestions and remediation outcomes will appear here once the AI SRE analyzes an incident</div>
             </div>
         </div>
     </div>
