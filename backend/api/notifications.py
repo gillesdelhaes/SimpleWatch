@@ -292,10 +292,10 @@ def test_notification_channel(
     if not channel:
         raise HTTPException(status_code=404, detail="Channel not found")
 
-    # Create test payload
+    # Create test payload with generic monitor data (not tied to specific types)
     test_monitors = [
-        {"name": "Website Monitor", "type": "website", "status": "operational", "response_time": 150},
-        {"name": "API Monitor", "type": "api", "status": "operational", "response_time": 200}
+        {"name": "Primary Monitor", "type": "monitor", "status": "operational", "response_time": 150},
+        {"name": "Secondary Monitor", "type": "monitor", "status": "operational", "response_time": 200}
     ]
 
     # ISO 8601 format for Discord compatibility

@@ -43,3 +43,6 @@ PASSIVE_MONITORS = frozenset(
 HEARTBEAT_MONITORS = frozenset(
     t for t, cls in MONITOR_CLASSES.items() if getattr(cls, 'ACCEPTS_HEARTBEAT', False)
 )
+METRIC_MONITORS = frozenset(
+    t for t, cls in MONITOR_CLASSES.items() if getattr(cls, 'ACCEPTS_METRIC', False)
+)

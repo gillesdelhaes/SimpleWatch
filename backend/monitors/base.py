@@ -22,6 +22,10 @@ class BaseMonitor(ABC):
     #   - The dashboard displays last_check_at as the meaningful "last seen" timestamp
     ACCEPTS_HEARTBEAT: bool = False
 
+    # Whether this monitor can receive external metric values via the metric ingestion API.
+    # When True, the monitor must implement evaluate_metric(value) -> {"status", "reason"}.
+    ACCEPTS_METRIC: bool = False
+
     # Graphable metrics for this monitor type
     # Each metric: {"key": str, "label": str, "unit": str, "color": str, "source": str}
     # source can be "response_time_ms" or "metadata.<key>"

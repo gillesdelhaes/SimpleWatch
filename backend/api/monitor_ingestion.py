@@ -11,8 +11,7 @@ import json
 from database import get_db, Service, Monitor, StatusUpdate
 from models import HeartbeatRequest, MetricUpdateRequest, MetricUpdateResponse
 from api.auth import get_user_from_api_key
-from monitors import HEARTBEAT_MONITORS
-from monitors.metric_threshold import MetricThresholdMonitor
+from monitors import MONITOR_CLASSES, HEARTBEAT_MONITORS, METRIC_MONITORS
 from utils.service_helpers import notify_service_status_change
 
 heartbeat_router = APIRouter(prefix="/api/v1/heartbeat", tags=["monitor-ingestion"])
@@ -124,10 +123,10 @@ def update_metric(
     if not service:
         raise HTTPException(status_code=404, detail=f"Service '{service_name}' not found")
 
-    # Find metric monitor by name in config
+    # Find a metric-capable monitor by name in config
     monitors = db.query(Monitor).filter(
         Monitor.service_id == service.id,
-        Monitor.monitor_type == "metric_threshold",
+        Monitor.monitor_type.in_(METRIC_MONITORS),
         Monitor.is_active == True
     ).all()
 
@@ -141,12 +140,12 @@ def update_metric(
     if not monitor:
         raise HTTPException(
             status_code=404,
-            detail=f"No active metric threshold monitor named '{monitor_name}' found for service '{service_name}'"
+            detail=f"No active metric monitor named '{monitor_name}' found for service '{service_name}'"
         )
 
-    # Load monitor configuration and evaluate metric using monitor class
+    # Load monitor configuration and evaluate metric using the registered monitor class
     config = json.loads(monitor.config_json)
-    monitor_instance = MetricThresholdMonitor(config)
+    monitor_instance = MONITOR_CLASSES[monitor.monitor_type](config)
     result = monitor_instance.evaluate_metric(request.value)
 
     status = result["status"]

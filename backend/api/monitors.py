@@ -32,6 +32,8 @@ def list_monitor_types():
         types.append({
             "type": monitor_type,
             "is_passive": getattr(monitor_class, 'IS_PASSIVE', False),
+            "accepts_heartbeat": getattr(monitor_class, 'ACCEPTS_HEARTBEAT', False),
+            "accepts_metric": getattr(monitor_class, 'ACCEPTS_METRIC', False),
             "has_graph_metrics": bool(getattr(monitor_class, 'GRAPH_METRICS', [])),
         })
     return {"types": sorted(types, key=lambda x: x["type"])}

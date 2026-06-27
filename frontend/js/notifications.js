@@ -41,7 +41,7 @@ async function loadSMTPConfig() {
             badge.innerHTML = '<span class="badge badge-warning">Not Tested</span>';
         }
     } catch (error) {
-        console.log('No SMTP config found, using defaults');
+        // SMTP not yet configured; form stays at defaults
     }
 }
 
@@ -440,7 +440,6 @@ async function loadNotificationLogs() {
 
     try {
         const data = await authenticatedFetch('/api/v1/notifications/logs?limit=50');
-        console.log('Notification logs data:', data);
 
         loadingEl.classList.add('hidden');
 
