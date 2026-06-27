@@ -11,8 +11,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 import json
 
-# Use the scheduler's auto-discovered monitor classes
-from scheduler import MONITOR_CLASSES
+from monitors import MONITOR_CLASSES
 
 router = APIRouter(prefix="/api/v1", tags=["graphs"])
 

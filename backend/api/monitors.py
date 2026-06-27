@@ -3,7 +3,7 @@ Monitor management API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from database import get_db, Monitor, Service, StatusUpdate
+from database import get_db, Monitor, Service
 from models import MonitorCreate, MonitorUpdate, MonitorResponse
 from api.auth import get_current_user
 from utils.audit import log_action
@@ -12,10 +12,8 @@ from typing import List
 import json
 import logging
 
-# Import auto-discovered monitor classes from scheduler
-from scheduler import MONITOR_CLASSES
-from utils.service_helpers import send_service_notification, update_service_incidents, calculate_service_status
-from database import ServiceNotificationSettings
+from monitors import MONITOR_CLASSES
+from utils.service_helpers import persist_monitor_check
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +73,9 @@ def create_monitor(
     service = db.query(Service).filter(Service.id == monitor.service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
+
+    if monitor.monitor_type not in MONITOR_CLASSES:
+        raise HTTPException(status_code=400, detail=f"Unknown monitor type: '{monitor.monitor_type}'")
 
     new_monitor = Monitor(
         service_id=monitor.service_id,
@@ -327,38 +328,7 @@ def check_monitor_now(
         logger.error(f"Error running manual check for monitor {monitor_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Check failed: {str(e)}")
 
-    # Create status update
-    status = result.get("status", "down")
-    response_time_ms = result.get("response_time_ms")
-    metadata = result.get("metadata", {})
-    if result.get("message"):
-        metadata["reason"] = result["message"]
-
-    status_update = StatusUpdate(
-        service_id=monitor.service_id,
-        monitor_id=monitor.id,
-        status=status,
-        timestamp=datetime.utcnow(),
-        response_time_ms=response_time_ms,
-        metadata_json=json.dumps(metadata)
-    )
-    db.add(status_update)
-
-    # Update timestamps — skip last_check_at for deadman monitors (managed by heartbeat API)
-    if monitor.monitor_type != "deadman":
-        monitor.last_check_at = datetime.utcnow()
-    monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
-    db.commit()
-
-    # Trigger notifications and incident tracking, same as the scheduler does
-    new_service_status = calculate_service_status(db, monitor.service_id)
-    settings = db.query(ServiceNotificationSettings).filter(
-        ServiceNotificationSettings.service_id == monitor.service_id
-    ).first()
-    old_service_status = settings.last_notified_status if settings else "unknown"
-    if new_service_status != old_service_status:
-        send_service_notification(db, monitor.service_id, old_service_status, new_service_status)
-    update_service_incidents(db, monitor.service_id)
+    status, response_time_ms, metadata = persist_monitor_check(db, monitor, result)
 
     config_data = json.loads(monitor.config_json) if monitor.config_json else {}
     monitor_name = config_data.get("name") or config_data.get("url") or config_data.get("host") or monitor.monitor_type

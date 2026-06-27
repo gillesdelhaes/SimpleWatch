@@ -2,81 +2,18 @@
 Background scheduler for monitor checks using APScheduler.
 """
 import logging
-import os
-import importlib
-import inspect
 from concurrent.futures import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
-from database import SessionLocal, Monitor, StatusUpdate, Service, ServiceNotificationSettings, AppSettings, MaintenanceWindow, AuditLog
-from monitors.base import BaseMonitor
-from utils.service_helpers import (
-    calculate_service_status, send_service_notification, update_service_incidents
-)
+from database import SessionLocal, Monitor, StatusUpdate, AppSettings, MaintenanceWindow, AuditLog
+from monitors import MONITOR_CLASSES, PASSIVE_MONITORS
+from utils.service_helpers import persist_monitor_check
 import json
-import time
 
 logger = logging.getLogger(__name__)
 
 scheduler = None
-
-
-def discover_monitors():
-    """
-    Automatically discover and register all monitor classes.
-    Scans the monitors/ directory for Python files and dynamically imports them.
-
-    Returns:
-        dict: Mapping of monitor_type (str) to monitor class
-    """
-    monitor_classes = {}
-    monitors_dir = os.path.join(os.path.dirname(__file__), 'monitors')
-
-    # Scan all Python files in monitors directory
-    for filename in os.listdir(monitors_dir):
-        if filename.endswith('.py') and filename not in ('base.py', '__init__.py'):
-            module_name = filename[:-3]  # Remove .py extension
-
-            try:
-                # Dynamically import the module
-                module = importlib.import_module(f'monitors.{module_name}')
-
-                # Find all classes that inherit from BaseMonitor
-                for name, obj in inspect.getmembers(module, inspect.isclass):
-                    if issubclass(obj, BaseMonitor) and obj != BaseMonitor:
-                        # Use the module name as the monitor type
-                        # e.g., 'website' from 'website.py', 'ssl_cert' from 'ssl_cert.py'
-                        monitor_type = module_name
-                        # Set the MONITOR_TYPE on the class for reference
-                        obj.MONITOR_TYPE = monitor_type
-                        monitor_classes[monitor_type] = obj
-                        logger.info(f"Auto-registered monitor: {monitor_type} -> {obj.__name__}")
-                        break  # Only register the first BaseMonitor subclass per file
-
-            except Exception as e:
-                logger.error(f"Failed to import monitor module '{module_name}': {e}")
-
-    logger.info(f"Monitor auto-discovery complete: {len(monitor_classes)} monitor types registered")
-    return monitor_classes
-
-
-def get_passive_monitors():
-    """
-    Get set of passive monitor types (those that don't actively check).
-    Derived from monitor classes that have IS_PASSIVE = True.
-    """
-    return {
-        monitor_type for monitor_type, monitor_class in MONITOR_CLASSES.items()
-        if getattr(monitor_class, 'IS_PASSIVE', False)
-    }
-
-
-# Auto-discover all monitor classes at module load time
-MONITOR_CLASSES = discover_monitors()
-
-# Passive monitors derived from class attributes
-PASSIVE_MONITORS = get_passive_monitors()
 
 
 def check_monitor(monitor_id: int):
@@ -99,7 +36,7 @@ def check_monitor(monitor_id: int):
         config = json.loads(monitor.config_json)
 
         config['monitor_id'] = monitor.id
-        # Deadman monitor reads last_check_at instead of opening a second DB session
+        # Heartbeat monitors read last_check_at from config to know when the last ping arrived
         if monitor.last_check_at:
             config['last_check_at'] = monitor.last_check_at.isoformat()
 
@@ -114,43 +51,7 @@ def check_monitor(monitor_id: int):
         logger.info(f"Checking monitor {monitor.id} ({monitor.monitor_type})")
 
         result = monitor_instance.check()
-
-        status_update = StatusUpdate(
-            service_id=monitor.service_id,
-            monitor_id=monitor.id,
-            status=result.get("status", "unknown"),
-            timestamp=datetime.utcnow(),
-            response_time_ms=result.get("response_time_ms"),
-            metadata_json=json.dumps(result.get("metadata", {}))
-        )
-        db.add(status_update)
-
-        # For deadman monitors, last_check_at should only be updated by heartbeat API
-        # For other monitors, update last_check_at to track when the check ran
-        if monitor.monitor_type != "deadman":
-            monitor.last_check_at = datetime.utcnow()
-
-        monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
-
-        db.commit()
-
-        # Check if service status changed and send notifications
-        new_service_status = calculate_service_status(db, monitor.service_id)
-
-        # Get previous service status from notification settings
-        settings = db.query(ServiceNotificationSettings).filter(
-            ServiceNotificationSettings.service_id == monitor.service_id
-        ).first()
-
-        old_service_status = settings.last_notified_status if settings else "unknown"
-
-        # If status changed, send notification
-        if new_service_status != old_service_status:
-            logger.info(f"Service {monitor.service_id} status changed: {old_service_status} → {new_service_status}")
-            send_service_notification(db, monitor.service_id, old_service_status, new_service_status)
-
-        # Update incidents based on service status
-        update_service_incidents(db, monitor.service_id)
+        persist_monitor_check(db, monitor, result)
 
         logger.info(f"Monitor {monitor.id} check completed: {result.get('status')}")
 

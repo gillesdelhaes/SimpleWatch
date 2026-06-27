@@ -9,6 +9,7 @@ from database import (
     AISettings, SQLALCHEMY_DATABASE_URL
 )
 from api.maintenance import is_service_in_maintenance
+from monitors import HEARTBEAT_MONITORS
 from utils.service_status import get_service_current_status
 from utils.notifications import (
     send_email_with_config, send_webhook_with_payload,
@@ -585,4 +586,56 @@ def send_service_notification(db: Session, service_id: int, old_status: str, new
     db.commit()
 
     logger.info(f"Notification process completed for service {service.name}: {old_status} → {new_status}")
+
+
+def notify_service_status_change(db: Session, service_id: int):
+    """
+    Post-check helper: compare new vs last-notified status, send notification if changed,
+    and update incident records. Called after any StatusUpdate is committed.
+    """
+    new_status = calculate_service_status(db, service_id)
+    settings = db.query(ServiceNotificationSettings).filter(
+        ServiceNotificationSettings.service_id == service_id
+    ).first()
+    old_status = settings.last_notified_status if settings else "unknown"
+    if new_status != old_status:
+        send_service_notification(db, service_id, old_status, new_status)
+    update_service_incidents(db, service_id)
+
+
+def persist_monitor_check(db: Session, monitor, result: dict):
+    """
+    Persist a monitor check result: create StatusUpdate, update timestamps,
+    commit, then trigger notification and incident tracking.
+
+    Handles the message→reason merge for monitors that return a top-level
+    'message' key instead of metadata.reason.
+
+    Returns (status, response_time_ms, metadata) tuple.
+    """
+    status = result.get("status", "down")
+    response_time_ms = result.get("response_time_ms")
+    metadata = dict(result.get("metadata") or {})
+    if result.get("message") and "reason" not in metadata:
+        metadata["reason"] = result["message"]
+
+    status_update = StatusUpdate(
+        service_id=monitor.service_id,
+        monitor_id=monitor.id,
+        status=status,
+        timestamp=datetime.utcnow(),
+        response_time_ms=response_time_ms,
+        metadata_json=json.dumps(metadata)
+    )
+    db.add(status_update)
+
+    if monitor.monitor_type not in HEARTBEAT_MONITORS:
+        monitor.last_check_at = datetime.utcnow()
+    monitor.next_check_at = datetime.utcnow() + timedelta(minutes=monitor.check_interval_minutes)
+
+    db.commit()
+
+    notify_service_status_change(db, monitor.service_id)
+
+    return status, response_time_ms, metadata
 

@@ -6,31 +6,6 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 
-class StatusUpdateRequest(BaseModel):
-    api_key: str
-    service: str
-    status: str = Field(..., pattern="^(operational|degraded|down|maintenance|unknown)$")
-    timestamp: Optional[datetime] = None
-    metadata: Optional[Dict[str, Any]] = None
-
-
-class StatusUpdateResponse(BaseModel):
-    success: bool
-    message: str
-    service: str
-
-
-class BulkStatusUpdate(BaseModel):
-    service: str
-    status: str
-    metadata: Optional[Dict[str, Any]] = None
-
-
-class BulkStatusUpdateRequest(BaseModel):
-    api_key: str
-    updates: List[BulkStatusUpdate]
-
-
 class HeartbeatRequest(BaseModel):
     """Heartbeat ping request for deadman monitors."""
     api_key: str
@@ -121,44 +96,6 @@ class LoginResponse(BaseModel):
     token_type: str
     username: str
     is_admin: bool
-
-
-class MonitorConfig(BaseModel):
-    """Base monitor configuration."""
-    pass
-
-
-class WebsiteMonitorConfig(MonitorConfig):
-    url: str
-    timeout_seconds: int = 10
-    follow_redirects: bool = True
-    verify_ssl: bool = True
-
-
-class APIMonitorConfig(MonitorConfig):
-    url: str
-    method: str = Field(..., pattern="^(GET|POST)$")
-    headers: Optional[Dict[str, str]] = None
-    expected_status_code: int = 200
-    json_path_validations: Optional[Dict[str, Any]] = None
-    timeout_seconds: int = 10
-
-
-class MetricThresholdMonitorConfig(MonitorConfig):
-    warning_threshold: float
-    critical_threshold: float
-    comparison: str = Field(default="greater", pattern="^(greater|less)$")
-
-
-class PortMonitorConfig(MonitorConfig):
-    host: str
-    port: int
-    timeout_seconds: int = 5
-
-
-class DeadmanMonitorConfig(MonitorConfig):
-    expected_interval_hours: float
-    grace_period_hours: float
 
 
 class MonitorCreate(BaseModel):

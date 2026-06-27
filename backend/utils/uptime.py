@@ -49,6 +49,43 @@ def update_uptime_cache(db: Session):
     logger.info(f"Uptime cache updated for {len(services)} services")
 
 
+def _accumulate_operational_seconds(
+    sorted_timestamps, timeline, monitor_status: dict,
+    previous_service_status: str, start_time: datetime
+) -> float:
+    """
+    Walk a monitor-status timeline forward, accumulating seconds spent in operational state.
+    Mutates monitor_status in place. Returns total operational seconds including tail to now.
+    """
+    operational_seconds = 0.0
+    previous_time = start_time
+
+    for ts in sorted_timestamps:
+        duration = (ts - previous_time).total_seconds()
+        if previous_service_status == "operational":
+            operational_seconds += duration
+
+        for mid, status in timeline[ts].items():
+            monitor_status[mid] = status
+
+        operational_count = sum(1 for s in monitor_status.values() if s == "operational")
+        total_monitors = len(monitor_status)
+        if operational_count == total_monitors:
+            previous_service_status = "operational"
+        elif operational_count == 0:
+            previous_service_status = "down"
+        else:
+            previous_service_status = "degraded"
+
+        previous_time = ts
+
+    final_duration = (datetime.utcnow() - previous_time).total_seconds()
+    if previous_service_status == "operational":
+        operational_seconds += final_duration
+
+    return operational_seconds
+
+
 def calculate_service_uptime_window(db: Session, service_id: int, cutoff_time: datetime) -> Optional[float]:
     """
     Calculate uptime percentage for a service within a specific time window.
@@ -114,55 +151,23 @@ def calculate_service_uptime_window(db: Session, service_id: int, cutoff_time: d
         # If we have a status before cutoff, use it; otherwise assume operational
         monitor_status[mid] = last_status.status if last_status else "operational"
 
-    # Calculate initial service status from monitor statuses
+    # Derive initial service status from seeded monitor statuses
     operational_count = sum(1 for s in monitor_status.values() if s == "operational")
     total_monitors = len(monitor_status)
-
     if operational_count == total_monitors:
-        previous_service_status = "operational"
+        initial_service_status = "operational"
     elif operational_count == 0:
-        previous_service_status = "down"
+        initial_service_status = "down"
     else:
-        previous_service_status = "degraded"
+        initial_service_status = "degraded"
 
-    # Calculate uptime
-    operational_seconds = 0.0
-    previous_time = actual_cutoff
+    operational_seconds = _accumulate_operational_seconds(
+        sorted_timestamps, timeline, monitor_status, initial_service_status, actual_cutoff
+    )
 
-    for ts in sorted_timestamps:
-        duration = (ts - previous_time).total_seconds()
-
-        if previous_service_status == "operational":
-            operational_seconds += duration
-
-        # Update monitor statuses
-        for mid, status in timeline[ts].items():
-            monitor_status[mid] = status
-
-        # Calculate service status
-        operational_count = sum(1 for s in monitor_status.values() if s == "operational")
-        total_monitors = len(monitor_status)
-
-        if operational_count == total_monitors:
-            previous_service_status = "operational"
-        elif operational_count == 0:
-            previous_service_status = "down"
-        else:
-            previous_service_status = "degraded"
-
-        previous_time = ts
-
-    # Add time from last update to now
-    final_duration = (datetime.utcnow() - previous_time).total_seconds()
-    if previous_service_status == "operational":
-        operational_seconds += final_duration
-
-    # Calculate percentage
     total_seconds = (datetime.utcnow() - actual_cutoff).total_seconds()
     if total_seconds > 0:
-        uptime_percentage = (operational_seconds / total_seconds) * 100
-        return round(uptime_percentage, 1)
-
+        return round((operational_seconds / total_seconds) * 100, 1)
     return 100.0
 
 
@@ -242,48 +247,15 @@ def calculate_service_uptime(db: Session, service_id: int) -> Optional[Dict]:
     # Sort timestamps
     sorted_timestamps = sorted(timeline.keys())
 
-    # Track current status for each monitor
-    monitor_status = {mid: "operational" for mid in monitor_ids}  # Assume operational initially
+    # All monitors assumed operational at start of period (no pre-seeding needed here)
+    monitor_status = {mid: "operational" for mid in monitor_ids}
 
-    # Calculate uptime by tracking service status over time
-    operational_seconds = 0.0
-    previous_time = cutoff_time
-    previous_service_status = "operational"
+    operational_seconds = _accumulate_operational_seconds(
+        sorted_timestamps, timeline, monitor_status, "operational", cutoff_time
+    )
 
-    for ts in sorted_timestamps:
-        # Calculate duration since last change
-        duration = (ts - previous_time).total_seconds()
-
-        # Add to operational time if service was operational
-        if previous_service_status == "operational":
-            operational_seconds += duration
-
-        # Update monitor statuses with changes at this timestamp
-        for mid, status in timeline[ts].items():
-            monitor_status[mid] = status
-
-        # Calculate service status (operational only if ALL monitors operational)
-        operational_count = sum(1 for s in monitor_status.values() if s == "operational")
-        total_monitors = len(monitor_status)
-
-        if operational_count == total_monitors:
-            previous_service_status = "operational"
-        elif operational_count == 0:
-            previous_service_status = "down"
-        else:
-            previous_service_status = "degraded"
-
-        previous_time = ts
-
-    # Add time from last update to now
-    final_duration = (datetime.utcnow() - previous_time).total_seconds()
-    if previous_service_status == "operational":
-        operational_seconds += final_duration
-
-    # Calculate percentage
     if actual_period_seconds > 0:
-        uptime_percentage = (operational_seconds / actual_period_seconds) * 100
-        uptime_percentage = round(uptime_percentage, 1)
+        uptime_percentage = round((operational_seconds / actual_period_seconds) * 100, 1)
     else:
         uptime_percentage = 100.0
 
@@ -293,6 +265,3 @@ def calculate_service_uptime(db: Session, service_id: int) -> Optional[Dict]:
         "period_label": period_label
     }
 
-
-# Removed get_service_status_at_time() function - no longer needed
-# Status calculation is now done efficiently inline using timeline processing

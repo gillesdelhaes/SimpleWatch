@@ -13,6 +13,7 @@ from models import (
 from api.auth import get_current_user
 from utils.audit import log_action
 from utils.notifications import (
+    VALID_CHANNEL_TYPES,
     encrypt_password, send_email_with_config, send_webhook_with_payload,
     format_slack_payload, format_discord_payload, format_generic_payload,
     format_pagerduty_payload, format_opsgenie_payload, format_teams_payload,
@@ -164,9 +165,8 @@ def create_notification_channel(
 ):
     """Create a new notification channel."""
     # Validate channel type
-    valid_types = ['slack', 'discord', 'teams', 'pagerduty', 'opsgenie', 'telegram', 'ntfy', 'matrix', 'generic']
-    if channel_data.channel_type not in valid_types:
-        raise HTTPException(status_code=400, detail=f"Invalid channel_type. Must be one of: {', '.join(valid_types)}")
+    if channel_data.channel_type not in VALID_CHANNEL_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid channel_type. Must be one of: {', '.join(VALID_CHANNEL_TYPES)}")
 
     # Validate generic webhook has template
     if channel_data.channel_type == 'generic' and not channel_data.custom_payload_template:

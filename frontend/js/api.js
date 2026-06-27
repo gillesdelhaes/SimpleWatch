@@ -164,29 +164,6 @@ class APIClient {
         });
     }
 
-    async listWebhooks() {
-        return this.request(`${API_BASE}/webhooks`);
-    }
-
-    async createWebhook(webhookData) {
-        return this.request(`${API_BASE}/webhooks`, {
-            method: 'POST',
-            body: JSON.stringify(webhookData)
-        });
-    }
-
-    async deleteWebhook(webhookId) {
-        return this.request(`${API_BASE}/webhooks/${webhookId}`, {
-            method: 'DELETE'
-        });
-    }
-
-    async toggleWebhook(webhookId) {
-        return this.request(`${API_BASE}/webhooks/${webhookId}/toggle`, {
-            method: 'PUT'
-        });
-    }
-
     // Incidents API
     async get(endpoint, params = {}) {
         const queryString = new URLSearchParams(params).toString();

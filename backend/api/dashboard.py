@@ -11,6 +11,7 @@ from api.auth import get_current_user
 from api.maintenance import get_service_maintenance_info
 from utils.service_status import calculate_service_status_from_counts
 from utils.db import get_service_by_name
+from monitors import HEARTBEAT_MONITORS
 from datetime import datetime
 import json
 from typing import List, Optional
@@ -60,9 +61,9 @@ def get_all_status(
                 if latest_status:
                     metadata = json.loads(latest_status.metadata_json) if latest_status.metadata_json else {}
 
-                    # For deadman monitors, use monitor.last_check_at (actual heartbeat time)
-                    # For other monitors, use latest_status.timestamp (last check time)
-                    timestamp = monitor.last_check_at if monitor.monitor_type == "deadman" else latest_status.timestamp
+                    # Heartbeat monitors: show last_check_at (set by heartbeat API, not the scheduler)
+                    # All others: show the latest status update timestamp
+                    timestamp = monitor.last_check_at if monitor.monitor_type in HEARTBEAT_MONITORS else latest_status.timestamp
 
                     monitor_statuses.append({
                         "monitor_id": monitor.id,
@@ -114,17 +115,6 @@ def get_all_status(
             # Calculate average response time
             if response_time_count > 0:
                 aggregate_response_time = total_response_time // response_time_count
-
-        # Fallback to old behavior if no monitors (shouldn't happen but for safety)
-        if not monitor_statuses:
-            latest_status = db.query(StatusUpdate).filter(
-                StatusUpdate.service_id == service.id
-            ).order_by(StatusUpdate.timestamp.desc()).first()
-
-            if latest_status:
-                overall_status = latest_status.status
-                latest_timestamp = latest_status.timestamp
-                aggregate_response_time = latest_status.response_time_ms
 
         # Use cached uptime data (updated every 5 minutes by background job)
         uptime_data = None

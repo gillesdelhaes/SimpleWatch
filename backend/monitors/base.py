@@ -15,6 +15,13 @@ class BaseMonitor(ABC):
     # Whether this monitor is passive (only receives data via API, not actively checked)
     IS_PASSIVE: bool = False
 
+    # Whether this monitor's last_check_at is managed by an external heartbeat signal
+    # rather than the scheduler. When True:
+    #   - The scheduler does NOT update last_check_at after running a check
+    #   - The heartbeat ingestion endpoint updates last_check_at instead
+    #   - The dashboard displays last_check_at as the meaningful "last seen" timestamp
+    ACCEPTS_HEARTBEAT: bool = False
+
     # Graphable metrics for this monitor type
     # Each metric: {"key": str, "label": str, "unit": str, "color": str, "source": str}
     # source can be "response_time_ms" or "metadata.<key>"

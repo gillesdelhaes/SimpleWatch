@@ -10,6 +10,10 @@ import json
 
 from database import get_db, Service, Monitor, StatusUpdate
 from models import HeartbeatRequest, MetricUpdateRequest, MetricUpdateResponse
+from api.auth import get_user_from_api_key
+from monitors import HEARTBEAT_MONITORS
+from monitors.metric_threshold import MetricThresholdMonitor
+from utils.service_helpers import notify_service_status_change
 
 heartbeat_router = APIRouter(prefix="/api/v1/heartbeat", tags=["monitor-ingestion"])
 metric_router = APIRouter(prefix="/api/v1/metric", tags=["monitor-ingestion"])
@@ -29,6 +33,9 @@ def receive_heartbeat(
     to signal they are still alive and running. Both service_name and monitor_name
     are required to identify which specific deadman monitor to update.
     """
+    # Verify API key first before doing any DB work
+    get_user_from_api_key(heartbeat.api_key, db)
+
     # Find service by name
     service = db.query(Service).filter(
         Service.name == service_name,
@@ -38,10 +45,10 @@ def receive_heartbeat(
     if not service:
         raise HTTPException(status_code=404, detail=f"Service '{service_name}' not found")
 
-    # Find deadman monitor by name in config
+    # Find a heartbeat-capable monitor by name in config
     monitors = db.query(Monitor).filter(
         Monitor.service_id == service.id,
-        Monitor.monitor_type == "deadman",
+        Monitor.monitor_type.in_(HEARTBEAT_MONITORS),
         Monitor.is_active == True
     ).all()
 
@@ -55,12 +62,8 @@ def receive_heartbeat(
     if not monitor:
         raise HTTPException(
             status_code=404,
-            detail=f"No active deadman monitor named '{monitor_name}' found for service '{service_name}'"
+            detail=f"No active heartbeat monitor named '{monitor_name}' found for service '{service_name}'"
         )
-
-    # Verify API key
-    from api.auth import get_user_from_api_key
-    user = get_user_from_api_key(heartbeat.api_key, db)
 
     # Update monitor's last_check_at to mark heartbeat received
     monitor.last_check_at = datetime.utcnow()
@@ -82,26 +85,7 @@ def receive_heartbeat(
     db.add(status_update)
     db.commit()
 
-    # Check if service status changed and send notifications
-    from utils.service_helpers import calculate_service_status, send_service_notification
-    from database import ServiceNotificationSettings
-
-    new_service_status = calculate_service_status(db, service.id)
-
-    # Get previous service status from notification settings
-    settings = db.query(ServiceNotificationSettings).filter(
-        ServiceNotificationSettings.service_id == service.id
-    ).first()
-
-    old_service_status = settings.last_notified_status if settings else "unknown"
-
-    # If status changed, send notification
-    if new_service_status != old_service_status:
-        send_service_notification(db, service.id, old_service_status, new_service_status)
-
-    # Update incidents based on service status
-    from utils.service_helpers import update_service_incidents
-    update_service_incidents(db, service.id)
+    notify_service_status_change(db, service.id)
 
     return {
         "success": True,
@@ -128,9 +112,8 @@ def update_metric(
     the value against configured thresholds and creates appropriate status updates.
     Both service_name and monitor_name are required to identify the specific monitor.
     """
-    # Verify API key
-    from api.auth import get_user_from_api_key
-    user = get_user_from_api_key(request.api_key, db)
+    # Verify API key first
+    get_user_from_api_key(request.api_key, db)
 
     # Find service by name
     service = db.query(Service).filter(
@@ -163,9 +146,6 @@ def update_metric(
 
     # Load monitor configuration and evaluate metric using monitor class
     config = json.loads(monitor.config_json)
-
-    # Use monitor's evaluation logic instead of duplicating it
-    from monitors.metric_threshold import MetricThresholdMonitor
     monitor_instance = MetricThresholdMonitor(config)
     result = monitor_instance.evaluate_metric(request.value)
 
@@ -183,26 +163,7 @@ def update_metric(
     db.add(status_update)
     db.commit()
 
-    # Check if service status changed and send notifications
-    from utils.service_helpers import calculate_service_status, send_service_notification
-    from database import ServiceNotificationSettings
-
-    new_service_status = calculate_service_status(db, service.id)
-
-    # Get previous service status from notification settings
-    settings = db.query(ServiceNotificationSettings).filter(
-        ServiceNotificationSettings.service_id == service.id
-    ).first()
-
-    old_service_status = settings.last_notified_status if settings else "unknown"
-
-    # If status changed, send notification
-    if new_service_status != old_service_status:
-        send_service_notification(db, service.id, old_service_status, new_service_status)
-
-    # Update incidents based on service status
-    from utils.service_helpers import update_service_incidents
-    update_service_incidents(db, service.id)
+    notify_service_status_change(db, service.id)
 
     return MetricUpdateResponse(
         success=True,

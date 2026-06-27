@@ -13,6 +13,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+VALID_CHANNEL_TYPES = [
+    'slack', 'discord', 'teams', 'pagerduty', 'opsgenie',
+    'telegram', 'ntfy', 'matrix', 'generic'
+]
+
 # Encryption key is now managed in the database
 # Will be retrieved from utils.db.get_encryption_key() when needed
 _cipher_suite_cache = None

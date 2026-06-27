@@ -19,6 +19,33 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 
 
+def _enrich_incident(db: Session, incident) -> dict:
+    """Build the standard incident dict with service name and affected monitor details."""
+    service = db.query(Service).filter(Service.id == incident.service_id).first()
+    affected_ids = json.loads(incident.affected_monitors_json) if incident.affected_monitors_json else []
+    affected_monitors = []
+    for mid in affected_ids:
+        monitor = db.query(Monitor).filter(Monitor.id == mid, Monitor.is_active == True).first()
+        if monitor:
+            config = json.loads(monitor.config_json) if monitor.config_json else {}
+            affected_monitors.append({
+                "id": monitor.id,
+                "type": monitor.monitor_type,
+                "name": config.get("name") if config else None
+            })
+    return {
+        "id": incident.id,
+        "service_id": incident.service_id,
+        "service_name": service.name if service else "Unknown",
+        "started_at": incident.started_at.isoformat(),
+        "ended_at": incident.ended_at.isoformat() if incident.ended_at else None,
+        "duration_seconds": incident.duration_seconds,
+        "severity": incident.severity,
+        "status": incident.status,
+        "affected_monitors": affected_monitors
+    }
+
+
 @router.get("/")
 def list_incidents(
     service_id: int = Query(None, description="Filter by service ID"),
@@ -64,36 +91,7 @@ def list_incidents(
     # Order by newest first
     incidents = query.order_by(Incident.started_at.desc()).all()
 
-    # Enrich with service names and monitor details
-    result = []
-    for incident in incidents:
-        service = db.query(Service).filter(Service.id == incident.service_id).first()
-
-        # Get affected monitor names (only active monitors)
-        affected_ids = json.loads(incident.affected_monitors_json) if incident.affected_monitors_json else []
-        affected_monitors = []
-        for mid in affected_ids:
-            monitor = db.query(Monitor).filter(Monitor.id == mid, Monitor.is_active == True).first()
-            if monitor:
-                config = json.loads(monitor.config_json) if monitor.config_json else {}
-                affected_monitors.append({
-                    "id": monitor.id,
-                    "type": monitor.monitor_type,
-                    "name": config.get("name") if config else None
-                })
-
-        result.append({
-            "id": incident.id,
-            "service_id": incident.service_id,
-            "service_name": service.name if service else "Unknown",
-            "started_at": incident.started_at.isoformat(),
-            "ended_at": incident.ended_at.isoformat() if incident.ended_at else None,
-            "duration_seconds": incident.duration_seconds,
-            "severity": incident.severity,
-            "status": incident.status,
-            "affected_monitors": affected_monitors
-        })
-
+    result = [_enrich_incident(db, inc) for inc in incidents]
     return {"success": True, "incidents": result}
 
 
@@ -281,35 +279,7 @@ def export_incidents_csv(
     # Order by newest first
     incidents_list = query.order_by(Incident.started_at.desc()).all()
 
-    # Enrich with service names and monitor details
-    incidents = []
-    for incident in incidents_list:
-        service = db.query(Service).filter(Service.id == incident.service_id).first()
-
-        # Get affected monitor names (only active monitors)
-        affected_ids = json.loads(incident.affected_monitors_json) if incident.affected_monitors_json else []
-        affected_monitors = []
-        for mid in affected_ids:
-            monitor = db.query(Monitor).filter(Monitor.id == mid, Monitor.is_active == True).first()
-            if monitor:
-                config = json.loads(monitor.config_json) if monitor.config_json else {}
-                affected_monitors.append({
-                    "id": monitor.id,
-                    "type": monitor.monitor_type,
-                    "name": config.get("name") if config else None
-                })
-
-        incidents.append({
-            "id": incident.id,
-            "service_id": incident.service_id,
-            "service_name": service.name if service else "Unknown",
-            "started_at": incident.started_at.isoformat(),
-            "ended_at": incident.ended_at.isoformat() if incident.ended_at else None,
-            "duration_seconds": incident.duration_seconds,
-            "severity": incident.severity,
-            "status": incident.status,
-            "affected_monitors": affected_monitors
-        })
+    incidents = [_enrich_incident(db, inc) for inc in incidents_list]
 
     # Generate CSV
     output = io.StringIO()

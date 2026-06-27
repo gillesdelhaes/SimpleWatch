@@ -8,7 +8,7 @@ from database import get_db, Service, StatusUpdate, Monitor
 from models import ServiceCreate, ServiceResponse
 from api.auth import get_current_user
 from utils.audit import log_action
-from scheduler import MONITOR_CLASSES
+from monitors import MONITOR_CLASSES
 from typing import List, Optional
 from datetime import datetime, timedelta
 import json

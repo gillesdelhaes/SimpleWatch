@@ -14,6 +14,8 @@ class DeadmanMonitor(BaseMonitor):
     Useful for monitoring cron jobs, backups, and scheduled tasks.
     """
 
+    ACCEPTS_HEARTBEAT = True
+
     GRAPH_METRICS = [
         {"key": "hours_since_heartbeat", "label": "Hours Since Heartbeat", "unit": "h", "color": "#F59E0B", "source": "metadata.hours_since_heartbeat"},
     ]
