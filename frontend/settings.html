@@ -13,371 +13,461 @@
     <div id="navigation" data-page="settings"></div>
 
     <div class="main-container">
-        <!-- API Key -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="keyIcon"></span>
-                API Key
-            </h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Use this key to authenticate API requests from your scripts and applications.</p>
 
-            <div class="api-key-display" id="apiKeyDisplay">
-                <span id="apiKeyValue">••••••••••••••••••••••••••••••••</span>
-            </div>
-
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button onclick="toggleApiKeyVisibility()" class="btn btn-secondary" id="toggleBtn">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-                    </svg>
-                    Show Key
-                </button>
-                <button onclick="copyApiKey()" class="btn btn-secondary">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;">
-                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path>
-                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path>
-                    </svg>
-                    Copy Key
-                </button>
-                <button onclick="regenerateApiKey()" class="btn btn-danger">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;">
-                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
-                    </svg>
-                    Regenerate
-                </button>
-            </div>
-            <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem; display: flex; align-items: center; gap: 0.375rem;">
-                <span class="icon" style="width: 14px; height: 14px; color: var(--status-degraded);" id="warningIcon"></span>
-                <span>Warning: Regenerating will invalidate your current key</span>
-            </p>
+        <!-- Tab bar -->
+        <div class="settings-tabs">
+            <button class="settings-tab" data-tab="account">Account</button>
+            <button class="settings-tab" data-tab="status-page">Status Page</button>
+            <button class="settings-tab" data-tab="ai">AI Assistant</button>
+            <button class="settings-tab" data-tab="data">Data</button>
         </div>
 
-        <!-- Data Retention -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="databaseIcon"></span>
-                Data Retention
-            </h2>
-            <p class="section-desc">Control how long status update history is stored in the database. Older data will be automatically cleaned up daily.</p>
+        <!-- ── Account ─────────────────────────────────────────────── -->
+        <div class="settings-tab-content" id="tab-account">
 
-            <div class="retention-control">
-                <div class="retention-input-group">
-                    <input type="number" id="retentionDaysInput" class="retention-input" min="1" placeholder="90">
-                    <span class="retention-unit">days</span>
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">API KEY</span>
                 </div>
-                <button onclick="showRetentionModal()" class="btn btn-primary retention-save-btn">
-                    Save Retention Policy
-                </button>
+                <div class="settings-card-body">
+                    <div class="settings-row settings-row--last">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Your API Key</div>
+                            <div class="settings-row-hint">Use this key to authenticate API requests from scripts and integrations.</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <div class="api-key-display" id="apiKeyDisplay">
+                                <span id="apiKeyValue">••••••••••••••••••••••••••••••••</span>
+                            </div>
+                            <div class="api-key-actions">
+                                <button onclick="toggleApiKeyVisibility()" class="btn btn-secondary btn-sm" id="toggleBtn">
+                                    Show Key
+                                </button>
+                                <button onclick="copyApiKey()" class="btn btn-secondary btn-sm">
+                                    Copy
+                                </button>
+                                <button onclick="regenerateApiKey()" class="btn btn-danger btn-sm">
+                                    Regenerate
+                                </button>
+                            </div>
+                            <p class="settings-warning-hint">
+                                <span class="icon" style="width:12px;height:12px;color:var(--status-degraded);" id="warningIcon"></span>
+                                Regenerating will invalidate your current key
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="retention-info">
-                <span class="icon retention-info-icon" id="infoCircleIcon"></span>
-                <span>Current retention: <strong id="currentRetentionDays">90</strong> days</span>
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">PASSWORD</span>
+                </div>
+                <div class="settings-card-body">
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Current Password</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <input type="password" id="currentPassword" class="settings-input"
+                                   placeholder="Enter current password" autocomplete="current-password">
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">New Password</div>
+                            <div class="settings-row-hint">Minimum 8 characters.</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <input type="password" id="newPassword" class="settings-input"
+                                   placeholder="Enter new password" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <div class="settings-row settings-row--last">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Confirm New Password</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <input type="password" id="confirmPassword" class="settings-input"
+                                   placeholder="Confirm new password" autocomplete="new-password">
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-save-bar hidden" id="passwordSaveBar">
+                    <span class="settings-save-bar-hint">Unsaved changes</span>
+                    <div class="settings-save-bar-actions">
+                        <button onclick="discardPassword()" class="btn btn-ghost btn-sm">Discard</button>
+                        <button onclick="savePassword()" class="btn btn-primary btn-sm">Save changes</button>
+                    </div>
+                </div>
             </div>
+
         </div>
 
-        <!-- Service Backup & Restore -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="backupIcon"></span>
-                Service Backup & Restore
-            </h2>
-            <p class="section-desc">Export your service configurations to JSON for backup or migration. Import configurations to restore or clone services to another instance.</p>
+        <!-- ── Status Page ─────────────────────────────────────────── -->
+        <div class="settings-tab-content hidden" id="tab-status-page">
 
-            <div class="backup-actions">
-                <div class="backup-action-card">
-                    <div class="backup-action-header">
-                        <span class="backup-action-icon" id="exportIcon"></span>
-                        <h3 class="backup-action-title">Export Services</h3>
-                    </div>
-                    <p class="backup-action-desc">Download service configurations as JSON</p>
-                    <button onclick="showExportModal()" class="btn btn-primary">
-                        <span class="icon btn-icon" id="downloadBtnIcon"></span>
-                        Export Configuration
-                    </button>
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">ANNOUNCEMENT BANNER</span>
                 </div>
-
-                <div class="backup-action-card">
-                    <div class="backup-action-header">
-                        <span class="backup-action-icon" id="importIcon"></span>
-                        <h3 class="backup-action-title">Import Services</h3>
+                <div class="settings-card-body">
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Banner Message</div>
+                            <div class="settings-row-hint">Displayed at the top of the public status page. Leave empty to hide the banner.</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <textarea id="bannerText" class="settings-input settings-textarea" rows="3" maxlength="500"
+                                      placeholder="e.g., Scheduled maintenance on Sunday at 2:00 AM UTC"></textarea>
+                            <div class="settings-char-count"><span id="bannerCharCount">0</span>/500</div>
+                        </div>
                     </div>
-                    <p class="backup-action-desc">Restore services from a JSON backup file</p>
-                    <button onclick="showImportModal()" class="btn btn-secondary">
-                        <span class="icon btn-icon" id="uploadBtnIcon"></span>
-                        Import Configuration
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI SRE Companion Settings -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="aiIcon"></span>
-                AI SRE Companion
-            </h2>
-            <p class="section-desc">
-                AI-powered incident analysis and remediation suggestions. When incidents occur,
-                the AI can suggest fixes or automatically execute safe remediations.
-            </p>
-
-            <!-- Enable Toggle -->
-            <div class="setting-row">
-                <div class="setting-info">
-                    <div class="setting-label">Enable AI SRE</div>
-                    <div class="setting-desc">Analyze incidents and suggest remediations</div>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="aiEnabled" onchange="toggleAISettings()">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-
-            <!-- AI Configuration (shown when enabled) -->
-            <div id="aiSettingsContent" style="display: none; margin-top: 1.5rem;">
-
-                <!-- Provider Selection -->
-                <div class="form-group">
-                    <label class="form-label">LLM Provider</label>
-                    <select id="aiProvider" class="form-input" onchange="updateAIProviderSettings()">
-                        <option value="local">Local Model (Ollama)</option>
-                        <option value="openai">OpenAI</option>
-                        <option value="anthropic">Anthropic Claude</option>
-                    </select>
-                </div>
-
-                <!-- Local Model Settings -->
-                <div id="localModelSettings" class="ai-provider-config">
-                    <div class="form-group">
-                        <label class="form-label">Ollama Endpoint</label>
-                        <input type="url" id="localEndpoint" class="form-input"
-                               placeholder="http://localhost:11434" value="http://localhost:11434">
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Severity</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <select id="bannerSeverity" class="settings-input settings-select">
+                                <option value="info">Info (Green)</option>
+                                <option value="warning">Warning (Amber)</option>
+                                <option value="critical">Critical (Red)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Model Name</label>
-                        <input type="text" id="localModel" class="form-input"
-                               placeholder="llama3.2, mistral, qwen2.5">
-                    </div>
-                </div>
-
-                <!-- OpenAI Settings -->
-                <div id="openaiSettings" class="ai-provider-config" style="display: none;">
-                    <div class="form-group">
-                        <label class="form-label">API Key</label>
-                        <input type="password" id="openaiKey" class="form-input" placeholder="sk-...">
-                        <p class="form-hint" id="openaiKeyHint" style="display: none;">API key is already configured</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Model</label>
-                        <select id="openaiModel" class="form-input" onchange="toggleCustomModelInput('openai')">
-                            <option value="gpt-4o">GPT-4o</option>
-                            <option value="gpt-4o-mini">GPT-4o Mini</option>
-                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                            <option value="gpt-4.1">GPT-4.1</option>
-                            <option value="custom">Custom model...</option>
-                        </select>
-                        <input type="text" id="openaiCustomModel" class="form-input" placeholder="Enter model ID (e.g., gpt-4-0125-preview)" style="display: none; margin-top: 0.5rem;">
-                    </div>
-                </div>
-
-                <!-- Anthropic Settings -->
-                <div id="anthropicSettings" class="ai-provider-config" style="display: none;">
-                    <div class="form-group">
-                        <label class="form-label">API Key</label>
-                        <input type="password" id="anthropicKey" class="form-input" placeholder="sk-ant-...">
-                        <p class="form-hint" id="anthropicKeyHint" style="display: none;">API key is already configured</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Model</label>
-                        <select id="anthropicModel" class="form-input" onchange="toggleCustomModelInput('anthropic')">
-                            <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
-                            <option value="claude-opus-4-20250514">Claude Opus 4</option>
-                            <option value="claude-haiku-4-20250514">Claude Haiku 4</option>
-                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-                            <option value="custom">Custom model...</option>
-                        </select>
-                        <input type="text" id="anthropicCustomModel" class="form-input" placeholder="Enter model ID (e.g., claude-3-opus-20240229)" style="display: none; margin-top: 0.5rem;">
-                    </div>
-                </div>
-
-                <!-- Behavior Settings -->
-                <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1.5rem;">
-                    <h4 style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Analysis Behavior</h4>
-
-                    <!-- Auto-analyze incidents -->
-                    <div class="setting-row">
-                        <div class="setting-info">
-                            <div class="setting-label">Auto-Analyze Incidents</div>
-                            <div class="setting-desc">
-                                Automatically trigger AI analysis when new incidents occur
+                    <div class="settings-row settings-row--last">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Preview</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <div id="bannerPreview" class="banner-preview">
+                                <div class="banner-preview-empty">Enter a message above to see preview</div>
                             </div>
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="autoAnalyzeIncidents" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
                     </div>
-                    <p class="form-hint" style="margin-top: 0.25rem; margin-bottom: 1.5rem;">
-                        When OFF, use the "Analyze with AI" button to manually trigger analysis (saves tokens)
-                    </p>
+                </div>
+                <div class="settings-save-bar hidden" id="bannerSaveBar">
+                    <span class="settings-save-bar-hint">Unsaved changes</span>
+                    <div class="settings-save-bar-actions">
+                        <button onclick="discardBanner()" class="btn btn-ghost btn-sm">Discard</button>
+                        <button onclick="saveStatusPageBanner()" class="btn btn-primary btn-sm">Save changes</button>
+                    </div>
+                </div>
+            </div>
 
-                    <h4 style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Approval Behavior</h4>
+        </div>
 
-                    <!-- SAFE DEFAULT: Require Approval (ON by default) -->
-                    <div class="setting-row">
-                        <div class="setting-info">
-                            <div class="setting-label">Require Human Approval</div>
-                            <div class="setting-desc">
-                                All AI-suggested actions must be approved before execution
-                            </div>
+        <!-- ── AI Assistant ────────────────────────────────────────── -->
+        <div class="settings-tab-content hidden" id="tab-ai">
+
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">AI SRE COMPANION</span>
+                </div>
+                <div class="settings-card-body">
+
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Enable AI SRE</div>
+                            <div class="settings-row-hint">Analyze incidents and suggest remediations using an LLM provider.</div>
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="requireApproval" checked onchange="updateAutoExecuteVisibility()">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <p class="form-hint" style="margin-top: 0.25rem; margin-bottom: 1rem;">
-                        Recommended: Keep this ON to review all actions before they execute
-                    </p>
-
-                    <!-- Auto-Execute (hidden by default, only shown when approval disabled) -->
-                    <div id="autoExecuteSection" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem;">
-                        <div class="setting-row">
-                            <div class="setting-info">
-                                <div class="setting-label" style="color: var(--status-down);">
-                                    Enable Auto-Execute
-                                </div>
-                                <div class="setting-desc">
-                                    Allow AI to execute high-confidence actions without approval
-                                </div>
-                            </div>
+                        <div class="settings-row-control settings-row-control--center">
                             <label class="toggle-switch">
-                                <input type="checkbox" id="autoExecuteEnabled">
+                                <input type="checkbox" id="aiEnabled" onchange="toggleAISettings()">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
+                    </div>
 
-                        <div class="form-group" style="margin-top: 1rem;">
-                            <label class="form-label">Confidence Threshold for Auto-Execute</label>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <input type="range" id="confidenceThreshold" style="flex: 1;" min="85" max="100" step="1" value="95"
-                                       oninput="document.getElementById('confidenceValue').textContent = this.value + '%'">
-                                <span id="confidenceValue" style="font-weight: bold; min-width: 3rem;">95%</span>
+                    <div id="aiSettingsContent" style="display:none;">
+
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">LLM Provider</div>
+                            </div>
+                            <div class="settings-row-control">
+                                <select id="aiProvider" class="settings-input settings-select" onchange="updateAIProviderSettings()">
+                                    <option value="local">Local Model (Ollama)</option>
+                                    <option value="openai">OpenAI</option>
+                                    <option value="anthropic">Anthropic Claude</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.15); border-radius: 0.375rem; font-size: 0.8rem; color: var(--text-secondary);">
-                            <strong style="color: var(--status-down);">Warning:</strong> Auto-execute will run webhooks without your confirmation.
-                            Only enable if you trust your configured remediation webhooks and understand the risks.
-                            All auto-executed actions are logged for audit purposes.
+                        <!-- Ollama -->
+                        <div id="localModelSettings" class="ai-provider-config">
+                            <div class="settings-row">
+                                <div class="settings-row-label">
+                                    <div class="settings-row-name">Ollama Endpoint</div>
+                                    <div class="settings-row-hint">Use <code>http://host.docker.internal:11434</code> when running in Docker.</div>
+                                </div>
+                                <div class="settings-row-control">
+                                    <input type="url" id="localEndpoint" class="settings-input"
+                                           placeholder="http://localhost:11434" value="http://localhost:11434">
+                                </div>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-label">
+                                    <div class="settings-row-name">Model Name</div>
+                                </div>
+                                <div class="settings-row-control">
+                                    <input type="text" id="localModel" class="settings-input"
+                                           placeholder="llama3.2, mistral, gemma3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OpenAI -->
+                        <div id="openaiSettings" class="ai-provider-config" style="display:none;">
+                            <div class="settings-row">
+                                <div class="settings-row-label">
+                                    <div class="settings-row-name">API Key</div>
+                                </div>
+                                <div class="settings-row-control">
+                                    <input type="password" id="openaiKey" class="settings-input" placeholder="sk-...">
+                                    <p class="form-hint" id="openaiKeyHint" style="display:none;">API key is already configured</p>
+                                </div>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-label">
+                                    <div class="settings-row-name">Model</div>
+                                </div>
+                                <div class="settings-row-control">
+                                    <select id="openaiModel" class="settings-input settings-select" onchange="toggleCustomModelInput('openai')">
+                                        <option value="gpt-4o">GPT-4o</option>
+                                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                        <option value="gpt-4.1">GPT-4.1</option>
+                                        <option value="custom">Custom model...</option>
+                                    </select>
+                                    <input type="text" id="openaiCustomModel" class="settings-input"
+                                           placeholder="Enter model ID" style="display:none;margin-top:8px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Anthropic -->
+                        <div id="anthropicSettings" class="ai-provider-config" style="display:none;">
+                            <div class="settings-row">
+                                <div class="settings-row-label">
+                                    <div class="settings-row-name">API Key</div>
+                                </div>
+                                <div class="settings-row-control">
+                                    <input type="password" id="anthropicKey" class="settings-input" placeholder="sk-ant-...">
+                                    <p class="form-hint" id="anthropicKeyHint" style="display:none;">API key is already configured</p>
+                                </div>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-label">
+                                    <div class="settings-row-name">Model</div>
+                                </div>
+                                <div class="settings-row-control">
+                                    <select id="anthropicModel" class="settings-input settings-select" onchange="toggleCustomModelInput('anthropic')">
+                                        <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                                        <option value="claude-opus-4-20250514">Claude Opus 4</option>
+                                        <option value="claude-haiku-4-20250514">Claude Haiku 4</option>
+                                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                        <option value="custom">Custom model...</option>
+                                    </select>
+                                    <input type="text" id="anthropicCustomModel" class="settings-input"
+                                           placeholder="Enter model ID" style="display:none;margin-top:8px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card-sub-header"><span>ANALYSIS BEHAVIOR</span></div>
+
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">Auto-Analyze Incidents</div>
+                                <div class="settings-row-hint">Automatically trigger AI analysis when new incidents occur. Turn off to trigger manually and save tokens.</div>
+                            </div>
+                            <div class="settings-row-control settings-row-control--center">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="autoAnalyzeIncidents" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-card-sub-header"><span>APPROVAL BEHAVIOR</span></div>
+
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">Require Human Approval</div>
+                                <div class="settings-row-hint">All AI-suggested actions must be approved before execution. Recommended: keep this on.</div>
+                            </div>
+                            <div class="settings-row-control settings-row-control--center">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="requireApproval" checked onchange="updateAutoExecuteVisibility()">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="autoExecuteSection" style="display:none;padding:16px 20px;">
+                            <div class="settings-danger-box">
+                                <div class="settings-row" style="border:none;padding:0 0 14px 0;">
+                                    <div class="settings-row-label">
+                                        <div class="settings-row-name" style="color:var(--status-down);">Enable Auto-Execute</div>
+                                        <div class="settings-row-hint">Allow AI to run high-confidence actions without approval.</div>
+                                    </div>
+                                    <div class="settings-row-control settings-row-control--center">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="autoExecuteEnabled">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confidence Threshold</label>
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <input type="range" id="confidenceThreshold" style="flex:1;" min="85" max="100" step="1" value="95"
+                                               oninput="document.getElementById('confidenceValue').textContent=this.value+'%'">
+                                        <span id="confidenceValue" style="font-weight:700;min-width:3rem;">95%</span>
+                                    </div>
+                                </div>
+                                <div class="settings-danger-warning">
+                                    <strong style="color:var(--status-down);">Warning:</strong> Auto-execute runs webhooks without confirmation.
+                                    Only enable if you fully trust your configured remediation webhooks. All actions are audit-logged.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-row settings-row--last">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">Test Connection</div>
+                                <div class="settings-row-hint">Verify SimpleWatch can reach your LLM provider with the current settings.</div>
+                            </div>
+                            <div class="settings-row-control">
+                                <button onclick="testAIConnection()" class="btn btn-secondary btn-sm" id="testAIBtn">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="settings-save-bar hidden" id="aiSaveBar">
+                    <span class="settings-save-bar-hint">Unsaved changes</span>
+                    <div class="settings-save-bar-actions">
+                        <button onclick="discardAI()" class="btn btn-ghost btn-sm">Discard</button>
+                        <button onclick="saveAIAndHideBar()" class="btn btn-primary btn-sm" id="saveAIBtn">Save changes</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── Data ────────────────────────────────────────────────── -->
+        <div class="settings-tab-content hidden" id="tab-data">
+
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">DATA RETENTION</span>
+                </div>
+                <div class="settings-card-body">
+                    <div class="settings-row settings-row--last">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Retention Period</div>
+                            <div class="settings-row-hint">
+                                How long to keep status history. Current: <strong id="currentRetentionDays">90</strong> days.
+                                Older data is cleaned up automatically each day.
+                            </div>
+                        </div>
+                        <div class="settings-row-control">
+                            <div class="retention-input-group">
+                                <input type="number" id="retentionDaysInput" class="retention-input" min="1" placeholder="90">
+                                <span class="retention-unit">days</span>
+                            </div>
                         </div>
                     </div>
-
                 </div>
-
-                <!-- Test Connection (only when enabled) -->
-                <div style="margin-top: 1.5rem;">
-                    <button onclick="testAIConnection()" class="btn btn-secondary" id="testAIBtn">
-                        Test Connection
-                    </button>
-                </div>
-            </div>
-
-            <!-- Save Button (always visible) -->
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                <button onclick="saveAISettings()" class="btn btn-primary" id="saveAIBtn">
-                    Save Settings
-                </button>
-            </div>
-        </div>
-
-        <!-- Status Page Settings -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="statusPageIcon"></span>
-                Status Page Settings
-            </h2>
-            <p class="section-desc">Configure the public status page appearance and announcements.</p>
-
-            <!-- Banner Settings -->
-            <div class="status-page-banner-settings">
-                <h4 style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Announcement Banner</h4>
-                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                    Display a message at the top of the public status page. Leave empty to hide.
-                </p>
-
-                <div class="form-group">
-                    <label class="form-label">Banner Message</label>
-                    <textarea id="bannerText" class="form-input" rows="3" maxlength="500"
-                              placeholder="e.g., Scheduled maintenance on Sunday at 2:00 AM UTC"></textarea>
-                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
-                        <span id="bannerCharCount">0</span>/500 characters
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Severity</label>
-                    <select id="bannerSeverity" class="form-input">
-                        <option value="info">Info (Green)</option>
-                        <option value="warning">Warning (Amber)</option>
-                        <option value="critical">Critical (Red)</option>
-                    </select>
-                </div>
-
-                <!-- Banner Preview -->
-                <div class="form-group">
-                    <label class="form-label">Preview</label>
-                    <div id="bannerPreview" class="banner-preview">
-                        <div class="banner-preview-empty">Enter a message above to see preview</div>
+                <div class="settings-save-bar hidden" id="retentionSaveBar">
+                    <span class="settings-save-bar-hint">Unsaved changes</span>
+                    <div class="settings-save-bar-actions">
+                        <button onclick="discardRetention()" class="btn btn-ghost btn-sm">Discard</button>
+                        <button onclick="showRetentionModal()" class="btn btn-primary btn-sm">Save changes</button>
                     </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <button onclick="saveStatusPageBanner()" class="btn btn-primary" id="saveBannerBtn">
-                    Save Banner Settings
-                </button>
-                <button onclick="clearStatusPageBanner()" class="btn btn-secondary" id="clearBannerBtn">
-                    Clear Banner
-                </button>
-            </div>
-        </div>
-
-        <!-- Audit Log -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="auditLogIcon"></span>
-                Audit Log
-            </h2>
-            <p class="section-desc">Track user actions for compliance and security. Export the full audit trail as CSV.</p>
-
-            <div class="retention-info">
-                <span class="icon retention-info-icon" id="auditInfoIcon"></span>
-                <span>Total entries: <strong id="auditLogCount">0</strong></span>
-            </div>
-
-            <div style="margin-top: 1rem;">
-                <h4 style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">Date Range (optional)</h4>
-                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <div>
-                        <label class="form-label" style="font-size: 0.8rem;">From</label>
-                        <input type="date" id="auditFromDate" class="form-input" style="width: auto;">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">BACKUP & RESTORE</span>
+                </div>
+                <div class="settings-card-body">
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Export Services</div>
+                            <div class="settings-row-hint">Download all service configurations as JSON for backup or migration to another instance.</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <button onclick="showExportModal()" class="btn btn-primary btn-sm">
+                                <span class="icon btn-icon" id="downloadBtnIcon"></span>
+                                Export Configuration
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="form-label" style="font-size: 0.8rem;">To</label>
-                        <input type="date" id="auditToDate" class="form-input" style="width: auto;">
+                    <div class="settings-row settings-row--last">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Import Services</div>
+                            <div class="settings-row-hint">Restore services from a JSON backup file exported from SimpleWatch.</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <button onclick="showImportModal()" class="btn btn-secondary btn-sm">
+                                <span class="icon btn-icon" id="uploadBtnIcon"></span>
+                                Import Configuration
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <button onclick="exportAuditLog()" class="btn btn-primary">
-                    <span class="icon btn-icon" id="auditExportBtnIcon"></span>
-                    Export Audit Log
-                </button>
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <span class="settings-card-label">AUDIT LOG</span>
+                </div>
+                <div class="settings-card-body">
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Total Entries</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <span class="settings-stat" id="auditLogCount">—</span>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Date Range</div>
+                            <div class="settings-row-hint">Optional filter applied to the CSV export.</div>
+                        </div>
+                        <div class="settings-row-control settings-date-range">
+                            <div>
+                                <label class="settings-row-hint" style="display:block;margin-bottom:4px;">From</label>
+                                <input type="date" id="auditFromDate" class="settings-input settings-date">
+                            </div>
+                            <div>
+                                <label class="settings-row-hint" style="display:block;margin-bottom:4px;">To</label>
+                                <input type="date" id="auditToDate" class="settings-input settings-date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-row settings-row--last">
+                        <div class="settings-row-label">
+                            <div class="settings-row-name">Export</div>
+                            <div class="settings-row-hint">Download the full audit trail as CSV.</div>
+                        </div>
+                        <div class="settings-row-control">
+                            <button onclick="exportAuditLog()" class="btn btn-primary btn-sm">
+                                <span class="icon btn-icon" id="auditExportBtnIcon"></span>
+                                Export Audit Log
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
 
     </div>
@@ -391,16 +481,14 @@
                     <span class="icon" id="modalCloseIcon"></span>
                 </button>
             </div>
-
             <div class="modal-body">
                 <div class="alert-box alert-warning">
                     <span class="alert-icon" id="warningTriangleIcon"></span>
                     <div class="alert-content">
                         <p class="alert-title">This action will immediately clean up old data</p>
-                        <p class="alert-text">Setting retention to <strong id="modalRetentionDays">0</strong> days will remove all status updates older than this period. This action cannot be undone.</p>
+                        <p class="alert-text">Setting retention to <strong id="modalRetentionDays">0</strong> days will remove all status updates older than this period. This cannot be undone.</p>
                     </div>
                 </div>
-
                 <div class="retention-confirm-details">
                     <div class="retention-detail-row">
                         <span class="retention-detail-label">Current retention:</span>
@@ -412,7 +500,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="modal-footer">
                 <button onclick="closeRetentionModal()" class="btn btn-secondary">Cancel</button>
                 <button onclick="confirmRetentionChange()" class="btn btn-danger">Confirm &amp; Apply</button>
@@ -429,15 +516,10 @@
                     <span class="icon" id="exportModalCloseIcon"></span>
                 </button>
             </div>
-
             <div class="modal-body">
                 <p class="modal-description">Select services to export. Only configuration data will be exported (no historical status data).</p>
-
-                <div class="export-service-list" id="exportServiceList">
-                    <!-- Services will be populated here -->
-                </div>
+                <div class="export-service-list" id="exportServiceList"></div>
             </div>
-
             <div class="modal-footer">
                 <button onclick="closeExportModal()" class="btn btn-secondary">Cancel</button>
                 <button onclick="executeExport()" class="btn btn-primary" id="exportBtn">
@@ -457,18 +539,15 @@
                     <span class="icon" id="importModalCloseIcon"></span>
                 </button>
             </div>
-
             <div class="modal-body">
                 <div id="importUploadSection">
                     <p class="modal-description">Upload a JSON configuration file exported from SimpleWatch.</p>
-
                     <div class="import-upload-area" id="importUploadArea">
                         <span class="icon import-upload-icon" id="uploadAreaIcon"></span>
                         <p class="import-upload-text">Click to select file or drag and drop</p>
                         <p class="import-upload-hint">JSON files only</p>
-                        <input type="file" id="importFileInput" accept=".json,application/json" style="display: none;">
+                        <input type="file" id="importFileInput" accept=".json,application/json" style="display:none;">
                     </div>
-
                     <div class="import-file-info hidden" id="importFileInfo">
                         <span class="icon" id="fileCheckIcon"></span>
                         <span id="importFileName"></span>
@@ -477,7 +556,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div id="importPreviewSection" class="hidden">
                     <div class="alert-box alert-info">
                         <span class="alert-icon" id="importInfoIcon"></span>
@@ -486,19 +564,12 @@
                             <p class="alert-text" id="importPreviewSummary"></p>
                         </div>
                     </div>
-
-                    <div class="import-service-list" id="importServiceList">
-                        <!-- Services will be populated here -->
-                    </div>
+                    <div class="import-service-list" id="importServiceList"></div>
                 </div>
-
                 <div id="importResultSection" class="hidden">
-                    <div class="import-result-summary" id="importResultSummary">
-                        <!-- Results will be populated here -->
-                    </div>
+                    <div class="import-result-summary" id="importResultSummary"></div>
                 </div>
             </div>
-
             <div class="modal-footer">
                 <button onclick="closeImportModal()" class="btn btn-secondary" id="importCancelBtn">Cancel</button>
                 <button onclick="validateImportFile()" class="btn btn-primary hidden" id="importValidateBtn">

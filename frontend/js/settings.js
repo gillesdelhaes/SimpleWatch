@@ -1,6 +1,5 @@
 /**
  * Settings Page JavaScript
- * Handles user settings, API key management, and theme preferences
  */
 
 requireAuth();
@@ -8,26 +7,62 @@ requireAuth();
 const userInfo = getUserInfo();
 let currentApiKey = '';
 let keyVisible = false;
+let currentUserId = null;
+let currentRetentionDays = 90;
+let currentBannerText = '';
+let currentBannerSeverity = 'info';
 
-function injectIcon(id, icon) {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = icon;
+// ============================================================
+// Tab switching
+// ============================================================
+
+const VALID_TABS = ['account', 'status-page', 'ai', 'data'];
+
+function activateTab(tabId) {
+    if (!VALID_TABS.includes(tabId)) tabId = 'account';
+    VALID_TABS.forEach(id => {
+        document.querySelector(`[data-tab="${id}"]`)?.classList.toggle('active', id === tabId);
+        document.getElementById(`tab-${id}`)?.classList.toggle('hidden', id !== tabId);
+    });
+    const url = new URL(location.href);
+    url.searchParams.set('tab', tabId);
+    history.replaceState(null, '', url);
 }
 
+document.querySelectorAll('.settings-tab').forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+});
+
+// ============================================================
+// Dirty state tracking
+// ============================================================
+
+function trackDirty(inputIds, saveBarId) {
+    const bar = document.getElementById(saveBarId);
+    if (!bar) return;
+    inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => bar.classList.remove('hidden'));
+        el.addEventListener('change', () => bar.classList.remove('hidden'));
+    });
+}
+
+// ============================================================
+// DOMContentLoaded init
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Icons
+    // Icons still used in new design
+    const injectIcon = (id, icon) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = icon;
+    };
     injectIcon('warningIcon', icons.alertTriangle);
-    injectIcon('zapIcon', icons.zap);
-    injectIcon('keyIcon', icons.key);
-    injectIcon('databaseIcon', icons.database);
-    injectIcon('infoCircleIcon', icons.infoCircle);
-    injectIcon('warningTriangleIcon', icons.alertTriangle);
-    injectIcon('modalCloseIcon', icons.x);
-    injectIcon('backupIcon', icons.folder);
-    injectIcon('exportIcon', icons.download);
-    injectIcon('importIcon', icons.upload);
     injectIcon('downloadBtnIcon', icons.download);
     injectIcon('uploadBtnIcon', icons.upload);
+    injectIcon('modalCloseIcon', icons.x);
+    injectIcon('warningTriangleIcon', icons.alertTriangle);
     injectIcon('exportModalCloseIcon', icons.x);
     injectIcon('exportBtnIcon', icons.download);
     injectIcon('importModalCloseIcon', icons.x);
@@ -37,28 +72,50 @@ document.addEventListener('DOMContentLoaded', () => {
     injectIcon('importInfoIcon', icons.info);
     injectIcon('importValidateBtnIcon', icons.check);
     injectIcon('importExecuteBtnIcon', icons.upload);
-    injectIcon('auditLogIcon', icons.clipboard);
-    injectIcon('auditInfoIcon', icons.infoCircle);
     injectIcon('auditExportBtnIcon', icons.download);
-    injectIcon('statusPageIcon', icons.globe);
 
-    // Init
+    // Restore active tab from URL
+    const tab = new URL(location.href).searchParams.get('tab') || 'account';
+    activateTab(tab);
+
+    // Load data
+    loadCurrentUser();
     loadRetentionSettings();
     loadAuditLogCount();
     loadStatusPageBannerSettings();
 
-    // Banner live preview
+    // Dirty tracking
+    trackDirty(['currentPassword', 'newPassword', 'confirmPassword'], 'passwordSaveBar');
+    trackDirty(['retentionDaysInput'], 'retentionSaveBar');
+    trackDirty([
+        'aiEnabled', 'aiProvider',
+        'localEndpoint', 'localModel',
+        'openaiKey', 'openaiModel', 'openaiCustomModel',
+        'anthropicKey', 'anthropicModel', 'anthropicCustomModel',
+        'autoAnalyzeIncidents', 'requireApproval', 'autoExecuteEnabled', 'confidenceThreshold'
+    ], 'aiSaveBar');
+
+    // Banner live updates
     document.getElementById('bannerText')?.addEventListener('input', () => {
         updateBannerCharCount();
         updateBannerPreview();
+        document.getElementById('bannerSaveBar')?.classList.remove('hidden');
     });
-    document.getElementById('bannerSeverity')?.addEventListener('change', updateBannerPreview);
+    document.getElementById('bannerSeverity')?.addEventListener('change', () => {
+        updateBannerPreview();
+        document.getElementById('bannerSaveBar')?.classList.remove('hidden');
+    });
 });
 
-async function loadUserInfo() {
+// ============================================================
+// Current user & API key
+// ============================================================
+
+async function loadCurrentUser() {
     try {
         const user = await api.getCurrentUser();
         currentApiKey = user.api_key;
+        currentUserId = user.id;
     } catch (error) {
         console.error('Failed to load user info:', error);
     }
@@ -67,53 +124,88 @@ async function loadUserInfo() {
 function toggleApiKeyVisibility() {
     const display = document.getElementById('apiKeyValue');
     const btn = document.getElementById('toggleBtn');
-
     if (keyVisible) {
         display.textContent = '••••••••••••••••••••••••••••••••';
-        btn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>Show Key';
+        btn.textContent = 'Show Key';
         keyVisible = false;
     } else {
         display.textContent = currentApiKey;
-        btn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; margin-right: 0.5rem;"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"></path><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"></path></svg>Hide Key';
+        btn.textContent = 'Hide Key';
         keyVisible = true;
     }
 }
 
 function copyApiKey() {
-    navigator.clipboard.writeText(currentApiKey).then(() => {
-        showSuccess('API key copied to clipboard!');
-    });
+    navigator.clipboard.writeText(currentApiKey).then(() => showSuccess('API key copied to clipboard!'));
 }
 
 async function regenerateApiKey() {
     const confirmed = await showConfirm(
         'Are you sure? This will invalidate your current API key and may break existing integrations.',
-        {
-            title: 'Regenerate API Key',
-            confirmText: 'Regenerate',
-            cancelText: 'Cancel',
-            confirmClass: 'btn-danger'
-        }
+        { title: 'Regenerate API Key', confirmText: 'Regenerate', cancelText: 'Cancel', confirmClass: 'btn-danger' }
     );
     if (!confirmed) return;
-
     try {
         const user = await api.regenerateApiKey();
         currentApiKey = user.api_key;
         localStorage.setItem('apiKey', user.api_key);
-        if (keyVisible) {
-            document.getElementById('apiKeyValue').textContent = currentApiKey;
-        }
+        if (keyVisible) document.getElementById('apiKeyValue').textContent = currentApiKey;
         showSuccess('API key regenerated successfully!');
     } catch (error) {
         showError('Failed to regenerate API key: ' + error.message);
     }
 }
 
-loadUserInfo();
+// ============================================================
+// Password change
+// ============================================================
 
-// Data Retention Management
-let currentRetentionDays = 90;
+async function savePassword() {
+    const current = document.getElementById('currentPassword').value;
+    const newPwd  = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+
+    if (!current || !newPwd || !confirm) {
+        showError('All password fields are required');
+        return;
+    }
+    if (newPwd !== confirm) {
+        showError('New passwords do not match');
+        return;
+    }
+    if (newPwd.length < 8) {
+        showError('Password must be at least 8 characters');
+        return;
+    }
+    if (!currentUserId) {
+        showError('User not loaded yet, please wait');
+        return;
+    }
+
+    try {
+        await authenticatedFetch(`/api/v1/users/${currentUserId}/password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_password: current, new_password: newPwd })
+        });
+        showSuccess('Password changed successfully');
+        discardPassword();
+    } catch (error) {
+        showError('Failed to change password: ' + error.message);
+    }
+}
+
+function discardPassword() {
+    ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('passwordSaveBar')?.classList.add('hidden');
+}
+
+// ============================================================
+// Data Retention
+// ============================================================
 
 async function loadRetentionSettings() {
     try {
@@ -123,31 +215,23 @@ async function loadRetentionSettings() {
         document.getElementById('retentionDaysInput').placeholder = currentRetentionDays;
     } catch (error) {
         console.error('Failed to load retention settings:', error);
-        showError('Failed to load retention settings');
     }
 }
 
 function showRetentionModal() {
     const input = document.getElementById('retentionDaysInput');
     const newRetention = parseInt(input.value);
-
-    // Validation
     if (!input.value || isNaN(newRetention)) {
         showError('Please enter a valid number of days');
         return;
     }
-
     if (newRetention < 1) {
         showError('Retention period must be at least 1 day');
         return;
     }
-
-    // Update modal values
     document.getElementById('modalCurrentRetention').textContent = currentRetentionDays;
     document.getElementById('modalNewRetention').textContent = newRetention;
     document.getElementById('modalRetentionDays').textContent = newRetention;
-
-    // Show modal
     document.getElementById('retentionModal').classList.remove('hidden');
 }
 
@@ -158,24 +242,18 @@ function closeRetentionModal() {
 async function confirmRetentionChange() {
     const input = document.getElementById('retentionDaysInput');
     const newRetention = parseInt(input.value);
-
     try {
         const response = await authenticatedFetch('/api/v1/settings/retention', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                retention_days: newRetention
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ retention_days: newRetention })
         });
-
         currentRetentionDays = newRetention;
         document.getElementById('currentRetentionDays').textContent = newRetention;
-        document.getElementById('retentionDaysInput').value = '';
-        document.getElementById('retentionDaysInput').placeholder = newRetention;
-
+        input.value = '';
+        input.placeholder = newRetention;
         closeRetentionModal();
+        document.getElementById('retentionSaveBar')?.classList.add('hidden');
         showSuccess(response.message || `Data retention updated to ${newRetention} days`);
     } catch (error) {
         closeRetentionModal();
@@ -183,16 +261,18 @@ async function confirmRetentionChange() {
     }
 }
 
-// Close modal when clicking backdrop
-document.getElementById('retentionModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'retentionModal') {
-        closeRetentionModal();
-    }
+function discardRetention() {
+    document.getElementById('retentionDaysInput').value = '';
+    document.getElementById('retentionSaveBar')?.classList.add('hidden');
+}
+
+document.getElementById('retentionModal')?.addEventListener('click', e => {
+    if (e.target.id === 'retentionModal') closeRetentionModal();
 });
 
-// ====================================================================
-// Service Export/Import
-// ====================================================================
+// ============================================================
+// Service Export / Import
+// ============================================================
 
 let allServices = [];
 let selectedExportServices = new Set();
@@ -200,128 +280,70 @@ let importFileData = null;
 let importValidationResult = null;
 let selectedImportServices = new Set();
 
-// Load all services for export/import
 async function loadAllServices() {
     try {
         const services = await authenticatedFetch('/api/v1/services');
         const monitors = await authenticatedFetch('/api/v1/monitors');
-
-        // Count monitors per service
         const monitorCounts = {};
-        monitors.forEach(monitor => {
-            monitorCounts[monitor.service_id] = (monitorCounts[monitor.service_id] || 0) + 1;
-        });
-
-        // Add monitor count to each service
-        allServices = services.map(service => ({
-            ...service,
-            monitor_count: monitorCounts[service.id] || 0
-        }));
+        monitors.forEach(m => { monitorCounts[m.service_id] = (monitorCounts[m.service_id] || 0) + 1; });
+        allServices = services.map(s => ({ ...s, monitor_count: monitorCounts[s.id] || 0 }));
     } catch (error) {
         console.error('Failed to load services:', error);
     }
 }
 
-// Initialize on page load
 loadAllServices();
 
-
-// ====================================================================
-// Export Modal
-// ====================================================================
-
 async function showExportModal() {
-    // Reload services
     await loadAllServices();
-
-    // Reset selection
     selectedExportServices.clear();
-
-    // Populate service list
     const serviceList = document.getElementById('exportServiceList');
     if (allServices.length === 0) {
-        serviceList.innerHTML = '<p style="padding: 2rem; text-align: center; color: var(--text-secondary);">No services found</p>';
+        serviceList.innerHTML = '<p style="padding:2rem;text-align:center;color:var(--text-secondary);">No services found</p>';
     } else {
         serviceList.innerHTML = allServices.map(service => {
-            const monitorCount = service.monitor_count || 0;
+            const n = service.monitor_count || 0;
             return `
                 <div class="export-service-item">
-                    <input
-                        type="checkbox"
-                        class="export-service-checkbox"
-                        id="export-service-${service.id}"
-                        data-service-id="${service.id}"
-                        onchange="toggleExportService(${service.id})"
-                        checked
-                    >
+                    <input type="checkbox" class="export-service-checkbox"
+                        id="export-service-${service.id}" data-service-id="${service.id}"
+                        onchange="toggleExportService(${service.id})" checked>
                     <label for="export-service-${service.id}" class="export-service-info">
                         <div class="export-service-name">${service.name}</div>
-                        <div class="export-service-meta">${monitorCount} monitor${monitorCount !== 1 ? 's' : ''}</div>
+                        <div class="export-service-meta">${n} monitor${n !== 1 ? 's' : ''}</div>
                     </label>
-                </div>
-            `;
+                </div>`;
         }).join('');
-
-        // Select all by default
         allServices.forEach(s => selectedExportServices.add(s.id));
     }
-
-    // Show modal
     document.getElementById('exportModal').classList.remove('hidden');
 }
 
-function closeExportModal() {
-    document.getElementById('exportModal').classList.add('hidden');
-}
+function closeExportModal() { document.getElementById('exportModal').classList.add('hidden'); }
 
 function toggleExportService(serviceId) {
-    if (selectedExportServices.has(serviceId)) {
-        selectedExportServices.delete(serviceId);
-    } else {
-        selectedExportServices.add(serviceId);
-    }
+    if (selectedExportServices.has(serviceId)) selectedExportServices.delete(serviceId);
+    else selectedExportServices.add(serviceId);
 }
 
 async function executeExport() {
-    if (selectedExportServices.size === 0) {
-        showError('Please select at least one service to export');
-        return;
-    }
-
+    if (selectedExportServices.size === 0) { showError('Please select at least one service to export'); return; }
     try {
         const serviceIds = Array.from(selectedExportServices).join(',');
         const token = localStorage.getItem('token');
-
-        // Download file
         const response = await fetch(`/api/v1/services/export?service_ids=${serviceIds}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if (!response.ok) {
-            throw new Error('Export failed');
-        }
-
-        // Get filename from header or use default
-        const contentDisposition = response.headers.get('Content-Disposition');
+        if (!response.ok) throw new Error('Export failed');
+        const cd = response.headers.get('Content-Disposition');
         let filename = 'simplewatch_export.json';
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (match) filename = match[1];
-        }
-
-        // Download blob
+        if (cd) { const m = cd.match(/filename="?([^"]+)"?/); if (m) filename = m[1]; }
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
         showSuccess(`Exported ${selectedExportServices.size} service${selectedExportServices.size !== 1 ? 's' : ''}`);
         closeExportModal();
     } catch (error) {
@@ -329,24 +351,12 @@ async function executeExport() {
     }
 }
 
-// Close export modal when clicking backdrop
-document.getElementById('exportModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'exportModal') {
-        closeExportModal();
-    }
+document.getElementById('exportModal')?.addEventListener('click', e => {
+    if (e.target.id === 'exportModal') closeExportModal();
 });
 
-// ====================================================================
-// Import Modal
-// ====================================================================
-
 function showImportModal() {
-    // Reset state
-    importFileData = null;
-    importValidationResult = null;
-    selectedImportServices.clear();
-
-    // Reset UI
+    importFileData = null; importValidationResult = null; selectedImportServices.clear();
     document.getElementById('importUploadSection').classList.remove('hidden');
     document.getElementById('importPreviewSection').classList.add('hidden');
     document.getElementById('importResultSection').classList.add('hidden');
@@ -355,67 +365,33 @@ function showImportModal() {
     document.getElementById('importExecuteBtn').classList.add('hidden');
     document.getElementById('importCancelBtn').textContent = 'Cancel';
 
-    // Setup file input
     const fileInput = document.getElementById('importFileInput');
     const uploadArea = document.getElementById('importUploadArea');
-
     fileInput.onchange = handleFileSelect;
-
     uploadArea.onclick = () => fileInput.click();
-
-    // Drag and drop
-    uploadArea.ondragover = (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('drag-over');
+    uploadArea.ondragover = e => { e.preventDefault(); uploadArea.classList.add('drag-over'); };
+    uploadArea.ondragleave = () => uploadArea.classList.remove('drag-over');
+    uploadArea.ondrop = e => {
+        e.preventDefault(); uploadArea.classList.remove('drag-over');
+        if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; handleFileSelect(); }
     };
-
-    uploadArea.ondragleave = () => {
-        uploadArea.classList.remove('drag-over');
-    };
-
-    uploadArea.ondrop = (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('drag-over');
-        if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files;
-            handleFileSelect();
-        }
-    };
-
-    // Show modal
     document.getElementById('importModal').classList.remove('hidden');
 }
 
-function closeImportModal() {
-    document.getElementById('importModal').classList.add('hidden');
-}
+function closeImportModal() { document.getElementById('importModal').classList.add('hidden'); }
 
 function handleFileSelect() {
     const fileInput = document.getElementById('importFileInput');
     const file = fileInput.files[0];
-
     if (!file) return;
-
-    // Validate file type
-    if (!file.name.endsWith('.json')) {
-        showError('Please select a JSON file');
-        return;
-    }
-
-    // Show file info
+    if (!file.name.endsWith('.json')) { showError('Please select a JSON file'); return; }
     document.getElementById('importFileName').textContent = file.name;
     document.getElementById('importFileInfo').classList.remove('hidden');
     document.getElementById('importValidateBtn').classList.remove('hidden');
-
-    // Read file
     const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            importFileData = JSON.parse(e.target.result);
-        } catch (error) {
-            showError('Invalid JSON file');
-            clearImportFile();
-        }
+    reader.onload = e => {
+        try { importFileData = JSON.parse(e.target.result); }
+        catch { showError('Invalid JSON file'); clearImportFile(); }
     };
     reader.readAsText(file);
 }
@@ -428,86 +404,50 @@ function clearImportFile() {
 }
 
 async function validateImportFile() {
-    if (!importFileData) {
-        showError('No file selected');
-        return;
-    }
-
+    if (!importFileData) { showError('No file selected'); return; }
     try {
-        // Create form data with file
         const blob = new Blob([JSON.stringify(importFileData)], { type: 'application/json' });
         const formData = new FormData();
         formData.append('file', blob, 'import.json');
-
         const token = localStorage.getItem('token');
         const response = await fetch('/api/v1/services/import/validate', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
+            method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
         });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Validation failed');
-        }
-
+        if (!response.ok) { const err = await response.json(); throw new Error(err.detail || 'Validation failed'); }
         importValidationResult = await response.json();
-
-        // Show preview
         displayImportPreview(importValidationResult);
-    } catch (error) {
-        showError('Validation failed: ' + error.message);
-    }
+    } catch (error) { showError('Validation failed: ' + error.message); }
 }
 
 function displayImportPreview(validation) {
     const { summary, details } = validation;
-
-    // Update summary
     document.getElementById('importPreviewSummary').textContent =
         `Found ${summary.total_services} service${summary.total_services !== 1 ? 's' : ''}. ` +
         `${summary.new_services} will be created with ${summary.new_monitors} monitor${summary.new_monitors !== 1 ? 's' : ''}. ` +
         `${summary.skipped_services} will be skipped (already exist).`;
 
-    // Populate service list
     const serviceList = document.getElementById('importServiceList');
     serviceList.innerHTML = details.map((item, index) => {
         const willCreate = item.action === 'create';
         const badge = willCreate
             ? '<span class="import-service-badge badge-new">NEW</span>'
             : '<span class="import-service-badge badge-skip">EXISTS</span>';
-
-        // Select new services by default
-        if (willCreate) {
-            selectedImportServices.add(index);
-        }
-
+        if (willCreate) selectedImportServices.add(index);
         return `
             <div class="import-service-item ${!willCreate ? 'will-skip' : ''}">
-                <input
-                    type="checkbox"
-                    class="import-service-checkbox"
-                    id="import-service-${index}"
-                    data-service-index="${index}"
-                    onchange="toggleImportService(${index})"
-                    ${willCreate ? 'checked' : 'disabled'}
-                >
+                <input type="checkbox" class="import-service-checkbox"
+                    id="import-service-${index}" data-service-index="${index}"
+                    onchange="toggleImportService(${index})" ${willCreate ? 'checked' : 'disabled'}>
                 <label for="import-service-${index}" class="import-service-info">
                     <div class="import-service-header">
                         <div class="import-service-name">${item.service_name}</div>
                         ${badge}
                     </div>
-                    <div class="import-service-meta">
-                        ${item.monitors} monitor${item.monitors !== 1 ? 's' : ''} • ${item.reason}
-                    </div>
+                    <div class="import-service-meta">${item.monitors} monitor${item.monitors !== 1 ? 's' : ''} • ${item.reason}</div>
                 </label>
-            </div>
-        `;
+            </div>`;
     }).join('');
 
-    // Update UI
     document.getElementById('importUploadSection').classList.add('hidden');
     document.getElementById('importPreviewSection').classList.remove('hidden');
     document.getElementById('importValidateBtn').classList.add('hidden');
@@ -515,98 +455,49 @@ function displayImportPreview(validation) {
 }
 
 function toggleImportService(index) {
-    if (selectedImportServices.has(index)) {
-        selectedImportServices.delete(index);
-    } else {
-        selectedImportServices.add(index);
-    }
+    if (selectedImportServices.has(index)) selectedImportServices.delete(index);
+    else selectedImportServices.add(index);
 }
 
 async function executeImport() {
-    if (selectedImportServices.size === 0) {
-        showError('Please select at least one service to import');
-        return;
-    }
-
+    if (selectedImportServices.size === 0) { showError('Please select at least one service to import'); return; }
     try {
-        // Create form data with file
         const blob = new Blob([JSON.stringify(importFileData)], { type: 'application/json' });
         const formData = new FormData();
         formData.append('file', blob, 'import.json');
-
         const serviceIndices = Array.from(selectedImportServices).join(',');
         const token = localStorage.getItem('token');
-
         const response = await fetch(`/api/v1/services/import?service_indices=${serviceIndices}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
+            method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
         });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Import failed');
-        }
-
+        if (!response.ok) { const err = await response.json(); throw new Error(err.detail || 'Import failed'); }
         const result = await response.json();
-
-        // Display results
         displayImportResult(result);
-
-        // Reload services
         await loadAllServices();
-    } catch (error) {
-        showError('Import failed: ' + error.message);
-    }
+    } catch (error) { showError('Import failed: ' + error.message); }
 }
 
 function displayImportResult(result) {
-    const { imported, skipped, failed, details } = result;
-
-    // Build result summary HTML
-    const summaryHTML = `
-        <div class="import-result-stat">
-            <span class="import-result-label">Successfully imported:</span>
-            <span class="import-result-value success">${imported}</span>
-        </div>
-        <div class="import-result-stat">
-            <span class="import-result-label">Skipped (already exist):</span>
-            <span class="import-result-value warning">${skipped}</span>
-        </div>
-        ${failed > 0 ? `
-        <div class="import-result-stat">
-            <span class="import-result-label">Failed:</span>
-            <span class="import-result-value error">${failed}</span>
-        </div>
-        ` : ''}
+    const { imported, skipped, failed } = result;
+    document.getElementById('importResultSummary').innerHTML = `
+        <div class="import-result-stat"><span class="import-result-label">Successfully imported:</span><span class="import-result-value success">${imported}</span></div>
+        <div class="import-result-stat"><span class="import-result-label">Skipped (already exist):</span><span class="import-result-value warning">${skipped}</span></div>
+        ${failed > 0 ? `<div class="import-result-stat"><span class="import-result-label">Failed:</span><span class="import-result-value error">${failed}</span></div>` : ''}
     `;
-
-    document.getElementById('importResultSummary').innerHTML = summaryHTML;
-
-    // Update UI
     document.getElementById('importPreviewSection').classList.add('hidden');
     document.getElementById('importResultSection').classList.remove('hidden');
     document.getElementById('importExecuteBtn').classList.add('hidden');
     document.getElementById('importCancelBtn').textContent = 'Close';
-
-    // Show success message
-    if (imported > 0) {
-        showSuccess(`Successfully imported ${imported} service${imported !== 1 ? 's' : ''}`);
-    }
+    if (imported > 0) showSuccess(`Successfully imported ${imported} service${imported !== 1 ? 's' : ''}`);
 }
 
-// Close import modal when clicking backdrop
-document.getElementById('importModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'importModal') {
-        closeImportModal();
-    }
+document.getElementById('importModal')?.addEventListener('click', e => {
+    if (e.target.id === 'importModal') closeImportModal();
 });
 
-// ====================================================================
+// ============================================================
 // Audit Log
-// ====================================================================
+// ============================================================
 
 async function loadAuditLogCount() {
     try {
@@ -620,62 +511,40 @@ async function loadAuditLogCount() {
 async function exportAuditLog() {
     try {
         const fromDate = document.getElementById('auditFromDate').value;
-        const toDate = document.getElementById('auditToDate').value;
-        const token = localStorage.getItem('token');
-
+        const toDate   = document.getElementById('auditToDate').value;
+        const token    = localStorage.getItem('token');
         let url = '/api/v1/audit/export';
         const params = [];
         if (fromDate) params.push(`from_date=${fromDate}`);
-        if (toDate) params.push(`to_date=${toDate}`);
-        if (params.length > 0) url += '?' + params.join('&');
+        if (toDate)   params.push(`to_date=${toDate}`);
+        if (params.length) url += '?' + params.join('&');
 
-        const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!response.ok) { const err = await response.json(); throw new Error(err.detail || 'Export failed'); }
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Export failed');
-        }
-
-        const contentDisposition = response.headers.get('Content-Disposition');
+        const cd = response.headers.get('Content-Disposition');
         let filename = 'audit_log.csv';
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (match) filename = match[1];
-        }
+        if (cd) { const m = cd.match(/filename="?([^"]+)"?/); if (m) filename = m[1]; }
 
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(downloadUrl);
-        document.body.removeChild(a);
-
+        a.href = downloadUrl; a.download = filename;
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(downloadUrl); document.body.removeChild(a);
         showSuccess('Audit log exported successfully');
-    } catch (error) {
-        showError('Failed to export audit log: ' + error.message);
-    }
+    } catch (error) { showError('Failed to export audit log: ' + error.message); }
 }
 
+// ============================================================
+// Status Page Banner
+// ============================================================
 
-// ====================================================================
-// Status Page Banner Settings
-// ====================================================================
-
-let currentBannerText = '';
-let currentBannerSeverity = 'info';
-
-// Load banner settings on page load
 async function loadStatusPageBannerSettings() {
     try {
         const response = await authenticatedFetch('/api/v1/settings/status-page-banner');
         currentBannerText = response.text || '';
         currentBannerSeverity = response.severity || 'info';
-
         document.getElementById('bannerText').value = currentBannerText;
         document.getElementById('bannerSeverity').value = currentBannerSeverity;
         updateBannerCharCount();
@@ -685,69 +554,63 @@ async function loadStatusPageBannerSettings() {
     }
 }
 
-// Character count update
 function updateBannerCharCount() {
     const text = document.getElementById('bannerText').value;
     document.getElementById('bannerCharCount').textContent = text.length;
 }
 
-// Preview update
 function updateBannerPreview() {
     const text = document.getElementById('bannerText').value.trim();
     const severity = document.getElementById('bannerSeverity').value;
     const preview = document.getElementById('bannerPreview');
-
     if (!text) {
         preview.innerHTML = '<div class="banner-preview-empty">Enter a message above to see preview</div>';
         return;
     }
-
-    const severityClass = `banner-${severity}`;
-    const icon = severity === 'critical' ? icons.alertCircle :
-                 severity === 'warning' ? icons.alertTriangle :
-                 icons.info;
-
+    const icon = severity === 'critical' ? icons.alertCircle : severity === 'warning' ? icons.alertTriangle : icons.info;
+    const div = document.createElement('div'); div.textContent = text;
     preview.innerHTML = `
-        <div class="status-banner ${severityClass}">
+        <div class="status-banner banner-${severity}">
             <span class="status-banner-icon">${icon}</span>
-            <span class="status-banner-text">${escapeHtml(text)}</span>
-        </div>
-    `;
+            <span class="status-banner-text">${div.innerHTML}</span>
+        </div>`;
 }
 
-// Escape HTML for preview
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Save banner settings
 async function saveStatusPageBanner() {
     const text = document.getElementById('bannerText').value.trim();
     const severity = document.getElementById('bannerSeverity').value;
-
     try {
         await authenticatedFetch('/api/v1/settings/status-page-banner', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text, severity })
         });
-
         currentBannerText = text;
         currentBannerSeverity = severity;
-        showSuccess('Banner settings saved successfully');
-    } catch (error) {
-        showError('Failed to save banner settings: ' + error.message);
-    }
+        document.getElementById('bannerSaveBar')?.classList.add('hidden');
+        showSuccess('Banner settings saved');
+    } catch (error) { showError('Failed to save banner: ' + error.message); }
 }
 
-// Clear banner
-async function clearStatusPageBanner() {
-    document.getElementById('bannerText').value = '';
-    document.getElementById('bannerSeverity').value = 'info';
+function discardBanner() {
+    document.getElementById('bannerText').value = currentBannerText;
+    document.getElementById('bannerSeverity').value = currentBannerSeverity;
     updateBannerCharCount();
     updateBannerPreview();
-    await saveStatusPageBanner();
+    document.getElementById('bannerSaveBar')?.classList.add('hidden');
 }
 
+// ============================================================
+// AI settings bridge (ai-settings.js owns the logic)
+// ============================================================
+
+async function saveAIAndHideBar() {
+    await saveAISettings();
+    document.getElementById('aiSaveBar')?.classList.add('hidden');
+}
+
+function discardAI() {
+    loadAISettings().then(() => {
+        document.getElementById('aiSaveBar')?.classList.add('hidden');
+    });
+}

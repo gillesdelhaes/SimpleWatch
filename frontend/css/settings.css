@@ -2,6 +2,261 @@
  * Settings page styles — Simple* family design
  */
 
+/* ── Tab bar ──────────────────────────────────────────────── */
+
+.settings-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--ink-200);
+    margin-bottom: 24px;
+    gap: 0;
+}
+
+.settings-tab {
+    padding: 11px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-400);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.settings-tab:hover { color: var(--ink-800); }
+
+.settings-tab.active {
+    color: var(--sw-primary);
+    border-bottom-color: var(--sw-primary);
+    font-weight: 600;
+}
+
+/* ── Tab content panels ───────────────────────────────────── */
+
+.settings-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-tab-content.hidden { display: none; }
+
+/* ── Settings card ────────────────────────────────────────── */
+
+.settings-card {
+    background: #fff;
+    border: 1px solid var(--ink-200);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.settings-card-header {
+    padding: 14px 20px;
+    background: var(--ink-50);
+    border-bottom: 1px solid var(--ink-100);
+}
+
+.settings-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    color: var(--ink-400);
+    text-transform: uppercase;
+}
+
+.settings-card-sub-header {
+    padding: 10px 20px;
+    background: var(--ink-50);
+    border-top: 1px solid var(--ink-100);
+    border-bottom: 1px solid var(--ink-100);
+}
+
+.settings-card-sub-header span {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    color: var(--ink-400);
+    text-transform: uppercase;
+}
+
+/* ── Two-column row ───────────────────────────────────────── */
+
+.settings-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    align-items: start;
+    padding: 20px;
+    border-bottom: 1px solid var(--ink-100);
+}
+
+.settings-row--last { border-bottom: none; }
+
+.settings-row-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-800);
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.settings-row-hint {
+    font-size: 12px;
+    color: var(--ink-400);
+    line-height: 1.55;
+}
+
+.settings-row-control--center {
+    display: flex;
+    align-items: center;
+    padding-top: 2px;
+}
+
+/* ── Settings inputs ──────────────────────────────────────── */
+
+.settings-input {
+    width: 100%;
+    border: 1.5px solid var(--ink-200);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--ink-800);
+    background: #fff;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.settings-input:focus {
+    border-color: var(--sw-primary);
+    box-shadow: 0 0 0 3px var(--sw-focus-ring);
+}
+
+.settings-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20' fill='%23737373'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.settings-textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+.settings-date { width: auto; max-width: 160px; }
+
+/* ── Save bar ─────────────────────────────────────────────── */
+
+.settings-save-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--ink-100);
+    background: var(--ink-50);
+}
+
+.settings-save-bar.hidden { display: none; }
+
+.settings-save-bar-hint {
+    font-size: 13px;
+    color: var(--ink-400);
+}
+
+.settings-save-bar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ── Misc ─────────────────────────────────────────────────── */
+
+.settings-stat {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink-800);
+    font-family: var(--font-mono);
+}
+
+.settings-date-range {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.settings-char-count {
+    font-size: 11px;
+    color: var(--ink-400);
+    margin-top: 4px;
+    text-align: right;
+    font-family: var(--font-mono);
+}
+
+.settings-warning-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--ink-400);
+    margin-top: 8px;
+}
+
+.api-key-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Danger box (auto-execute) ────────────────────────────── */
+
+.settings-danger-box {
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.settings-danger-warning {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(239,68,68,0.08);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--ink-500);
+    line-height: 1.5;
+}
+
+/* ── Ghost button (save bar discard) ─────────────────────── */
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--ink-200);
+    color: var(--ink-500);
+}
+
+.btn-ghost:hover {
+    background: var(--ink-100);
+    color: var(--ink-800);
+    border-color: var(--ink-200);
+}
+
+/* ── Small button variant ─────────────────────────────────── */
+
+.btn-sm {
+    font-size: 13px;
+    padding: 7px 14px;
+    height: auto;
+    line-height: 1.4;
+}
+
 /* ── Setting rows ─────────────────────────────────────────── */
 
 .setting-row {
