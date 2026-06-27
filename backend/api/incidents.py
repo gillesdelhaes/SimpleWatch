@@ -18,6 +18,22 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 
+# Time window definitions shared across incident endpoints
+_TIME_WINDOWS: dict = {
+    "24h": timedelta(hours=24),
+    "7d": timedelta(days=7),
+    "30d": timedelta(days=30),
+    "90d": timedelta(days=90),
+}
+_DEFAULT_WINDOW = timedelta(days=30)
+
+# Granularity per window used only by the timeline endpoint
+_TIMELINE_GRANULARITY: dict = {
+    "24h": "hour",
+    "7d": "hour",
+    "30d": "day",
+}
+
 
 def _enrich_incident(db: Session, incident) -> dict:
     """Build the standard incident dict with service name and affected monitor details."""
@@ -72,13 +88,7 @@ def list_incidents(
 
     # Filter by time window
     if time_window != "all":
-        window_map = {
-            "24h": timedelta(hours=24),
-            "7d": timedelta(days=7),
-            "30d": timedelta(days=30),
-            "90d": timedelta(days=90)
-        }
-        cutoff = datetime.utcnow() - window_map.get(time_window, timedelta(days=30))
+        cutoff = datetime.utcnow() - _TIME_WINDOWS.get(time_window, _DEFAULT_WINDOW)
         # Show incidents that were active during the time window
         query = query.filter(
             or_(
@@ -107,13 +117,7 @@ def get_incident_stats(
     Returns: incident count, MTTR, uptime %, incidents by service, incidents by severity.
     Only includes incidents from active services.
     """
-    window_map = {
-        "24h": timedelta(hours=24),
-        "7d": timedelta(days=7),
-        "30d": timedelta(days=30),
-        "90d": timedelta(days=90)
-    }
-    cutoff = datetime.utcnow() - window_map.get(time_window, timedelta(days=30))
+    cutoff = datetime.utcnow() - _TIME_WINDOWS.get(time_window, _DEFAULT_WINDOW)
 
     # Get all incidents in time window from active services only
     query = db.query(Incident).join(Service, Incident.service_id == Service.id).filter(
@@ -196,12 +200,8 @@ def get_incident_timeline(
     Returns hourly/daily incident counts suitable for Chart.js.
     Only includes incidents from active services.
     """
-    window_map = {
-        "24h": (timedelta(hours=24), "hour"),
-        "7d": (timedelta(days=7), "hour"),
-        "30d": (timedelta(days=30), "day")
-    }
-    delta, granularity = window_map.get(time_window, (timedelta(days=7), "hour"))
+    delta = _TIME_WINDOWS.get(time_window, timedelta(days=7))
+    granularity = _TIMELINE_GRANULARITY.get(time_window, "hour")
     cutoff = datetime.utcnow() - delta
 
     # Only include incidents from active services
@@ -260,13 +260,7 @@ def export_incidents_csv(
 
     # Filter by time window
     if time_window != "all":
-        window_map = {
-            "24h": timedelta(hours=24),
-            "7d": timedelta(days=7),
-            "30d": timedelta(days=30),
-            "90d": timedelta(days=90)
-        }
-        cutoff = datetime.utcnow() - window_map.get(time_window, timedelta(days=30))
+        cutoff = datetime.utcnow() - _TIME_WINDOWS.get(time_window, _DEFAULT_WINDOW)
         # Show incidents that were active during the time window
         query = query.filter(
             or_(

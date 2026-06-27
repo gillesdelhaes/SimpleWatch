@@ -15,6 +15,14 @@ logger = logging.getLogger(__name__)
 
 scheduler = None
 
+# Scheduler timing constants
+_MONITOR_CHECK_INTERVAL_SECONDS = 30
+_CLEANUP_INTERVAL_HOURS = 24
+_CACHE_UPDATE_INTERVAL_MINUTES = 5
+_MAINTENANCE_CHECK_INTERVAL_MINUTES = 1
+_MONITOR_INITIAL_DELAY_MINUTES = 1
+_SCHEDULER_MAX_WORKERS = 20
+
 
 def check_monitor(monitor_id: int):
     """
@@ -88,7 +96,7 @@ def monitor_scheduler_job():
         db.close()
 
     # Run checks in parallel — each check manages its own DB session
-    with ThreadPoolExecutor(max_workers=20) as pool:
+    with ThreadPoolExecutor(max_workers=_SCHEDULER_MAX_WORKERS) as pool:
         for monitor_id in monitor_ids:
             pool.submit(check_monitor, monitor_id)
 
@@ -105,7 +113,7 @@ def initialize_monitors():
         ).all()
 
         for monitor in monitors:
-            monitor.next_check_at = datetime.utcnow() + timedelta(minutes=1)
+            monitor.next_check_at = datetime.utcnow() + timedelta(minutes=_MONITOR_INITIAL_DELAY_MINUTES)
 
         db.commit()
         logger.info(f"Initialized {len(monitors)} monitors")
@@ -408,41 +416,41 @@ def start_scheduler():
 
     scheduler.add_job(
         func=monitor_scheduler_job,
-        trigger=IntervalTrigger(seconds=30),
+        trigger=IntervalTrigger(seconds=_MONITOR_CHECK_INTERVAL_SECONDS),
         id='monitor_scheduler',
-        name='Check monitors every 30 seconds',
+        name=f'Check monitors every {_MONITOR_CHECK_INTERVAL_SECONDS}s',
         replace_existing=True
     )
 
     scheduler.add_job(
         func=cleanup_old_status_updates,
-        trigger=IntervalTrigger(hours=24),
+        trigger=IntervalTrigger(hours=_CLEANUP_INTERVAL_HOURS),
         id='cleanup_scheduler',
-        name='Clean up old status updates daily',
+        name=f'Clean up old status updates every {_CLEANUP_INTERVAL_HOURS}h',
         replace_existing=True
     )
 
     scheduler.add_job(
         func=update_cached_uptime,
-        trigger=IntervalTrigger(minutes=5),
+        trigger=IntervalTrigger(minutes=_CACHE_UPDATE_INTERVAL_MINUTES),
         id='uptime_cache_scheduler',
-        name='Update cached uptime every 5 minutes',
+        name=f'Update cached uptime every {_CACHE_UPDATE_INTERVAL_MINUTES}m',
         replace_existing=True
     )
 
     scheduler.add_job(
         func=update_cached_sla,
-        trigger=IntervalTrigger(minutes=5),
+        trigger=IntervalTrigger(minutes=_CACHE_UPDATE_INTERVAL_MINUTES),
         id='sla_cache_scheduler',
-        name='Update cached SLA metrics every 5 minutes',
+        name=f'Update cached SLA metrics every {_CACHE_UPDATE_INTERVAL_MINUTES}m',
         replace_existing=True
     )
 
     scheduler.add_job(
         func=update_maintenance_windows,
-        trigger=IntervalTrigger(minutes=1),
+        trigger=IntervalTrigger(minutes=_MAINTENANCE_CHECK_INTERVAL_MINUTES),
         id='maintenance_window_scheduler',
-        name='Update maintenance window statuses every minute',
+        name=f'Update maintenance windows every {_MAINTENANCE_CHECK_INTERVAL_MINUTES}m',
         replace_existing=True
     )
 
