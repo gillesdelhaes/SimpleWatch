@@ -10,25 +10,26 @@ class APIClient {
         this.apiKey = localStorage.getItem('apiKey');
     }
 
-    async request(url, options = {}) {
+    async request(url, options = {}, _retry = false) {
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers
         };
 
-        if (this.token && !url.includes('/auth/login')) {
+        if (this.token && !url.includes('/auth/login') && !url.includes('/auth/refresh')) {
             headers['Authorization'] = `Bearer ${this.token}`;
         }
 
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
+        const response = await fetch(url, { ...options, headers });
 
         if (response.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('apiKey');
-            window.location.href = '/static/login.html';
+            if (!_retry && !url.includes('/auth/login') && !url.includes('/auth/refresh')) {
+                const refreshed = await this._tryRefresh();
+                if (refreshed) {
+                    return this.request(url, options, true);
+                }
+            }
+            this._logout();
             throw new Error('Unauthorized');
         }
 
@@ -41,6 +42,32 @@ class APIClient {
         return data;
     }
 
+    async _tryRefresh() {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) return false;
+        try {
+            const response = await fetch(`${API_BASE}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: refreshToken })
+            });
+            if (!response.ok) return false;
+            const data = await response.json();
+            this.token = data.access_token;
+            localStorage.setItem('token', data.access_token);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    _logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('apiKey');
+        window.location.href = '/static/login.html';
+    }
+
     async login(username, password) {
         const data = await this.request(`${API_BASE}/auth/login`, {
             method: 'POST',
@@ -49,6 +76,7 @@ class APIClient {
 
         this.token = data.access_token;
         localStorage.setItem('token', data.access_token);
+        localStorage.setItem('refreshToken', data.refresh_token);
         localStorage.setItem('username', data.username);
         localStorage.setItem('isAdmin', data.is_admin);
 
@@ -176,33 +204,5 @@ const api = new APIClient();
 
 // Helper function for authenticated fetch (used by some pages)
 async function authenticatedFetch(url, options = {}) {
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-
-    const token = localStorage.getItem('token');
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(url, {
-        ...options,
-        headers
-    });
-
-    if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('apiKey');
-        window.location.href = '/static/login.html';
-        throw new Error('Unauthorized');
-    }
-
-    const data = await response.json();
-
-    if (!response.ok) {
-        throw new Error(data.error || data.detail || 'Request failed');
-    }
-
-    return data;
+    return api.request(url, options);
 }

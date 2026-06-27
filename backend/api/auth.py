@@ -5,8 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db, User
-from models import LoginRequest, LoginResponse
-from utils.auth import verify_password, create_access_token, decode_access_token
+from models import LoginRequest, LoginResponse, RefreshRequest, RefreshResponse
+from utils.auth import (
+    verify_password,
+    create_access_token,
+    decode_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+)
 from utils.db import get_user_by_username, get_user_by_api_key
 from utils.audit import log_action
 
@@ -27,12 +33,15 @@ def login(request: LoginRequest, req: Request, db: Session = Depends(get_db)):
             detail="Incorrect username or password"
         )
 
-    access_token = create_access_token(data={"sub": user.username, "user_id": user.id})
+    token_data = {"sub": user.username, "user_id": user.id}
+    access_token = create_access_token(data=token_data)
+    refresh_token = create_refresh_token(data=token_data)
 
     log_action(db, user=user, action="login.success", ip_address=ip)
 
     return LoginResponse(
         access_token=access_token,
+        refresh_token=refresh_token,
         token_type="bearer",
         username=user.username,
         is_admin=user.is_admin
@@ -68,6 +77,22 @@ def get_current_user(
         )
 
     return user
+
+
+@router.post("/refresh", response_model=RefreshResponse)
+def refresh(request: RefreshRequest, db: Session = Depends(get_db)):
+    """Issue a new access token using a valid refresh token."""
+    payload = decode_refresh_token(request.refresh_token)
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    username = payload.get("sub")
+    user = get_user_by_username(db, username)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    access_token = create_access_token(data={"sub": user.username, "user_id": user.id})
+    return RefreshResponse(access_token=access_token, token_type="bearer")
 
 
 def get_user_from_api_key(api_key: str, db: Session) -> User:
