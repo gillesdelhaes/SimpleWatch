@@ -749,8 +749,32 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Setup failed');
 
-        showMessage('System initialized — redirecting to sign in…', 'success');
-        setTimeout(() => { window.location.href = '/static/login.html'; }, 2000);
+        // Log the new admin straight in and go to the dashboard — no need to
+        // bounce through the login page with the credentials just entered.
+        showMessage('System initialized — signing you in…', 'success');
+        try {
+          const loginRes = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          if (!loginRes.ok) throw new Error('auto-login failed');
+          const loginData = await loginRes.json();
+          localStorage.setItem('token', loginData.access_token);
+          localStorage.setItem('refreshToken', loginData.refresh_token);
+          localStorage.setItem('username', loginData.username);
+          localStorage.setItem('isAdmin', loginData.is_admin);
+          try {
+            const meRes = await fetch('/api/v1/users/me', {
+              headers: { 'Authorization': 'Bearer ' + loginData.access_token }
+            });
+            if (meRes.ok) localStorage.setItem('apiKey', (await meRes.json()).api_key);
+          } catch (e) { /* apiKey is non-critical; settings page will refetch */ }
+          window.location.href = '/static/dashboard.html';
+        } catch (e) {
+          // Fall back to the login page if auto-login didn't take.
+          window.location.href = '/static/login.html';
+        }
       } catch (err) {
         showMessage(err.message || 'Setup failed. Please try again.');
         submitBtn.disabled = false;
