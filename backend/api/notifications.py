@@ -152,6 +152,8 @@ def list_notification_channels(
     current_user = Depends(get_current_user)
 ):
     """List all notification channels (global, available to all admins)."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     channels = db.query(NotificationChannel).all()
     return {"channels": channels}
 
@@ -164,6 +166,8 @@ def create_notification_channel(
     current_user = Depends(get_current_user)
 ):
     """Create a new notification channel."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     # Validate channel type
     if channel_data.channel_type not in VALID_CHANNEL_TYPES:
         raise HTTPException(status_code=400, detail=f"Invalid channel_type. Must be one of: {', '.join(VALID_CHANNEL_TYPES)}")
@@ -204,6 +208,8 @@ def update_notification_channel(
     current_user = Depends(get_current_user)
 ):
     """Update a notification channel."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     channel = db.query(NotificationChannel).filter(
         NotificationChannel.id == channel_id
     ).first()
@@ -239,6 +245,8 @@ def delete_notification_channel(
     current_user = Depends(get_current_user)
 ):
     """Delete a notification channel."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     channel = db.query(NotificationChannel).filter(
         NotificationChannel.id == channel_id
     ).first()
@@ -265,6 +273,8 @@ def toggle_notification_channel(
     current_user = Depends(get_current_user)
 ):
     """Toggle notification channel active status."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     channel = db.query(NotificationChannel).filter(
         NotificationChannel.id == channel_id
     ).first()
@@ -285,6 +295,8 @@ def test_notification_channel(
     current_user = Depends(get_current_user)
 ):
     """Send test notification to verify channel configuration."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
     channel = db.query(NotificationChannel).filter(
         NotificationChannel.id == channel_id
     ).first()

@@ -1,8 +1,8 @@
 """
 Database initialization and configuration for SimpleWatch.
 """
-import os
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, TIMESTAMP, ForeignKey, JSON, Float
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, TIMESTAMP, ForeignKey, JSON, Float, Index, event
+import sqlalchemy.types as types
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -16,8 +16,45 @@ engine = create_engine(
     echo=False
 )
 
+
+@event.listens_for(engine, "connect")
+def _set_sqlite_pragmas(dbapi_connection, connection_record):
+    """Enable WAL and a busy timeout so scheduler writes don't block dashboard reads."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=5000")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
+
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+class EncryptedString(types.TypeDecorator):
+    """Transparently Fernet-encrypts a string column at rest.
+
+    Reads tolerate legacy plaintext values (returned as-is) so an existing
+    database keeps working after a column is switched to this type.
+    """
+    impl = types.Text
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        from utils.notifications import encrypt_password
+        return encrypt_password(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        from utils.notifications import decrypt_password
+        try:
+            return decrypt_password(value)
+        except Exception:
+            # Legacy plaintext row written before encryption was added.
+            return value
 
 
 class User(Base):
@@ -84,6 +121,12 @@ class StatusUpdate(Base):
     service = relationship("Service", back_populates="status_updates")
     monitor = relationship("Monitor")
 
+    # Hot path: "latest status for a monitor" — WHERE monitor_id=? ORDER BY timestamp DESC.
+    # Composite index turns the per-monitor sort of ~100k rows/yr into an index seek.
+    __table_args__ = (
+        Index("ix_status_updates_monitor_timestamp", "monitor_id", "timestamp"),
+    )
+
 
 class DashboardLayout(Base):
     __tablename__ = "dashboard_layouts"
@@ -137,8 +180,8 @@ class NotificationChannel(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     label = Column(String(255), nullable=False)
     channel_type = Column(String(50), nullable=False)  # 'slack', 'discord', 'generic'
-    webhook_url = Column(Text, nullable=False)
-    secret_token = Column(String(255))
+    webhook_url = Column(EncryptedString, nullable=False)  # holds the secret for Slack/Discord/Telegram
+    secret_token = Column(EncryptedString)  # routing key for PagerDuty/Opsgenie/etc.
     custom_payload_template = Column(Text)
     is_active = Column(Boolean, nullable=False, default=True)
     is_tested = Column(Boolean, nullable=False, default=False)
@@ -203,6 +246,17 @@ class Incident(Base):
 
     # Relationships
     service = relationship("Service", back_populates="incidents")
+
+    # At most one ongoing incident per service. Hard DB backstop against the
+    # race where two monitors of the same service fail in the same scheduler batch.
+    __table_args__ = (
+        Index(
+            "uq_incident_one_ongoing_per_service",
+            "service_id",
+            unique=True,
+            sqlite_where=(status == "ongoing"),
+        ),
+    )
 
 
 class MaintenanceWindow(Base):

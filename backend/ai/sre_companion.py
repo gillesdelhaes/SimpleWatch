@@ -330,23 +330,54 @@ class SRECompanion:
         return {"success": True, "message": "Action rejected"}
 
     async def _execute_action(self, action_log: ActionLog) -> Dict[str, Any]:
-        """Execute the action (webhook call)."""
+        """Execute the action (webhook call).
+
+        Security: the target is resolved from the admin-configured allowlist
+        (ServiceAIConfig.remediation_webhooks) by name. The URL/method/payload
+        proposed by the LLM are NEVER used directly — this prevents a
+        prompt-injected model (e.g. via monitor error text) from steering the
+        call at an arbitrary internal or cloud-metadata endpoint.
+        """
         import httpx
 
         config = action_log.action_config or {}
-        webhook = config.get("webhook")
+        llm_webhook = config.get("webhook")
 
-        if not webhook:
+        if not llm_webhook:
             return {"success": True, "message": "No webhook configured - suggestion acknowledged"}
 
+        # Resolve the requested webhook against the server-side allowlist by name.
+        requested_name = (llm_webhook.get("name") or config.get("name") or "").strip()
+        if not requested_name:
+            return {"success": False, "error": "No webhook name provided; refusing to execute"}
+
+        ai_config = self.db.query(ServiceAIConfig).filter(
+            ServiceAIConfig.service_id == action_log.service_id
+        ).first()
+        allowlist = (ai_config.remediation_webhooks if ai_config else None) or []
+        matched = next(
+            (w for w in allowlist if (w.get("name") or "").strip() == requested_name),
+            None
+        )
+        if not matched:
+            logger.warning(
+                f"Refusing AI webhook '{requested_name}' for service {action_log.service_id}: "
+                f"not in the configured remediation allowlist"
+            )
+            return {
+                "success": False,
+                "error": f"Webhook '{requested_name}' is not in this service's configured remediation allowlist",
+            }
+
         try:
-            url = webhook.get("url")
-            method = webhook.get("method", "POST").upper()
-            payload = webhook.get("payload")
-            headers = webhook.get("headers", {})
+            # Use ONLY the stored, admin-vetted values — never the LLM's.
+            url = matched.get("url")
+            method = (matched.get("method") or "POST").upper()
+            payload = matched.get("payload")
+            headers = matched.get("headers", {})
 
             if not url:
-                return {"success": False, "error": "No webhook URL configured"}
+                return {"success": False, "error": "Configured webhook has no URL"}
 
             async with httpx.AsyncClient(timeout=30.0) as client:
                 kwargs = {"headers": headers} if headers else {}
@@ -385,7 +416,7 @@ class SRECompanion:
         except httpx.TimeoutException:
             return {"success": False, "error": "Webhook request timed out (30s)"}
         except httpx.ConnectError:
-            return {"success": False, "error": f"Could not connect to webhook URL: {webhook.get('url', 'unknown')}"}
+            return {"success": False, "error": f"Could not connect to webhook URL: {matched.get('url', 'unknown')}"}
         except Exception as e:
             return {"success": False, "error": f"Webhook execution failed: {str(e)}"}
 

@@ -90,13 +90,19 @@ def send_email_with_config(smtp_config: dict, to_emails: List[str],
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
 
-        # Connect and send
-        server = smtplib.SMTP(smtp_config['host'], smtp_config['port'])
-        if smtp_config['use_tls']:
-            server.starttls()
-        server.login(smtp_config['username'], password)
-        server.send_message(msg)
-        server.quit()
+        # Connect and send. A timeout is mandatory: this runs inside a scheduler
+        # worker thread, and an unbounded SMTP hang would stall all monitoring.
+        server = smtplib.SMTP(smtp_config['host'], smtp_config['port'], timeout=10)
+        try:
+            if smtp_config['use_tls']:
+                server.starttls()
+            server.login(smtp_config['username'], password)
+            server.send_message(msg)
+        finally:
+            try:
+                server.quit()
+            except Exception:
+                pass
 
         logger.info(f"Email sent to {to_emails}: {subject}")
         return True, None

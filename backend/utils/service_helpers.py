@@ -3,6 +3,7 @@ Service-level helper functions for status calculation, incident management, and 
 Consolidates all service-related operations in one place.
 """
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from database import (
     Service, Monitor, StatusUpdate, Incident,
     SMTPConfig, NotificationChannel, ServiceNotificationSettings, NotificationLog,
@@ -26,6 +27,22 @@ import asyncio
 import threading
 
 logger = logging.getLogger(__name__)
+
+# Per-service locks serialize the post-check critical section (incident +
+# notification). The scheduler runs monitor checks in parallel threads within a
+# single process, so two monitors of the same service can otherwise race and
+# produce duplicate incidents / duplicate alerts.
+_service_locks_guard = threading.Lock()
+_service_locks: dict = {}
+
+
+def _get_service_lock(service_id: int) -> threading.Lock:
+    with _service_locks_guard:
+        lock = _service_locks.get(service_id)
+        if lock is None:
+            lock = threading.Lock()
+            _service_locks[service_id] = lock
+        return lock
 
 
 def trigger_ai_analysis_background(db_url: str, incident_id: int):
@@ -156,7 +173,14 @@ def update_service_incidents(db: Session, service_id: int):
                     affected_monitors_json=json.dumps(affected)
                 )
                 db.add(incident)
-                db.commit()
+                try:
+                    db.commit()
+                except IntegrityError:
+                    # Another thread already opened the ongoing incident for this
+                    # service (unique index). Not an error — just yield to it.
+                    db.rollback()
+                    logger.debug(f"Ongoing incident already exists for service {service_id}, skipping duplicate")
+                    return
                 logger.info(f"Created incident for service {service_id} (severity: {current_status})")
 
                 # Trigger AI analysis in background
@@ -593,14 +617,17 @@ def notify_service_status_change(db: Session, service_id: int):
     Post-check helper: compare new vs last-notified status, send notification if changed,
     and update incident records. Called after any StatusUpdate is committed.
     """
-    new_status = calculate_service_status(db, service_id)
-    settings = db.query(ServiceNotificationSettings).filter(
-        ServiceNotificationSettings.service_id == service_id
-    ).first()
-    old_status = settings.last_notified_status if settings else "unknown"
-    if new_status != old_status:
-        send_service_notification(db, service_id, old_status, new_status)
-    update_service_incidents(db, service_id)
+    # Serialize per service so parallel monitor checks can't double-send
+    # notifications or open duplicate incidents for the same status change.
+    with _get_service_lock(service_id):
+        new_status = calculate_service_status(db, service_id)
+        settings = db.query(ServiceNotificationSettings).filter(
+            ServiceNotificationSettings.service_id == service_id
+        ).first()
+        old_status = settings.last_notified_status if settings else "unknown"
+        if new_status != old_status:
+            send_service_notification(db, service_id, old_status, new_status)
+        update_service_incidents(db, service_id)
 
 
 def persist_monitor_check(db: Session, monitor, result: dict):
