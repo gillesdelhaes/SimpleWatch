@@ -35,11 +35,30 @@ class APIClient {
 
         const data = await response.json();
 
+        // Setup was reset (e.g. the database was wiped) while this session was
+        // open. The backend signals this with a 403 carrying redirect:"/setup".
+        // Key on the redirect field specifically so ordinary admin-only 403s
+        // ("Admin access required") are left to throw normally.
+        if (response.status === 403 && data && data.redirect === '/setup') {
+            this._redirectToSetup();
+            throw new Error('Setup required');
+        }
+
         if (!response.ok) {
             throw new Error(data.error || data.detail || 'Request failed');
         }
 
         return data;
+    }
+
+    _redirectToSetup() {
+        // A wiped DB invalidates the old session entirely — clear it.
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('apiKey');
+        if (!window.location.pathname.endsWith('/setup.html')) {
+            window.location.href = '/static/setup.html';
+        }
     }
 
     async _tryRefresh() {

@@ -162,6 +162,36 @@ On first launch you will:
 
 **Important:** Mounting `/data` is required to persist the database across restarts.
 
+### Using docker compose
+
+```bash
+docker compose up -d
+```
+
+The bundled `docker-compose.yml` stores the database and logs in named Docker volumes
+(`simplewatch-data`, `simplewatch-logs`) rather than loose files, so they can be snapshotted,
+backed up, and moved with standard Docker tooling.
+
+### Backup and restore
+
+The entire database lives in the `simplewatch-data` volume. To back it up:
+
+```bash
+docker run --rm \
+  -v simplewatch-data:/data \
+  -v "$PWD":/backup \
+  alpine tar czf /backup/simplewatch-backup.tgz -C /data .
+```
+
+To restore it into a fresh volume:
+
+```bash
+docker run --rm \
+  -v simplewatch-data:/data \
+  -v "$PWD":/backup \
+  alpine sh -c "cd /data && tar xzf /backup/simplewatch-backup.tgz"
+```
+
 ---
 
 ## Documentation
