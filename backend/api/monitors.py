@@ -13,7 +13,7 @@ import json
 import logging
 
 from monitors import MONITOR_CLASSES
-from utils.service_helpers import persist_monitor_check
+from utils.service_helpers import persist_monitor_check, update_service_incidents
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +255,11 @@ def pause_monitor(
         if service and service.is_active:
             service.is_active = False
             db.commit()
+
+    # Re-evaluate incidents: pausing a monitor changes the aggregated status
+    # (the failing monitor may be gone, or no monitors remain), so an ongoing
+    # incident may need to be resolved instead of lingering forever.
+    update_service_incidents(db, service_id)
 
     return {"success": True, "message": "Monitor paused"}
 

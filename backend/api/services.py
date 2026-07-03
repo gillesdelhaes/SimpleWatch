@@ -8,6 +8,7 @@ from database import get_db, Service, StatusUpdate, Monitor
 from models import ServiceCreate, ServiceResponse
 from api.auth import get_current_user
 from utils.audit import log_action
+from utils.service_helpers import update_service_incidents
 from monitors import MONITOR_CLASSES
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -436,6 +437,10 @@ def pause_service(
     ).update({"is_active": False})
 
     db.commit()
+
+    # Pausing stops monitoring, so close any ongoing incident rather than
+    # leaving it open forever (it would otherwise skew MTTR/uptime).
+    update_service_incidents(db, service_id)
 
     log_action(db, user=current_user, action="service.pause", resource_type="service",
                resource_id=service_id, resource_name=service.name,

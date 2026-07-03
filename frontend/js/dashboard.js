@@ -439,7 +439,7 @@ function getMonitorMetrics(monitor) {
         html += `
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Reason</div>
-                <div class="monitor-metric-value">${monitor.metadata.reason}</div>
+                <div class="monitor-metric-value">${escapeHtml(monitor.metadata.reason)}</div>
             </div>
         `;
     }
@@ -1138,11 +1138,11 @@ function renderModalAiSuggestionCard(action) {
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
-                    Action: ${webhook.name || 'Webhook'}
+                    Action: ${escapeHtml(webhook.name || 'Webhook')}
                 </div>
                 <div class="modal-ai-webhook-url">
-                    <span class="modal-ai-webhook-method modal-ai-webhook-method-${(webhook.method || 'POST').toLowerCase()}">${webhook.method || 'POST'}</span>
-                    ${webhook.url}
+                    <span class="modal-ai-webhook-method modal-ai-webhook-method-${(webhook.method || 'POST').toLowerCase()}">${escapeHtml(webhook.method || 'POST')}</span>
+                    ${escapeHtml(webhook.url)}
                 </div>
             </div>
         `;
@@ -1155,9 +1155,9 @@ function renderModalAiSuggestionCard(action) {
                 <span class="modal-ai-time">${formatTimestamp(action.created_at)}</span>
             </div>
 
-            <div class="modal-ai-description">${action.description}</div>
+            <div class="modal-ai-description">${escapeHtml(action.description)}</div>
 
-            <div class="modal-ai-reasoning">${action.reasoning}</div>
+            <div class="modal-ai-reasoning">${escapeHtml(action.reasoning)}</div>
 
             ${renderConfidenceBar(action.confidence)}
 
@@ -1167,7 +1167,7 @@ function renderModalAiSuggestionCard(action) {
                 <details class="modal-ai-alternatives">
                     <summary>Alternative approaches</summary>
                     <ul>
-                        ${action.config.alternatives.map(alt => `<li>${alt}</li>`).join('')}
+                        ${action.config.alternatives.map(alt => `<li>${escapeHtml(alt)}</li>`).join('')}
                     </ul>
                 </details>
             ` : ''}

@@ -194,15 +194,20 @@ def update_service_incidents(db: Session, service_id: int):
                 db.commit()
                 logger.info(f"Updated incident {ongoing.id} severity to {current_status}")
 
-        elif current_status == "operational":
+        else:
+            # current_status is "operational" or "unknown" (service/monitors paused,
+            # or no active monitors left). Either way it's no longer in a trackable
+            # failing state, so close any ongoing incident instead of leaving it open
+            # forever (which would silently skew MTTR and uptime analytics).
             if ongoing:
-                # Service recovered - close incident
                 ongoing.ended_at = datetime.utcnow()
                 ongoing.status = "resolved"
-                ongoing.duration_seconds = int((ongoing.ended_at - ongoing.started_at).total_seconds())
-                ongoing.recovery_metadata_json = json.dumps({"trigger": "auto"})
+                # Guard against clock skew producing a negative duration.
+                ongoing.duration_seconds = max(0, int((ongoing.ended_at - ongoing.started_at).total_seconds()))
+                trigger = "auto" if current_status == "operational" else "monitoring_stopped"
+                ongoing.recovery_metadata_json = json.dumps({"trigger": trigger})
                 db.commit()
-                logger.info(f"Resolved incident {ongoing.id} (duration: {ongoing.duration_seconds}s)")
+                logger.info(f"Resolved incident {ongoing.id} (status: {current_status}, duration: {ongoing.duration_seconds}s)")
 
     except Exception as e:
         logger.error(f"Error updating incidents for service {service_id}: {e}")
@@ -235,13 +240,22 @@ def should_send_notification(db: Session, service_id: int, new_status: str) -> b
     if not settings or not settings.enabled:
         return False
 
+    # Only notify on real, actionable states — never on "unknown" (a service
+    # whose monitors are paused or haven't reported yet).
+    if new_status not in ("operational", "degraded", "down"):
+        return False
+
     # Check if status changed
     if settings.last_notified_status == new_status:
         return False
 
-    # If recovering, always notify regardless of cooldown
-    if new_status == "operational" and settings.notify_on_recovery:
-        return True
+    # Recovery: notify (bypassing cooldown) only when we previously alerted a
+    # real failure. A brand-new service settling into "operational" (last
+    # notified status is None/unknown) is NOT a recovery and must stay silent.
+    if new_status == "operational":
+        if settings.notify_on_recovery and settings.last_notified_status in ("degraded", "down"):
+            return True
+        return False
 
     # Check cooldown
     if settings.last_notification_sent_at:

@@ -262,7 +262,7 @@ function renderIncidentsTable(incidents) {
                 ${incidents.map(incident => `
                     <tr>
                         <td>
-                            <div class="incident-service">${incident.service_name}</div>
+                            <div class="incident-service">${escapeHtml(incident.service_name)}</div>
                         </td>
                         <td>
                             <div class="incident-time">${formatTimestamp(incident.started_at)}</div>
@@ -282,7 +282,7 @@ function renderIncidentsTable(incidents) {
                         <td>
                             <div class="incident-monitors">
                                 ${incident.affected_monitors.map(m => `
-                                    <span class="monitor-badge">${m.type}${m.name ? ': ' + m.name : ''}</span>
+                                    <span class="monitor-badge">${escapeHtml(m.type)}${m.name ? ': ' + escapeHtml(m.name) : ''}</span>
                                 `).join('')}
                             </div>
                         </td>
@@ -605,14 +605,14 @@ function renderActionHistoryTable(actions) {
                             ${action.executed_at ? `<div class="incident-time" style="font-size: 0.75rem;">Resolved: ${formatTimestamp(action.executed_at)}</div>` : ''}
                         </td>
                         <td>
-                            <div class="incident-service">${action.service_name}</div>
+                            <div class="incident-service">${escapeHtml(action.service_name)}</div>
                         </td>
                         <td>
                             <div style="max-width: 300px;">
-                                <div style="font-weight: 500;">${action.description || 'N/A'}</div>
+                                <div style="font-weight: 500;">${escapeHtml(action.description || 'N/A')}</div>
                                 ${action.config?.webhook ? `
                                     <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
-                                        ${action.config.webhook.name || 'Webhook'}: ${action.config.webhook.method} ${truncateUrl(action.config.webhook.url)}
+                                        ${escapeHtml(action.config.webhook.name || 'Webhook')}: ${escapeHtml(action.config.webhook.method || '')} ${escapeHtml(truncateUrl(action.config.webhook.url))}
                                     </div>
                                 ` : ''}
                             </div>
