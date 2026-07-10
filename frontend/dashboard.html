@@ -1,11 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>Dashboard - SimpleWatch</title>
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
+    <link rel="stylesheet" href="/static/css/glasshouse.css">
+    <link rel="stylesheet" href="/static/css/watch.css">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/maintenance.css">
     <link rel="stylesheet" href="/static/css/ai-sre.css">
@@ -16,127 +25,117 @@
 <body>
     <div id="navigation" data-page="dashboard"></div>
 
-    <!-- Main content -->
-    <div class="main-container">
-        <div class="page-header">
-            <div class="page-header-row">
-                <div class="header-controls">
-                    <button id="filterButton" class="filter-btn-compact" onclick="toggleFilterPanel()" title="Sort & Filter">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                        </svg>
-                        <span id="filterIndicator" class="filter-indicator-dot"></span>
-                    </button>
-                </div>
+    <!-- Stats strip — populated by dashboard.js -->
+    <div id="statsStrip" class="stats hidden">
+        <div class="stat panel">
+            <div class="label">Operational</div>
+            <div class="value ok" id="statOpValue">—</div>
+            <div class="sub" id="statOpSub">services</div>
+        </div>
+        <div class="stat panel">
+            <div class="label">Degraded</div>
+            <div class="value warn" id="statDegValue">—</div>
+            <div class="sub">services</div>
+        </div>
+        <div class="stat panel">
+            <div class="label">Down</div>
+            <div class="value crit" id="statDownValue">—</div>
+            <div class="sub">services</div>
+        </div>
+        <div class="stat panel">
+            <div class="label">Avg uptime</div>
+            <div class="value" id="statUptimeValue">—</div>
+            <div class="sub" id="statUptimeSub">all services</div>
+        </div>
+    </div>
+
+    <!-- Services panel -->
+    <section class="panel">
+        <div class="panel-head">
+            <h2>Services</h2>
+            <span class="sub" id="lastUpdate"></span>
+            <div class="head-tools">
+                <button id="filterButton" class="chip" onclick="toggleFilterPanel()" title="Sort & filter">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filter</span>
+                    <span id="filterIndicator" class="filter-dot"></span>
+                </button>
             </div>
-            <div class="last-update" id="lastUpdate"></div>
         </div>
 
-        <!-- Inline filter bar — full width, slides in below header -->
+        <!-- Inline filter bar — slides in below the panel head -->
         <div id="filterPanel" class="filter-bar"></div>
-
-        <!-- Stats strip — populated by dashboard.js -->
-        <div id="statsStrip" class="stats-strip hidden">
-            <div class="stat-card stat-card--accent">
-                <div class="stat-card__label">Operational</div>
-                <div class="stat-card__value ok" id="statOpValue">—</div>
-                <div class="stat-card__sub" id="statOpSub">services</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card__label">Degraded</div>
-                <div class="stat-card__value warn" id="statDegValue">—</div>
-                <div class="stat-card__sub">services</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card__label">Down</div>
-                <div class="stat-card__value crit" id="statDownValue">—</div>
-                <div class="stat-card__sub">services</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card__label">Avg Uptime</div>
-                <div class="stat-card__value neutral" id="statUptimeValue">—</div>
-                <div class="stat-card__sub" id="statUptimeSub">all services</div>
-            </div>
-        </div>
 
         <div id="dashboardGrid" class="service-grid"></div>
 
         <div id="emptyState" class="empty-state hidden">
-            <div class="empty-state-icon" id="emptyStateIcon"></div>
-            <h2 class="empty-state-title">No services configured yet</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                Start monitoring your services in seconds
-            </p>
-            <a href="/static/services.html" class="empty-state-link">
-                Add your first monitor →
-            </a>
+            <div class="empty-ico" id="emptyStateIcon"></div>
+            <h2>No services configured yet</h2>
+            <p>Start monitoring your services in seconds.</p>
+            <a href="/static/services.html" class="btn sm">Add your first monitor</a>
         </div>
-    </div>
+    </section>
 
-    <!-- Monitor Details Modal -->
-    <div id="monitorDetailsModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalServiceName"></h2>
-                <button onclick="closeMonitorModal()" class="modal-close">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
+    <!-- Monitor details modal -->
+    <div id="monitorModalScrim" class="scrim" onclick="closeMonitorModal()"></div>
+    <div id="monitorDetailsModal" class="modal wide modal-scroll" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2 id="modalServiceName"></h2>
+            <button onclick="closeMonitorModal()" class="so-close" aria-label="Close">✕</button>
+        </div>
 
-            <div class="modal-overall-status">
-                <div class="mos-info">
-                    <div class="mos-label">Overall Status</div>
-                    <div class="mos-status-row">
-                        <span id="modalOverallStatus" class="mos-status-text"></span>
-                        <span id="modalStatusIndicator" class="service-status-dot"></span>
-                    </div>
-                    <div id="modalMonitorSummary" class="mos-summary"></div>
+        <div class="so-block mos">
+            <div class="mos-info">
+                <div class="bl">Overall status</div>
+                <div class="mos-status-row">
+                    <span id="modalOverallStatus" class="pill"></span>
                 </div>
-                <div id="modalAiAnalyzeContainer"></div>
+                <div id="modalMonitorSummary" class="mos-summary"></div>
             </div>
+            <div id="modalAiAnalyzeContainer"></div>
+        </div>
 
-            <div style="margin-bottom: 1rem;">
-                <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem;">Monitor Details</h3>
-                <div id="monitorDetailsList" class="monitor-details-list"></div>
-            </div>
+        <div class="modal-sec">
+            <h3>Monitor details</h3>
+            <div id="monitorDetailsList" class="monitor-details-list"></div>
+        </div>
 
-            <!-- Monitor Graph Section -->
-            <div id="graphSection" class="graph-section" style="margin-bottom: 1.5rem;">
-                <div class="graph-header">
-                    <h3 style="font-size: 1.125rem; font-weight: 700;">Performance Graph</h3>
-                    <div class="graph-controls">
-                        <select id="graphMonitorSelect" class="graph-select" onchange="loadMonitorGraph()">
-                            <!-- Populated dynamically -->
-                        </select>
-                        <select id="graphMetricSelect" class="graph-select" onchange="updateGraphMetric()">
-                            <!-- Populated dynamically -->
-                        </select>
-                        <div class="graph-period-buttons">
-                            <button class="graph-period-btn active" data-period="24h" onclick="setGraphPeriod('24h')">24h</button>
-                            <button class="graph-period-btn" data-period="7d" onclick="setGraphPeriod('7d')">7d</button>
-                            <button class="graph-period-btn" data-period="30d" onclick="setGraphPeriod('30d')">30d</button>
-                        </div>
+        <!-- Monitor graph section -->
+        <div id="graphSection" class="so-block graph-section">
+            <div class="graph-header">
+                <div class="bl">Performance</div>
+                <div class="graph-controls">
+                    <select id="graphMonitorSelect" class="select graph-select" onchange="loadMonitorGraph()">
+                        <!-- Populated dynamically -->
+                    </select>
+                    <select id="graphMetricSelect" class="select graph-select" onchange="updateGraphMetric()">
+                        <!-- Populated dynamically -->
+                    </select>
+                    <div class="graph-period-buttons">
+                        <button class="graph-period-btn active" data-period="24h" onclick="setGraphPeriod('24h')">24h</button>
+                        <button class="graph-period-btn" data-period="7d" onclick="setGraphPeriod('7d')">7d</button>
+                        <button class="graph-period-btn" data-period="30d" onclick="setGraphPeriod('30d')">30d</button>
                     </div>
                 </div>
-                <div id="graphContainer" class="graph-container">
-                    <div id="graphLoading" class="graph-loading">Loading graph data...</div>
-                    <div id="graphNoData" class="graph-no-data hidden">No data available for this period</div>
-                    <canvas id="monitorGraph"></canvas>
-                </div>
             </div>
+            <div id="graphContainer" class="graph-container">
+                <div id="graphLoading" class="graph-loading">Loading graph data…</div>
+                <div id="graphNoData" class="graph-no-data hidden">No data available for this period</div>
+                <canvas id="monitorGraph"></canvas>
+            </div>
+        </div>
 
-            <!-- AI SRE Suggestions (shown when there are pending actions for this service) -->
-            <div id="modalAiSuggestions" class="modal-ai-section hidden">
-                <h3 class="modal-ai-title">
-                    <svg class="modal-ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                    AI Analysis
-                </h3>
-                <div id="modalAiSuggestionsList"></div>
-            </div>
+        <!-- AI SRE suggestions (shown when there are pending actions for this service) -->
+        <div id="modalAiSuggestions" class="modal-ai-section hidden">
+            <h3 class="modal-ai-title">
+                <svg class="modal-ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                AI Analysis
+            </h3>
+            <div id="modalAiSuggestionsList"></div>
         </div>
     </div>
 

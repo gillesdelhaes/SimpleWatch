@@ -189,7 +189,7 @@ async function analyzeServiceWithAi(serviceId, serviceName) {
 
         // Update modal if open - replace button with pending indicator
         const modal = document.getElementById('monitorDetailsModal');
-        if (!modal.classList.contains('hidden')) {
+        if (modal.classList.contains('open')) {
             const aiAnalyzeContainer = document.getElementById('modalAiAnalyzeContainer');
             aiAnalyzeContainer.innerHTML = `
                 <div class="modal-ai-analysis-available">
@@ -227,6 +227,31 @@ function getStatusClass(status) {
     return status === 'operational' ? 'operational' :
            status === 'degraded' ? 'degraded' :
            status === 'down' ? 'down' : 'unknown';
+}
+
+// Glasshouse status vocabulary: operational wears brand, degraded warn,
+// down danger, everything else neutral.
+function statusPillClass(status) {
+    return status === 'operational' ? 'use' :
+           status === 'degraded' ? 'warn' :
+           status === 'down' ? 'danger' :
+           status === 'maintenance' ? 'avail' : 'retired';
+}
+
+// Resolve a CSS custom property to a concrete color Chart.js can consume
+// (tokens may be color-mix() expressions the canvas API can't parse).
+const _colorCache = {};
+function resolveCssColor(varName) {
+    const key = varName + ':' + document.documentElement.dataset.theme;
+    if (_colorCache[key]) return _colorCache[key];
+    const probe = document.createElement('span');
+    probe.style.color = `var(${varName})`;
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+    _colorCache[key] = resolved;
+    return resolved;
 }
 
 function getStatusText(status) {
@@ -278,9 +303,9 @@ function renderSlaBadge(sla) {
     if (!sla || !sla.target || !sla.status) return '';
 
     const statusColors = {
-        'ok': 'var(--status-operational)',
-        'at_risk': 'var(--status-degraded)',
-        'breached': 'var(--status-down)'
+        'ok': 'var(--brand-ink)',
+        'at_risk': 'var(--warn-ink)',
+        'breached': 'var(--danger-ink)'
     };
 
     const statusLabels = {
@@ -289,7 +314,7 @@ function renderSlaBadge(sla) {
         'breached': 'Breached'
     };
 
-    const color = statusColors[sla.status] || 'var(--text-tertiary)';
+    const color = statusColors[sla.status] || 'var(--ink-3)';
     const label = statusLabels[sla.status] || 'Unknown';
 
     // Determine opacity based on status (subtle when ok, prominent when at-risk/breached)
@@ -309,10 +334,10 @@ function getMonitorSummary(monitors) {
     const unknown = monitors.filter(m => m.status === 'unknown').length;
 
     const parts = [];
-    if (operational > 0) parts.push(`<span style="color: var(--status-operational); font-weight: 600;">${operational} ✓</span>`);
-    if (degraded > 0) parts.push(`<span style="color: var(--status-degraded); font-weight: 600;">${degraded} ~</span>`);
-    if (down > 0) parts.push(`<span style="color: var(--status-down); font-weight: 600;">${down} ✗</span>`);
-    if (unknown > 0) parts.push(`<span style="color: var(--text-tertiary); font-weight: 600;">${unknown} ?</span>`);
+    if (operational > 0) parts.push(`<span class="op">${operational} ✓</span>`);
+    if (degraded > 0) parts.push(`<span class="deg">${degraded} ~</span>`);
+    if (down > 0) parts.push(`<span class="down">${down} ✗</span>`);
+    if (unknown > 0) parts.push(`<span class="unk">${unknown} ?</span>`);
 
     return parts.join(', ');
 }
@@ -340,9 +365,7 @@ function createStatusWidget(service) {
             ${maintenanceBadge}
             <div class="sc-header">
                 <div class="sc-name">${escapeHtml(service.service)}</div>
-                <div class="status-indicator status-${getStatusClass(service.status)}">
-                    <span class="status-dot"></span>${getStatusText(service.status)}
-                </div>
+                <span class="pill ${statusPillClass(service.status)}">${getStatusText(service.status)}</span>
             </div>
             <div class="sc-monitors">
                 ${service.monitor_count > 0
@@ -466,12 +489,15 @@ let currentGraphPeriod = '24h';
 let currentGraphData = null;
 let currentGraphMetricIndex = 0;
 
-// Status colors for annotations
-const STATUS_COLORS = {
-    'operational': 'rgba(16, 185, 129, 0.7)',
-    'degraded': 'rgba(245, 158, 11, 0.7)',
-    'down': 'rgba(239, 68, 68, 0.7)'
-};
+// Status colors for annotations — resolved from theme tokens at render time
+function getStatusColor(status) {
+    const tokens = {
+        'operational': '--brand-ink',
+        'degraded': '--warn-ink',
+        'down': '--danger-ink'
+    };
+    return resolveCssColor(tokens[status] || '--ink-3');
+}
 
 function getGraphableMetrics(monitorType) {
     // Try to get from plugin first
@@ -480,7 +506,7 @@ function getGraphableMetrics(monitorType) {
         return plugin.graphableMetrics;
     }
     // Fallback defaults
-    return [{ key: 'response_time_ms', label: 'Response Time', unit: 'ms', color: '#10B981' }];
+    return [{ key: 'response_time_ms', label: 'Response Time', unit: 'ms' }];
 }
 
 function populateGraphSelectors(service) {
@@ -639,18 +665,19 @@ function renderGraph(data) {
     const annotations = {};
     if (data.status_changes) {
         data.status_changes.forEach((change, idx) => {
+            const statusColor = getStatusColor(change.to);
             annotations[`statusChange${idx}`] = {
                 type: 'line',
                 xMin: new Date(change.timestamp),
                 xMax: new Date(change.timestamp),
-                borderColor: STATUS_COLORS[change.to] || 'rgba(156, 163, 175, 0.5)',
+                borderColor: statusColor,
                 borderWidth: 2,
                 borderDash: [5, 5],
                 label: {
                     display: true,
                     content: change.to.charAt(0).toUpperCase(),
                     position: 'start',
-                    backgroundColor: STATUS_COLORS[change.to] || 'rgba(156, 163, 175, 0.8)',
+                    backgroundColor: statusColor,
                     color: 'white',
                     font: { size: 10, weight: 'bold' },
                     padding: 3
@@ -658,6 +685,14 @@ function renderGraph(data) {
             };
         });
     }
+
+    // Line color: metric-defined, else the app brand token
+    const lineColor = metric.color || resolveCssColor('--brand-ink');
+    const fillColor = lineColor.startsWith('#')
+        ? lineColor + '20'
+        : lineColor.replace('rgb(', 'rgba(').replace(')', ', 0.13)');
+    const gridColor = resolveCssColor('--track');
+    const tickColor = resolveCssColor('--ink-3');
 
     const ctx = canvas.getContext('2d');
     monitorChart = new Chart(ctx, {
@@ -667,8 +702,8 @@ function renderGraph(data) {
             datasets: [{
                 label: metric.label,
                 data: values,
-                borderColor: metric.color || '#10B981',
-                backgroundColor: (metric.color || '#10B981') + '20',
+                borderColor: lineColor,
+                backgroundColor: fillColor,
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3,
@@ -720,20 +755,20 @@ function renderGraph(data) {
                         }
                     },
                     grid: {
-                        color: 'rgba(156, 163, 175, 0.1)'
+                        color: gridColor
                     },
                     ticks: {
-                        color: 'rgba(156, 163, 175, 0.8)',
+                        color: tickColor,
                         maxRotation: 0
                     }
                 },
                 y: {
                     beginAtZero: metric.key !== 'status_code',
                     grid: {
-                        color: 'rgba(156, 163, 175, 0.1)'
+                        color: gridColor
                     },
                     ticks: {
-                        color: 'rgba(156, 163, 175, 0.8)',
+                        color: tickColor,
                         callback: function(value) {
                             return value + (metric.unit ? ' ' + metric.unit : '');
                         }
@@ -749,14 +784,9 @@ function openMonitorModal(serviceId) {
     if (!service) return;
 
     document.getElementById('modalServiceName').textContent = service.service;
-    document.getElementById('modalOverallStatus').textContent = getStatusText(service.status);
-    document.getElementById('modalOverallStatus').style.color =
-        service.status === 'operational' ? 'var(--status-operational)' :
-        service.status === 'degraded' ? 'var(--status-degraded)' :
-        'var(--status-down)';
-
-    const statusDot = document.getElementById('modalStatusIndicator');
-    statusDot.className = `service-status-dot ${getStatusClass(service.status)}`;
+    const overallStatus = document.getElementById('modalOverallStatus');
+    overallStatus.textContent = getStatusText(service.status);
+    overallStatus.className = `pill ${statusPillClass(service.status)}`;
 
     const monitorSummary = service.monitors && service.monitors.length > 0
         ? getMonitorSummary(service.monitors)
@@ -787,10 +817,7 @@ function openMonitorModal(serviceId) {
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         ${checkNowBtn}
-                        <div class="status-indicator status-${getStatusClass(monitor.status)}">
-                            <span class="status-dot"></span>
-                            ${getStatusText(monitor.status)}
-                        </div>
+                        <span class="pill ${statusPillClass(monitor.status)}">${getStatusText(monitor.status)}</span>
                     </div>
                 </div>
                 <div class="monitor-metrics">
@@ -799,7 +826,7 @@ function openMonitorModal(serviceId) {
             </div>
         `}).join('');
     } else {
-        monitorDetailsList.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 2rem;">No monitors configured for this service</p>';
+        monitorDetailsList.innerHTML = '<p style="text-align: center; color: var(--ink-3); padding: 2rem;">No monitors configured for this service</p>';
     }
 
     // Initialize graph section
@@ -853,11 +880,13 @@ function openMonitorModal(serviceId) {
         document.getElementById('modalAiSuggestions').classList.add('hidden');
     }
 
-    document.getElementById('monitorDetailsModal').classList.remove('hidden');
+    document.getElementById('monitorModalScrim').classList.add('open');
+    document.getElementById('monitorDetailsModal').classList.add('open');
 }
 
 function closeMonitorModal() {
-    document.getElementById('monitorDetailsModal').classList.add('hidden');
+    document.getElementById('monitorModalScrim').classList.remove('open');
+    document.getElementById('monitorDetailsModal').classList.remove('open');
 }
 
 async function checkMonitorNow(monitorId, btn) {
@@ -898,13 +927,6 @@ async function checkMonitorNow(monitorId, btn) {
     }
 }
 
-// Close modal when clicking outside
-document.getElementById('monitorDetailsModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeMonitorModal();
-    }
-});
-
 async function loadDashboard() {
     try {
         const data = await api.getAllStatus();
@@ -931,14 +953,15 @@ async function loadDashboard() {
 
         if (displayServices.length === 0) {
             dashboardGrid.innerHTML = `
-                <div class="filter-empty-state">
-                    <div class="filter-empty-icon">
-                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <div class="empty-ico">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                         </svg>
                     </div>
-                    <p>No services match your filters</p>
-                    <button class="filter-reset-btn" onclick="resetFilters()">Reset Filters</button>
+                    <h2>No services match your filters</h2>
+                    <p>Adjust the filters or reset them to see everything.</p>
+                    <button class="btn ghost sm" onclick="resetFilters()">Reset filters</button>
                 </div>
             `;
         } else {
@@ -1111,8 +1134,8 @@ let pendingActionsByService = {};
 
 function renderConfidenceBar(confidence) {
     const percentage = Math.round(confidence * 100);
-    const color = confidence >= 0.8 ? 'var(--status-operational)' :
-                  confidence >= 0.5 ? 'var(--status-degraded)' : 'var(--status-down)';
+    const color = confidence >= 0.8 ? 'var(--brand-ink)' :
+                  confidence >= 0.5 ? 'var(--warn-ink)' : 'var(--danger-ink)';
     return `
         <div class="ai-confidence">
             <span class="ai-confidence-label">Confidence</span>
