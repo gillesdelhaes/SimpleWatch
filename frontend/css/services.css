@@ -3,11 +3,6 @@
    Tokens only: no hard-coded brand or status hexes.
    ============================================================ */
 
-/* ── Page actions row ─────────────────────────────────────── */
-.page-actions {
-    display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px;
-}
-
 /* ── Services list (one panel, cards inside) ──────────────── */
 .servicelist { padding: 12px; }
 .servicelist .empty-state { padding: 56px 24px; }

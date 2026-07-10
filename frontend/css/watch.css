@@ -8,6 +8,18 @@
 /* ── Utilities ─────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
+/* ── Stat card extras (shared: dashboard, incidents) ───────── */
+.stat .value.ok   { color: var(--brand-ink); }
+.stat .value.warn { color: var(--warn-ink); }
+.stat .value.crit { color: var(--danger-ink); }
+.stat .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--ink-3);
+}
+
+/* ── Page actions row (shared) ─────────────────────────────── */
+.page-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px; }
+
 /* ── Status vocabulary ─────────────────────────────────────────
    operational → brand (the app's "good" color — no green token)
    degraded    → warn · down → danger · unknown/paused → neutral

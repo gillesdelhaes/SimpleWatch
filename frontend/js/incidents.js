@@ -1,5 +1,20 @@
 // Incidents page - uses global api, showSuccess, showError, requireAuth, getUserInfo from loaded scripts
 
+// Resolve a CSS token to a concrete color Chart.js can consume
+function resolveCssColor(varName) {
+    const probe = document.createElement('span');
+    probe.style.color = `var(${varName})`;
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+    return resolved;
+}
+
+function withAlpha(rgbColor, alpha) {
+    return rgbColor.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+}
+
 let timelineChart = null;
 let serviceChart = null;
 let aiEnabled = false;
@@ -118,25 +133,25 @@ function renderStats(stats) {
     const grid = document.getElementById('statsGrid');
     const uptimeDisplay = stats.uptime_percentage !== null ? `${stats.uptime_percentage}%` : 'N/A';
     grid.innerHTML = `
-        <div class="stat-card">
-            <div class="stat-label">Total Incidents</div>
-            <div class="stat-value">${stats.total_incidents}</div>
-            <div class="stat-trend">${stats.ongoing_incidents} ongoing, ${stats.resolved_incidents} resolved</div>
+        <div class="stat panel">
+            <div class="label">Total incidents</div>
+            <div class="value">${stats.total_incidents}</div>
+            <div class="sub">${stats.ongoing_incidents} ongoing, ${stats.resolved_incidents} resolved</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Mean Time To Recovery</div>
-            <div class="stat-value">${stats.mttr_formatted}</div>
-            <div class="stat-trend">Average incident duration</div>
+        <div class="stat panel">
+            <div class="label">Mean time to recovery</div>
+            <div class="value">${stats.mttr_formatted}</div>
+            <div class="sub">average incident duration</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Uptime</div>
-            <div class="stat-value">${uptimeDisplay}</div>
-            <div class="stat-trend">Last ${stats.time_window}</div>
+        <div class="stat panel">
+            <div class="label">Uptime</div>
+            <div class="value ok">${uptimeDisplay}</div>
+            <div class="sub">last ${stats.time_window}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Critical Incidents</div>
-            <div class="stat-value">${stats.by_severity.down || 0}</div>
-            <div class="stat-trend">${stats.by_severity.degraded || 0} degraded</div>
+        <div class="stat panel">
+            <div class="label">Critical incidents</div>
+            <div class="value crit">${stats.by_severity.down || 0}</div>
+            <div class="sub">${stats.by_severity.degraded || 0} degraded</div>
         </div>
     `;
 }
@@ -155,6 +170,15 @@ async function renderCharts(timeWindow) {
         timelineChart.destroy();
     }
 
+    const dangerColor = resolveCssColor('--danger-ink');
+    const brandColor = resolveCssColor('--brand-ink');
+    const gridColor = resolveCssColor('--track');
+    const tickColor = resolveCssColor('--ink-3');
+    const axisOpts = {
+        y: { beginAtZero: true, ticks: { stepSize: 1, color: tickColor }, grid: { color: gridColor } },
+        x: { ticks: { color: tickColor }, grid: { color: gridColor } }
+    };
+
     timelineChart = new Chart(timelineCtx, {
         type: 'line',
         data: {
@@ -162,24 +186,19 @@ async function renderCharts(timeWindow) {
             datasets: [{
                 label: 'Incidents',
                 data: timelineData.data,
-                borderColor: 'rgb(239, 68, 68)',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderColor: dangerColor,
+                backgroundColor: withAlpha(dangerColor, 0.1),
                 tension: 0.3,
                 fill: true
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                }
-            }
+            scales: axisOpts
         }
     });
 
@@ -203,23 +222,18 @@ async function renderCharts(timeWindow) {
             datasets: [{
                 label: 'Incidents',
                 data: serviceData.map(s => s.count),
-                backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: withAlpha(brandColor, 0.5),
+                borderColor: brandColor,
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                }
-            }
+            scales: axisOpts
         }
     });
 }
@@ -233,7 +247,7 @@ function renderIncidentsTable(incidents) {
         section.style.display = 'none';
         emptyState.style.display = 'block';
         const iconEl = document.getElementById('incidentEmptyIcon');
-        if (iconEl) iconEl.innerHTML = `<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#10B981;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+        if (iconEl) iconEl.innerHTML = `<svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--brand-ink);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
         return;
     }
 
@@ -417,11 +431,13 @@ async function generateIncidentPostmortem(incidentId) {
 }
 
 function openReportGeneratorModal() {
-    document.getElementById('reportGeneratorModal').classList.remove('hidden');
+    document.getElementById('reportGeneratorModalScrim').classList.add('open');
+    document.getElementById('reportGeneratorModal').classList.add('open');
 }
 
 function closeReportGeneratorModal() {
-    document.getElementById('reportGeneratorModal').classList.add('hidden');
+    document.getElementById('reportGeneratorModalScrim').classList.remove('open');
+    document.getElementById('reportGeneratorModal').classList.remove('open');
 }
 
 async function generateServiceReport() {
@@ -478,11 +494,13 @@ function showPostmortemModal(markdown) {
 
     // Render markdown (basic conversion)
     content.innerHTML = renderMarkdown(markdown);
-    modal.classList.remove('hidden');
+    document.getElementById('postmortemModalScrim').classList.add('open');
+    modal.classList.add('open');
 }
 
 function closePostmortemModal() {
-    document.getElementById('postmortemModal').classList.add('hidden');
+    document.getElementById('postmortemModalScrim').classList.remove('open');
+    document.getElementById('postmortemModal').classList.remove('open');
 }
 
 function renderMarkdown(md) {
@@ -570,7 +588,7 @@ function renderActionHistoryTable(actions) {
         if (emptyState) {
             emptyState.style.display = 'block';
             const iconEl = document.getElementById('aiEmptyIcon');
-            if (iconEl) iconEl.innerHTML = `<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:0.35;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>`;
+            if (iconEl) iconEl.innerHTML = `<svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>`;
         }
         return;
     }
@@ -611,7 +629,7 @@ function renderActionHistoryTable(actions) {
                             <div style="max-width: 300px;">
                                 <div style="font-weight: 500;">${escapeHtml(action.description || 'N/A')}</div>
                                 ${action.config?.webhook ? `
-                                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+                                    <div style="font-size: 0.75rem; color: var(--ink-3); margin-top: 0.25rem;">
                                         ${escapeHtml(action.config.webhook.name || 'Webhook')}: ${escapeHtml(action.config.webhook.method || '')} ${escapeHtml(truncateUrl(action.config.webhook.url))}
                                     </div>
                                 ` : ''}
@@ -629,7 +647,7 @@ function renderActionHistoryTable(actions) {
                             <span class="badge action-status-${action.status}">${action.status}</span>
                         </td>
                         <td>
-                            <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                            <div style="font-size: 0.875rem; color: var(--ink-2);">
                                 ${formatExecutedBy(action.executed_by)}
                             </div>
                         </td>
@@ -653,13 +671,13 @@ function renderActionHistoryPagination(total, limit, offset) {
     const totalPages = Math.ceil(total / limit);
 
     container.innerHTML = `
-        <button class="btn btn-secondary btn-sm" ${offset === 0 ? 'disabled' : ''} onclick="loadActionHistory(${offset - limit})">
+        <button class="btn ghost sm" ${offset === 0 ? 'disabled' : ''} onclick="loadActionHistory(${offset - limit})">
             Previous
         </button>
-        <span style="color: var(--text-secondary); font-size: 0.875rem;">
+        <span style="color: var(--ink-2); font-size: 0.875rem;">
             Page ${currentPage} of ${totalPages} (${total} items)
         </span>
-        <button class="btn btn-secondary btn-sm" ${offset + limit >= total ? 'disabled' : ''} onclick="loadActionHistory(${offset + limit})">
+        <button class="btn ghost sm" ${offset + limit >= total ? 'disabled' : ''} onclick="loadActionHistory(${offset + limit})">
             Next
         </button>
     `;

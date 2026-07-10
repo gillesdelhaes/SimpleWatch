@@ -1,46 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>Incidents - SimpleWatch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/glasshouse.css">
+    <link rel="stylesheet" href="/static/css/watch.css">
     <link rel="stylesheet" href="/static/css/incidents.css">
     <link rel="stylesheet" href="/static/css/ai-sre.css">
 </head>
 <body>
     <div id="navigation" data-page="incidents"></div>
 
-    <div class="main-container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div style="display: flex; gap: 0.75rem;">
-                <button id="generateReportHeaderBtn" onclick="openReportGeneratorModal()" class="btn btn-ai-report" style="display: none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                    Generate Report
-                </button>
-                <button onclick="exportIncidentsCSV()" class="btn btn-export">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Export CSV
-                </button>
-            </div>
-        </div>
+    <!-- Page actions -->
+    <div class="page-actions">
+        <button id="generateReportHeaderBtn" onclick="openReportGeneratorModal()" class="btn ghost" style="display: none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Generate Report
+        </button>
+        <button onclick="exportIncidentsCSV()" class="btn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export CSV
+        </button>
+    </div>
 
-        <!-- Filters -->
-        <div class="page-section">
-            <div class="filters-row">
-                <div class="filter-group">
-                    <label class="form-label">Time Window</label>
-                    <select id="timeWindow" class="form-input" onchange="loadIncidents(); loadStats();">
+    <!-- Filters -->
+    <section class="panel filters-panel">
+        <div class="filters-row">
+            <div class="fieldrow">
+                <label for="timeWindow">Time window</label>
+                <div class="selectwrap">
+                    <select id="timeWindow" class="select" onchange="loadIncidents(); loadStats();">
                         <option value="24h">Last 24 Hours</option>
                         <option value="7d">Last 7 Days</option>
                         <option value="30d" selected>Last 30 Days</option>
@@ -48,15 +55,19 @@
                         <option value="all">All Time</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label class="form-label">Service</label>
-                    <select id="serviceFilter" class="form-input" onchange="loadIncidents(); loadStats();">
+            </div>
+            <div class="fieldrow">
+                <label for="serviceFilter">Service</label>
+                <div class="selectwrap">
+                    <select id="serviceFilter" class="select" onchange="loadIncidents(); loadStats();">
                         <option value="">All Services</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label class="form-label">Status</label>
-                    <select id="statusFilter" class="form-input" onchange="loadIncidents();">
+            </div>
+            <div class="fieldrow">
+                <label for="statusFilter">Status</label>
+                <div class="selectwrap">
+                    <select id="statusFilter" class="select" onchange="loadIncidents();">
                         <option value="">All</option>
                         <option value="ongoing">Ongoing</option>
                         <option value="resolved">Resolved</option>
@@ -64,166 +75,158 @@
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid" id="statsGrid"></div>
+    <!-- Stats cards -->
+    <div class="stats" id="statsGrid"></div>
 
-        <!-- Charts -->
-        <div class="charts-grid">
-            <div class="page-section">
-                <h2 class="section-title">
-                    <span class="section-icon" id="chartIcon"></span>
-                    Incident Timeline
-                </h2>
-                <canvas id="timelineChart"></canvas>
+    <!-- Charts -->
+    <div class="charts-grid">
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Incident timeline</h2>
             </div>
-            <div class="page-section">
-                <h2 class="section-title">
-                    <span class="section-icon" id="barChartIcon"></span>
-                    By Service
-                </h2>
-                <canvas id="serviceChart"></canvas>
+            <div class="chart-wrap"><canvas id="timelineChart"></canvas></div>
+        </section>
+        <section class="panel">
+            <div class="panel-head">
+                <h2>By service</h2>
             </div>
-        </div>
+            <div class="chart-wrap"><canvas id="serviceChart"></canvas></div>
+        </section>
+    </div>
 
-        <!-- Incidents Table (Collapsible — hidden when empty) -->
-        <div class="page-section" id="incidentLogSection" style="display:none;">
-            <div class="collapsible-header" onclick="toggleIncidentLog()">
-                <div class="collapsible-header-left">
-                    <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                    </svg>
-                    <h2 class="collapsible-title">Incident Log</h2>
-                </div>
-            </div>
-            <div class="collapsible-content">
-                <div class="collapsible-content-inner">
-                    <div id="incidentsTable"></div>
-                </div>
+    <!-- Incidents table (collapsible — hidden when empty) -->
+    <section class="panel section-panel" id="incidentLogSection" style="display:none;">
+        <div class="collapsible-header" onclick="toggleIncidentLog()">
+            <div class="collapsible-header-left">
+                <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+                <h2 class="collapsible-title">Incident log</h2>
             </div>
         </div>
-
-        <!-- Incidents empty state (shown when no incidents) -->
-        <div class="page-section" id="incidentsEmptyState" style="display:none;">
-            <div class="empty-state">
-                <div class="empty-state-icon" id="incidentEmptyIcon"></div>
-                <div class="empty-state-title">No incidents found</div>
-                <div class="empty-state-text">All services are running smoothly in this time period</div>
+        <div class="collapsible-content">
+            <div class="collapsible-content-inner">
+                <div id="incidentsTable" class="tablewrap"></div>
             </div>
         </div>
+    </section>
 
-        <!-- AI Action History (Collapsible — hidden when empty or AI disabled) -->
-        <div class="page-section" id="aiActionHistorySection" style="display:none;">
-            <div class="collapsible-header" onclick="toggleActionHistory()">
-                <div class="collapsible-header-left">
-                    <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                    </svg>
-                    <h2 class="collapsible-title">AI Action History</h2>
-                </div>
-                <div class="collapsible-header-right" onclick="event.stopPropagation()">
-                    <select id="actionStatusFilter" class="form-input" style="width: auto;" onchange="loadActionHistory()">
+    <!-- Incidents empty state (shown when no incidents) -->
+    <section class="panel" id="incidentsEmptyState" style="display:none;">
+        <div class="empty-state">
+            <div class="empty-ico" id="incidentEmptyIcon"></div>
+            <h2>No incidents found</h2>
+            <p>All services are running smoothly in this time period.</p>
+        </div>
+    </section>
+
+    <!-- AI action history (collapsible — hidden when empty or AI disabled) -->
+    <section class="panel section-panel" id="aiActionHistorySection" style="display:none;">
+        <div class="collapsible-header" onclick="toggleActionHistory()">
+            <div class="collapsible-header-left">
+                <svg class="collapsible-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+                <h2 class="collapsible-title">AI action history</h2>
+            </div>
+            <div class="collapsible-header-right" onclick="event.stopPropagation()">
+                <div class="selectwrap">
+                    <select id="actionStatusFilter" class="select" style="width: auto;" onchange="loadActionHistory()">
                         <option value="">All Statuses</option>
                         <option value="pending">Pending</option>
                         <option value="executed">Executed</option>
                         <option value="failed">Failed</option>
                         <option value="rejected">Rejected</option>
                     </select>
-                    <button onclick="exportActionHistoryCSV()" class="btn btn-secondary btn-sm">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        Export
-                    </button>
                 </div>
-            </div>
-            <div class="collapsible-content">
-                <div class="collapsible-content-inner">
-                    <div id="actionHistoryTable"></div>
-                    <div id="actionHistoryPagination" class="pagination-controls" style="display: none;"></div>
-                </div>
+                <button onclick="exportActionHistoryCSV()" class="btn ghost sm">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Export
+                </button>
             </div>
         </div>
-
-        <!-- AI Action History empty state (shown when AI enabled but no history yet) -->
-        <div class="page-section" id="aiActionEmptyState" style="display:none;">
-            <div class="empty-state">
-                <div class="empty-state-icon" id="aiEmptyIcon"></div>
-                <div class="empty-state-title">No AI actions recorded</div>
-                <div class="empty-state-text">AI suggestions and remediation outcomes will appear here once the AI SRE analyzes an incident</div>
+        <div class="collapsible-content">
+            <div class="collapsible-content-inner">
+                <div id="actionHistoryTable" class="tablewrap"></div>
+                <div id="actionHistoryPagination" class="pagination-controls" style="display: none;"></div>
             </div>
+        </div>
+    </section>
+
+    <!-- AI action history empty state (shown when AI enabled but no history yet) -->
+    <section class="panel" id="aiActionEmptyState" style="display:none;">
+        <div class="empty-state">
+            <div class="empty-ico" id="aiEmptyIcon"></div>
+            <h2>No AI actions recorded</h2>
+            <p>AI suggestions and remediation outcomes will appear here once the AI SRE analyzes an incident.</p>
+        </div>
+    </section>
+
+    <!-- Report generator modal -->
+    <div id="reportGeneratorModalScrim" class="scrim" onclick="closeReportGeneratorModal()"></div>
+    <div id="reportGeneratorModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <div>
+                <h2>Generate report</h2>
+                <p class="sub" style="margin: 0;">Create an AI post-mortem for a service</p>
+            </div>
+            <button class="so-close" onclick="closeReportGeneratorModal()" aria-label="Close">✕</button>
+        </div>
+        <div class="fieldrow">
+            <label for="reportServiceSelect">Service</label>
+            <div class="selectwrap">
+                <select id="reportServiceSelect" class="select">
+                    <option value="">Select a service...</option>
+                </select>
+            </div>
+        </div>
+        <div class="formgrid">
+            <div class="fieldrow">
+                <label for="reportStartDate">Start date</label>
+                <input type="date" id="reportStartDate" class="input">
+            </div>
+            <div class="fieldrow">
+                <label for="reportEndDate">End date</label>
+                <input type="date" id="reportEndDate" class="input">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button onclick="closeReportGeneratorModal()" class="btn ghost">Cancel</button>
+            <button id="generateReportBtn" onclick="generateServiceReport()" class="btn">Generate Report</button>
         </div>
     </div>
 
-    <!-- Report Generator Modal -->
-    <div id="reportGeneratorModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 480px;">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title">Generate Report</h2>
-                    <p class="modal-subtitle">Create an AI post-mortem for a service</p>
-                </div>
-                <button class="modal-close" onclick="closeReportGeneratorModal()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
+    <!-- Post-mortem display modal -->
+    <div id="postmortemModalScrim" class="scrim" onclick="closePostmortemModal()"></div>
+    <div id="postmortemModal" class="modal wide modal-scroll" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <div>
+                <h2>Post-mortem report</h2>
+                <p class="sub" style="margin: 0;">AI-generated incident analysis</p>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Service</label>
-                    <select id="reportServiceSelect" class="form-input">
-                        <option value="">Select a service...</option>
-                    </select>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                    <div class="form-group">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" id="reportStartDate" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">End Date</label>
-                        <input type="date" id="reportEndDate" class="form-input">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeReportGeneratorModal()" class="btn btn-secondary">Cancel</button>
-                <button id="generateReportBtn" onclick="generateServiceReport()" class="btn btn-primary">Generate Report</button>
-            </div>
+            <button class="so-close" onclick="closePostmortemModal()" aria-label="Close">✕</button>
         </div>
-    </div>
-
-    <!-- Postmortem Display Modal -->
-    <div id="postmortemModal" class="modal hidden">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title">Post-Mortem Report</h2>
-                    <p class="modal-subtitle">AI-generated incident analysis</p>
-                </div>
-                <button class="modal-close" onclick="closePostmortemModal()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="postmortemContent" class="postmortem-content"></div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="copyPostmortem()" class="btn btn-secondary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2"/>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                    </svg>
-                    Copy
-                </button>
-                <button onclick="downloadPostmortem()" class="btn btn-primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Download
-                </button>
-            </div>
+        <div id="postmortemContent" class="postmortem-content"></div>
+        <div class="modal-actions">
+            <button onclick="copyPostmortem()" class="btn ghost">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copy
+            </button>
+            <button onclick="downloadPostmortem()" class="btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download
+            </button>
         </div>
     </div>
 
