@@ -102,6 +102,8 @@ a.wordmark { display: block; text-decoration: none; color: var(--ink); }
 /* ── Checkbox rows ─────────────────────────────────────────── */
 input[type="checkbox"] { accent-color: var(--b1); width: 15px; height: 15px; cursor: pointer; flex: 0 0 auto; }
 .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px; color: var(--ink); }
+.fieldrow label.checkbox-label { justify-content: flex-start; font-size: 13px; font-weight: 500; color: var(--ink); }
+textarea.input { resize: vertical; }
 
 /* ── Modal sizing variants (glasshouse .modal is 520px) ────── */
 .modal.wide  { width: min(720px, 94vw); }
@@ -133,6 +135,66 @@ input[type="checkbox"] { accent-color: var(--b1); width: 15px; height: 15px; cur
 /* ── Generic icon wrapper (legacy markup helper) ───────────── */
 .icon { display: inline-flex; align-items: center; justify-content: center; width: 1em; height: 1em; vertical-align: middle; flex: 0 0 auto; }
 .icon svg { width: 100%; height: 100%; display: block; }
+
+/* ── Legacy markup aliases ─────────────────────────────────────
+   Dynamically generated markup (monitor plugins, registry forms)
+   still emits .form-group/.form-label/.form-input and the old
+   button variants. Map them onto the glasshouse form/button
+   recipes so every generator doesn't need rewriting. */
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.form-input {
+  width: 100%; font: inherit; font-size: 13.5px; color: var(--ink);
+  padding: 10px 13px; border-radius: var(--r-control);
+  background: var(--field); border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--specular);
+  outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.form-input::placeholder { color: var(--ink-3); }
+.form-input:focus {
+  border-color: color-mix(in oklab, var(--b1) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--b1) 18%, transparent);
+}
+textarea.form-input { resize: vertical; }
+
+.btn.btn-secondary {
+  background: var(--glass); color: var(--ink); border-color: var(--edge);
+  box-shadow: inset 0 1px 0 var(--specular);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.btn.btn-secondary:hover { filter: none; background: var(--field); }
+.btn.btn-danger {
+  background: var(--glass); color: var(--danger-ink); border-color: var(--edge);
+  box-shadow: inset 0 1px 0 var(--specular);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.btn.btn-danger:hover { filter: none; background: var(--danger-bg); }
+.btn.btn-sm, .btn-sm { padding: 8px 14px; font-size: 12.5px; }
+
+/* ── Small inline action buttons (row/card actions) ────────── */
+.act-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: var(--r-control);
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--ink-3); flex: 0 0 auto;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.act-btn:hover { color: var(--ink); background: var(--row-hover); }
+.act-btn.danger:hover { color: var(--danger-ink); background: var(--danger-bg); }
+.act-btn.brand { color: var(--brand-ink); }
+.act-btn svg, .act-btn .icon { width: 17px; height: 17px; }
+
+/* ── Metric value states (plugin detail metrics) ───────────── */
+.monitor-metric-value.success { color: var(--brand-ink); }
+.monitor-metric-value.warning { color: var(--warn-ink); }
+.monitor-metric-value.error   { color: var(--danger-ink); }
+
+/* ── Code example (plugin collapsibles) ────────────────────── */
+.code-example {
+  background: var(--field); border: 1px solid var(--edge); border-radius: var(--r-control);
+  padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  color: var(--ink-2); overflow-x: auto; line-height: 1.6; white-space: pre-wrap; word-break: break-all;
+}
 
 /* ── Login page extras ─────────────────────────────────────── */
 .login-error {

@@ -25,7 +25,7 @@ async function loadServices() {
         const servicesList = document.getElementById('servicesList');
 
         if (services.length === 0) {
-            servicesList.innerHTML = '<div style="text-align: center; padding: 4rem; color: var(--text-secondary);"><h3 style="font-size: 1.5rem; margin-bottom: 1rem;">No services yet</h3><p>Create your first service using Quick Monitor or Add Service</p></div>';
+            servicesList.innerHTML = '<div class="empty-state"><h2>No services yet</h2><p>Create your first service using Quick Monitor or Add Service.</p></div>';
             return;
         }
 
@@ -43,23 +43,23 @@ async function loadServices() {
                         </div>
                     </div>
                     <div class="actions">
-                        <button class="icon-btn" onclick="openMaintenanceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')" title="Schedule maintenance">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.5 10a4.5 4.5 0 004.284-5.882c-.105-.324-.51-.391-.752-.15L15.34 6.66a.454.454 0 01-.493.11 3.01 3.01 0 01-1.618-1.616.455.455 0 01.11-.494l2.694-2.692c.24-.241.174-.647-.15-.752a4.5 4.5 0 00-5.873 4.575c.055.873-.128 1.808-.8 2.368l-7.23 6.024a2.724 2.724 0 103.837 3.837l6.024-7.23c.56-.672 1.495-.855 2.368-.8.096.007.193.01.29.01zM5 16a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"></path></svg>
+                        <button class="act-btn" onclick="openMaintenanceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')" title="Schedule maintenance">
+                            <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.5 10a4.5 4.5 0 004.284-5.882c-.105-.324-.51-.391-.752-.15L15.34 6.66a.454.454 0 01-.493.11 3.01 3.01 0 01-1.618-1.616.455.455 0 01.11-.494l2.694-2.692c.24-.241.174-.647-.15-.752a4.5 4.5 0 00-5.873 4.575c.055.873-.128 1.808-.8 2.368l-7.23 6.024a2.724 2.724 0 103.837 3.837l6.024-7.23c.56-.672 1.495-.855 2.368-.8.096.007.193.01.29.01zM5 16a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"></path></svg>
                         </button>
-                        <button class="icon-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}', ${service.show_on_status_page || false}, ${service.sla_target || 'null'}, ${service.sla_timeframe_days || 'null'})">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
+                        <button class="act-btn" onclick="showEditServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${(service.description || '').replace(/'/g, "\\'")}', '${(service.category || '').replace(/'/g, "\\'")}', ${service.show_on_status_page || false}, ${service.sla_target || 'null'}, ${service.sla_timeframe_days || 'null'})" title="Edit service">
+                            <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                         </button>
                         ${service.is_active ? `
-                            <button class="icon-btn" onclick="pauseService(${service.id})" title="Pause service">
-                                <span class="icon" style="width: 20px; height: 20px;">${icons.pause}</span>
+                            <button class="act-btn" onclick="pauseService(${service.id})" title="Pause service">
+                                <span class="icon">${icons.pause}</span>
                             </button>
                         ` : `
-                            <button class="icon-btn" onclick="resumeService(${service.id})" title="Resume service" style="color: var(--status-operational);">
-                                <span class="icon" style="width: 20px; height: 20px;">${icons.play}</span>
+                            <button class="act-btn brand" onclick="resumeService(${service.id})" title="Resume service">
+                                <span class="icon">${icons.play}</span>
                             </button>
                         `}
-                        <button class="icon-btn delete" onclick="deleteService(${service.id})">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        <button class="act-btn danger" onclick="deleteService(${service.id})" title="Delete service">
+                            <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -67,7 +67,7 @@ async function loadServices() {
                     <div class="monitors-section">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h4 class="monitors-title">Monitors</h4>
-                            <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="showAddMonitorToServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')">+ Add Monitor</button>
+                            <button class="btn ghost sm" onclick="showAddMonitorToServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')">+ Add Monitor</button>
                         </div>
                         ${serviceMonitors.map(monitor => `
                             <div class="monitor-item${!monitor.is_active ? ' paused' : ''}"${!monitor.is_active ? ' title="This monitor is paused"' : ''}>
@@ -77,20 +77,20 @@ async function loadServices() {
                                     <div class="monitor-interval">Every ${monitor.check_interval_minutes} minutes</div>
                                 </div>
                                 <div class="actions">
-                                    <button class="icon-btn" onclick="editMonitor(${monitor.id})">
-                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
+                                    <button class="act-btn" onclick="editMonitor(${monitor.id})" title="Edit monitor">
+                                        <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path></svg>
                                     </button>
                                     ${monitor.is_active ? `
-                                        <button class="icon-btn" onclick="pauseMonitor(${monitor.id})" title="Pause monitor">
-                                            <span class="icon" style="width: 20px; height: 20px;">${icons.pause}</span>
+                                        <button class="act-btn" onclick="pauseMonitor(${monitor.id})" title="Pause monitor">
+                                            <span class="icon">${icons.pause}</span>
                                         </button>
                                     ` : `
-                                        <button class="icon-btn" onclick="resumeMonitor(${monitor.id})" title="Resume monitor" style="color: var(--status-operational);">
-                                            <span class="icon" style="width: 20px; height: 20px;">${icons.play}</span>
+                                        <button class="act-btn brand" onclick="resumeMonitor(${monitor.id})" title="Resume monitor">
+                                            <span class="icon">${icons.play}</span>
                                         </button>
                                     `}
-                                    <button class="icon-btn delete" onclick="deleteMonitor(${monitor.id})">
-                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                    <button class="act-btn danger" onclick="deleteMonitor(${monitor.id})" title="Delete monitor">
+                                        <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                                     </button>
                                 </div>
                             </div>
@@ -98,8 +98,8 @@ async function loadServices() {
                     </div>
                 ` : `
                     <div class="monitors-section">
-                        <p style="color: var(--text-tertiary); text-align: center; padding: 1rem;">No monitors configured</p>
-                        <button class="btn btn-secondary" style="width: 100%;" onclick="showAddMonitorToServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')">+ Add First Monitor</button>
+                        <p style="color: var(--ink-3); text-align: center; padding: 1rem;">No monitors configured</p>
+                        <button class="btn ghost sm" style="width: 100%;" onclick="showAddMonitorToServiceModal(${service.id}, '${service.name.replace(/'/g, "\\'")}')">+ Add First Monitor</button>
                     </div>
                 `}
             </div>
@@ -214,12 +214,23 @@ async function resumeMonitor(id) {
 // Modal Functions
 // ============================================
 
+// Glasshouse modal helpers: each modal pairs with a sibling scrim
+function _openModal(id) {
+    document.getElementById(id + 'Scrim')?.classList.add('open');
+    document.getElementById(id)?.classList.add('open');
+}
+
+function _closeModal(id) {
+    document.getElementById(id + 'Scrim')?.classList.remove('open');
+    document.getElementById(id)?.classList.remove('open');
+}
+
 function showAddServiceModal() {
-    document.getElementById('addServiceModal').classList.remove('hidden');
+    _openModal('addServiceModal');
 }
 
 function hideAddServiceModal() {
-    document.getElementById('addServiceModal').classList.add('hidden');
+    _closeModal('addServiceModal');
 }
 
 async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = false, slaTarget = null, slaTimeframeDays = null) {
@@ -243,11 +254,11 @@ async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = fals
         hideWebhookForm(); // Reset webhook form state
     }
 
-    document.getElementById('editServiceModal').classList.remove('hidden');
+    _openModal('editServiceModal');
 }
 
 function hideEditServiceModal() {
-    document.getElementById('editServiceModal').classList.add('hidden');
+    _closeModal('editServiceModal');
 }
 
 // ============================================
@@ -293,7 +304,7 @@ async function loadNotificationSettingsForService(serviceId) {
         // Render webhook channels checkboxes
         const webhookList = document.getElementById('webhookChannelsList');
         if (activeChannels.length === 0) {
-            webhookList.innerHTML = '<span style="color: var(--text-tertiary);">No webhook channels configured. <a href="/static/notifications.html" style="color: var(--accent-primary);">Add channels</a></span>';
+            webhookList.innerHTML = '<span style="color: var(--ink-3);">No webhook channels configured. <a href="/static/notifications.html" style="color: var(--brand-ink);">Add channels</a></span>';
         } else {
             webhookList.innerHTML = activeChannels.map(channel => `
                 <label class="checkbox-label" style="margin-bottom: 0.5rem;">
@@ -349,7 +360,7 @@ async function loadNotificationSettingsForService(serviceId) {
     } catch (error) {
         console.error('Failed to load notification settings:', error);
         // Use defaults on error
-        document.getElementById('webhookChannelsList').innerHTML = '<span style="color: var(--text-tertiary);">Failed to load channels</span>';
+        document.getElementById('webhookChannelsList').innerHTML = '<span style="color: var(--ink-3);">Failed to load channels</span>';
     }
 }
 
@@ -440,16 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Close modals on background click
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.add('hidden');
-            }
-        });
-    });
-
-    // Toggle email recipients field visibility
+// Toggle email recipients field visibility
     document.getElementById('editEmailEnabled').addEventListener('change', (e) => {
         const recipientsGroup = document.getElementById('emailRecipientsGroup');
         if (e.target.checked) {
@@ -566,13 +568,13 @@ function renderRemediationWebhooks() {
             </div>
             <div class="webhook-item-url">${webhook.url}</div>
             <div class="webhook-item-actions">
-                <button type="button" onclick="editWebhook(${index})" class="btn-icon" title="Edit">
+                <button type="button" onclick="editWebhook(${index})" class="act-btn" title="Edit">
                     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M14.5 3.5l2 2-9 9H5.5v-2z"/>
                         <path d="M12.5 5.5l2 2"/>
                     </svg>
                 </button>
-                <button type="button" onclick="deleteWebhook(${index})" class="btn-icon btn-icon-danger" title="Delete">
+                <button type="button" onclick="deleteWebhook(${index})" class="act-btn danger" title="Delete">
                     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M6 6l8 8M14 6l-8 8"/>
                     </svg>
@@ -723,8 +725,7 @@ function openMonitorModal(mode, options = {}) {
     };
 
     // Show modal
-    const modal = document.getElementById('unifiedMonitorModal');
-    modal.classList.remove('hidden');
+    _openModal('unifiedMonitorModal');
 
     // Render appropriate view
     if (currentModalState.step === 'type_selection') {
@@ -738,7 +739,7 @@ function openMonitorModal(mode, options = {}) {
  * Close the unified monitor modal
  */
 function closeMonitorModal() {
-    document.getElementById('unifiedMonitorModal').classList.add('hidden');
+    _closeModal('unifiedMonitorModal');
     resetModalState();
 }
 
@@ -778,11 +779,11 @@ function renderTypeSelection() {
     // Render categorized type cards
     container.innerHTML = `
         <div class="monitor-modal-section">
-            <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">Select Monitor Type</h4>
+            <h4>Select monitor type</h4>
             <div id="typeSelectionGrid">
                 ${window.monitorRegistry.renderCategorizedTypeCards('selectMonitorType')}
             </div>
-            <button onclick="closeMonitorModal()" class="btn btn-secondary" style="width: 100%; margin-top: 1.5rem;">Cancel</button>
+            <button onclick="closeMonitorModal()" class="btn ghost" style="width: 100%; margin-top: 1.5rem;">Cancel</button>
         </div>
     `;
 }
@@ -833,8 +834,8 @@ function renderConfiguration() {
     container.innerHTML = `
         <div class="monitor-modal-section">
             ${currentModalState.mode !== MonitorModalMode.EDIT ? `
-                <button onclick="backToTypeSelection()" class="btn btn-secondary" style="margin-bottom: 1rem;">
-                    ← Back to Type Selection
+                <button onclick="backToTypeSelection()" class="btn ghost sm" style="margin-bottom: 1rem;">
+                    ← Back to type selection
                 </button>
             ` : ''}
 
@@ -842,12 +843,12 @@ function renderConfiguration() {
                 ${formHtml}
                 ${intervalHtml}
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">
-                        ${currentModalState.mode === MonitorModalMode.EDIT ? 'Update Monitor' : 'Create Monitor'}
-                    </button>
-                    <button type="button" onclick="closeMonitorModal()" class="btn btn-secondary" style="flex: 1;">
+                <div class="modal-actions">
+                    <button type="button" onclick="closeMonitorModal()" class="btn ghost">
                         Cancel
+                    </button>
+                    <button type="submit" class="btn">
+                        ${currentModalState.mode === MonitorModalMode.EDIT ? 'Update Monitor' : 'Create Monitor'}
                     </button>
                 </div>
             </form>
