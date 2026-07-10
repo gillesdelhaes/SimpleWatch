@@ -1,11 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>Settings - SimpleWatch</title>
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
+    <link rel="stylesheet" href="/static/css/glasshouse.css">
+    <link rel="stylesheet" href="/static/css/watch.css">
     <link rel="stylesheet" href="/static/css/settings.css">
     <link rel="stylesheet" href="/static/css/ai-sre.css">
 </head>
@@ -40,18 +49,18 @@
                                 <span id="apiKeyValue">••••••••••••••••••••••••••••••••</span>
                             </div>
                             <div class="api-key-actions">
-                                <button onclick="toggleApiKeyVisibility()" class="btn btn-secondary btn-sm" id="toggleBtn">
+                                <button onclick="toggleApiKeyVisibility()" class="btn ghost sm" id="toggleBtn">
                                     Show Key
                                 </button>
-                                <button onclick="copyApiKey()" class="btn btn-secondary btn-sm">
+                                <button onclick="copyApiKey()" class="btn ghost sm">
                                     Copy
                                 </button>
-                                <button onclick="regenerateApiKey()" class="btn btn-danger btn-sm">
+                                <button onclick="regenerateApiKey()" class="btn ghost danger sm">
                                     Regenerate
                                 </button>
                             </div>
                             <p class="settings-warning-hint">
-                                <span class="icon" style="width:12px;height:12px;color:var(--status-degraded);" id="warningIcon"></span>
+                                <span class="icon" style="width:12px;height:12px;color:var(--warn-ink);" id="warningIcon"></span>
                                 Regenerating will invalidate your current key
                             </p>
                         </div>
@@ -96,8 +105,8 @@
                 <div class="settings-save-bar hidden" id="passwordSaveBar">
                     <span class="settings-save-bar-hint">Unsaved changes</span>
                     <div class="settings-save-bar-actions">
-                        <button onclick="discardPassword()" class="btn btn-ghost btn-sm">Discard</button>
-                        <button onclick="savePassword()" class="btn btn-primary btn-sm">Save changes</button>
+                        <button onclick="discardPassword()" class="btn ghost sm">Discard</button>
+                        <button onclick="savePassword()" class="btn sm">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -149,8 +158,8 @@
                 <div class="settings-save-bar hidden" id="bannerSaveBar">
                     <span class="settings-save-bar-hint">Unsaved changes</span>
                     <div class="settings-save-bar-actions">
-                        <button onclick="discardBanner()" class="btn btn-ghost btn-sm">Discard</button>
-                        <button onclick="saveStatusPageBanner()" class="btn btn-primary btn-sm">Save changes</button>
+                        <button onclick="discardBanner()" class="btn ghost sm">Discard</button>
+                        <button onclick="saveStatusPageBanner()" class="btn sm">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -309,7 +318,7 @@
                             <div class="settings-danger-box">
                                 <div class="settings-row" style="border:none;padding:0 0 14px 0;">
                                     <div class="settings-row-label">
-                                        <div class="settings-row-name" style="color:var(--status-down);">Enable Auto-Execute</div>
+                                        <div class="settings-row-name" style="color:var(--danger-ink);">Enable Auto-Execute</div>
                                         <div class="settings-row-hint">Allow AI to run high-confidence actions without approval.</div>
                                     </div>
                                     <div class="settings-row-control settings-row-control--center">
@@ -328,7 +337,7 @@
                                     </div>
                                 </div>
                                 <div class="settings-danger-warning">
-                                    <strong style="color:var(--status-down);">Warning:</strong> Auto-execute runs webhooks without confirmation.
+                                    <strong style="color:var(--danger-ink);">Warning:</strong> Auto-execute runs webhooks without confirmation.
                                     Only enable if you fully trust your configured remediation webhooks. All actions are audit-logged.
                                 </div>
                             </div>
@@ -340,7 +349,7 @@
                                 <div class="settings-row-hint">Verify SimpleWatch can reach your LLM provider with the current settings.</div>
                             </div>
                             <div class="settings-row-control">
-                                <button onclick="testAIConnection()" class="btn btn-secondary btn-sm" id="testAIBtn">
+                                <button onclick="testAIConnection()" class="btn ghost sm" id="testAIBtn">
                                     Test Connection
                                 </button>
                             </div>
@@ -351,8 +360,8 @@
                 <div class="settings-save-bar hidden" id="aiSaveBar">
                     <span class="settings-save-bar-hint">Unsaved changes</span>
                     <div class="settings-save-bar-actions">
-                        <button onclick="discardAI()" class="btn btn-ghost btn-sm">Discard</button>
-                        <button onclick="saveAIAndHideBar()" class="btn btn-primary btn-sm" id="saveAIBtn">Save changes</button>
+                        <button onclick="discardAI()" class="btn ghost sm">Discard</button>
+                        <button onclick="saveAIAndHideBar()" class="btn sm" id="saveAIBtn">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -386,8 +395,8 @@
                 <div class="settings-save-bar hidden" id="retentionSaveBar">
                     <span class="settings-save-bar-hint">Unsaved changes</span>
                     <div class="settings-save-bar-actions">
-                        <button onclick="discardRetention()" class="btn btn-ghost btn-sm">Discard</button>
-                        <button onclick="showRetentionModal()" class="btn btn-primary btn-sm">Save changes</button>
+                        <button onclick="discardRetention()" class="btn ghost sm">Discard</button>
+                        <button onclick="showRetentionModal()" class="btn sm">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -403,7 +412,7 @@
                             <div class="settings-row-hint">Download all service configurations as JSON for backup or migration to another instance.</div>
                         </div>
                         <div class="settings-row-control">
-                            <button onclick="showExportModal()" class="btn btn-primary btn-sm">
+                            <button onclick="showExportModal()" class="btn sm">
                                 <span class="icon btn-icon" id="downloadBtnIcon"></span>
                                 Export Configuration
                             </button>
@@ -415,7 +424,7 @@
                             <div class="settings-row-hint">Restore services from a JSON backup file exported from SimpleWatch.</div>
                         </div>
                         <div class="settings-row-control">
-                            <button onclick="showImportModal()" class="btn btn-secondary btn-sm">
+                            <button onclick="showImportModal()" class="btn ghost sm">
                                 <span class="icon btn-icon" id="uploadBtnIcon"></span>
                                 Import Configuration
                             </button>
@@ -459,7 +468,7 @@
                             <div class="settings-row-hint">Download the full audit trail as CSV.</div>
                         </div>
                         <div class="settings-row-control">
-                            <button onclick="exportAuditLog()" class="btn btn-primary btn-sm">
+                            <button onclick="exportAuditLog()" class="btn sm">
                                 <span class="icon btn-icon" id="auditExportBtnIcon"></span>
                                 Export Audit Log
                             </button>
@@ -501,8 +510,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button onclick="closeRetentionModal()" class="btn btn-secondary">Cancel</button>
-                <button onclick="confirmRetentionChange()" class="btn btn-danger">Confirm &amp; Apply</button>
+                <button onclick="closeRetentionModal()" class="btn ghost">Cancel</button>
+                <button onclick="confirmRetentionChange()" class="btn ghost danger">Confirm &amp; Apply</button>
             </div>
         </div>
     </div>
@@ -521,8 +530,8 @@
                 <div class="export-service-list" id="exportServiceList"></div>
             </div>
             <div class="modal-footer">
-                <button onclick="closeExportModal()" class="btn btn-secondary">Cancel</button>
-                <button onclick="executeExport()" class="btn btn-primary" id="exportBtn">
+                <button onclick="closeExportModal()" class="btn ghost">Cancel</button>
+                <button onclick="executeExport()" class="btn" id="exportBtn">
                     <span class="icon btn-icon" id="exportBtnIcon"></span>
                     Export Selected
                 </button>
@@ -571,7 +580,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button onclick="closeImportModal()" class="btn btn-secondary" id="importCancelBtn">Cancel</button>
+                <button onclick="closeImportModal()" class="btn ghost" id="importCancelBtn">Cancel</button>
                 <button onclick="validateImportFile()" class="btn btn-primary hidden" id="importValidateBtn">
                     <span class="icon btn-icon" id="importValidateBtnIcon"></span>
                     Validate File

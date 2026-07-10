@@ -299,7 +299,7 @@ async function showExportModal() {
     selectedExportServices.clear();
     const serviceList = document.getElementById('exportServiceList');
     if (allServices.length === 0) {
-        serviceList.innerHTML = '<p style="padding:2rem;text-align:center;color:var(--text-secondary);">No services found</p>';
+        serviceList.innerHTML = '<p style="padding:2rem;text-align:center;color:var(--ink-2);">No services found</p>';
     } else {
         serviceList.innerHTML = allServices.map(service => {
             const n = service.monitor_count || 0;

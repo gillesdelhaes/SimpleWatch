@@ -1,82 +1,33 @@
-/**
- * Users page styles — Simple* family design
- */
+/* ============================================================
+   Users page — app-specific styles on top of glasshouse.css
+   Tokens only: no hard-coded brand or status hexes.
+   ============================================================ */
 
-.users-list {
-    background: #fff;
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    overflow: hidden;
-}
+.users-list { padding: 8px; }
 
 .user-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background var(--transition-fast);
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 16px; border-radius: var(--r-block);
+    transition: background var(--t-fast);
 }
+.user-item:hover { background: var(--row-hover); }
+.user-item + .user-item { border-top: 1px solid var(--track); }
 
-.user-item:last-child { border-bottom: none; }
-
-.user-item:hover { background: var(--ink-50); }
-
-/* Avatar circle — initial letter with brand gradient */
 .user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: var(--sw-gradient);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 0;
-    user-select: none;
+    width: 34px; height: 34px; border-radius: 11px; flex: 0 0 auto;
+    background: linear-gradient(135deg, var(--b1), var(--b2));
+    display: grid; place-items: center; color: #fff;
+    font-size: 13px; font-weight: 700;
 }
-
 .user-info { flex: 1; min-width: 0; }
-
 .user-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ink-800);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px; font-weight: 650; color: var(--ink);
 }
-
-.user-meta {
-    font-size: 12px;
-    color: var(--ink-500);
-    font-family: var(--font-mono);
-}
-
-/* Role badge */
 .user-badge {
-    display: inline-flex;
-    align-items: center;
-    height: 20px;
-    padding: 0 8px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: rgba(0,200,150,0.09);
-    color: #00A87E;
-    border: 1px solid rgba(0,200,150,0.20);
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    padding: 2px 8px; border-radius: var(--r-pill);
+    background: var(--brand-tint); color: var(--brand-ink);
 }
-
-/* Checkbox group in modal */
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.user-meta { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+.user-item .actions { display: flex; gap: 2px; }

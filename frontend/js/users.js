@@ -35,15 +35,15 @@ async function loadUsers() {
                 </div>
                 <div class="actions">
                     ${!(user.username != userInfo.username && user.is_admin) ? `
-                        <button class="icon-btn" onclick="showChangePasswordModal(${user.id}, '${user.username}')" title="Change password">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                        <button class="act-btn" onclick="showChangePasswordModal(${user.id}, '${user.username}')" title="Change password">
+                            <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
                             </svg>
                         </button>
                     ` : ''}
                     ${user.id != userInfo.id ? `
-                        <button class="icon-btn delete" onclick="deleteUser(${user.id}, '${user.username}')" title="Delete user">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                        <button class="act-btn danger" onclick="deleteUser(${user.id}, '${user.username}')" title="Delete user">
+                            <svg width="17" height="17" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                             </svg>
                         </button>
@@ -57,11 +57,13 @@ async function loadUsers() {
 }
 
 function showAddUserModal() {
-    document.getElementById('addUserModal').classList.remove('hidden');
+    document.getElementById('addUserModalScrim').classList.add('open');
+    document.getElementById('addUserModal').classList.add('open');
 }
 
 function hideAddUserModal() {
-    document.getElementById('addUserModal').classList.add('hidden');
+    document.getElementById('addUserModalScrim').classList.remove('open');
+    document.getElementById('addUserModal').classList.remove('open');
     document.getElementById('addUserForm').reset();
     clearAllFieldErrors();
 }
@@ -78,11 +80,13 @@ function showChangePasswordModal(userId, username) {
         document.getElementById('currentPassword').required = false;
     }
 
-    document.getElementById('changePasswordModal').classList.remove('hidden');
+    document.getElementById('changePasswordModalScrim').classList.add('open');
+    document.getElementById('changePasswordModal').classList.add('open');
 }
 
 function hideChangePasswordModal() {
-    document.getElementById('changePasswordModal').classList.add('hidden');
+    document.getElementById('changePasswordModalScrim').classList.remove('open');
+    document.getElementById('changePasswordModal').classList.remove('open');
     document.getElementById('changePasswordForm').reset();
     clearAllFieldErrors();
     changingUserId = null;
@@ -278,15 +282,6 @@ document.getElementById('confirmNewPassword').addEventListener('input', (e) => {
     if (e.target.value && e.target.classList.contains('invalid')) {
         validateConfirmPasswordField();
     }
-});
-
-// Close modals on background click
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.add('hidden');
-        }
-    });
 });
 
 loadUsers();

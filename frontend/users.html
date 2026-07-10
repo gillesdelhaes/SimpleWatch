@@ -1,92 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>Users - SimpleWatch</title>
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
+    <link rel="stylesheet" href="/static/css/glasshouse.css">
+    <link rel="stylesheet" href="/static/css/watch.css">
     <link rel="stylesheet" href="/static/css/users.css">
     <link rel="stylesheet" href="/static/css/ai-sre.css">
 </head>
 <body>
     <div id="navigation" data-page="users"></div>
 
-    <div class="main-container">
-        <div class="page-header">
-            <button onclick="showAddUserModal()" class="btn btn-primary">+ Add User</button>
-        </div>
-
-        <div id="usersList" class="users-list"></div>
+    <div class="page-actions">
+        <button onclick="showAddUserModal()" class="btn">+ Add User</button>
     </div>
 
+    <div id="usersList" class="panel users-list"></div>
+
     <!-- Add User Modal -->
-    <div id="addUserModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Add User</h3>
+    <div id="addUserModalScrim" class="scrim" onclick="hideAddUserModal()"></div>
+    <div id="addUserModal" class="modal" role="dialog" aria-modal="true">
+        <h2>Add user</h2>
+        <p class="sub">Create an account for a teammate.</p>
+        <form id="addUserForm">
+            <div class="fieldrow">
+                <label for="newUsername">Username</label>
+                <input type="text" id="newUsername" class="input">
+                <div class="field-error" id="newUsernameError"></div>
+                <p class="form-hint" id="addUserUsernameHint">Minimum 3 characters</p>
             </div>
-            <form id="addUserForm">
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" id="newUsername" class="form-input">
-                    <div class="field-error" id="newUsernameError"></div>
-                    <p class="form-hint" id="addUserUsernameHint">Minimum 3 characters</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="newPassword" class="form-input">
-                    <div class="field-error" id="newPasswordError"></div>
-                    <p class="form-hint" id="addUserPasswordHint">Minimum 8 characters</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email (Optional)</label>
-                    <input type="email" id="newEmail" class="form-input">
-                </div>
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="newIsAdmin" style="width: auto;">
-                        <label for="newIsAdmin" style="margin: 0; text-transform: none;">Grant admin privileges</label>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Create User</button>
-                    <button type="button" onclick="hideAddUserModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
+            <div class="fieldrow">
+                <label for="newPassword">Password</label>
+                <input type="password" id="newPassword" class="input">
+                <div class="field-error" id="newPasswordError"></div>
+                <p class="form-hint" id="addUserPasswordHint">Minimum 8 characters</p>
+            </div>
+            <div class="fieldrow">
+                <label for="newEmail">Email (optional)</label>
+                <input type="email" id="newEmail" class="input">
+            </div>
+            <div class="fieldrow">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="newIsAdmin">
+                    <span>Grant admin privileges</span>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="hideAddUserModal()" class="btn ghost">Cancel</button>
+                <button type="submit" class="btn">Create User</button>
+            </div>
+        </form>
     </div>
 
     <!-- Change Password Modal -->
-    <div id="changePasswordModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Change Password</h3>
-                <p class="modal-subtitle">User: <span id="changePasswordUsername"></span></p>
+    <div id="changePasswordModalScrim" class="scrim" onclick="hideChangePasswordModal()"></div>
+    <div id="changePasswordModal" class="modal" role="dialog" aria-modal="true">
+        <h2>Change password</h2>
+        <p class="sub">User: <span id="changePasswordUsername"></span></p>
+        <form id="changePasswordForm">
+            <div id="currentPasswordField" class="fieldrow hidden">
+                <label for="currentPassword">Current password</label>
+                <input type="password" id="currentPassword" class="input">
+                <div class="field-error" id="currentPasswordError"></div>
             </div>
-            <form id="changePasswordForm">
-                <div id="currentPasswordField" class="form-group hidden">
-                    <label class="form-label">Current Password</label>
-                    <input type="password" id="currentPassword" class="form-input">
-                    <div class="field-error" id="currentPasswordError"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">New Password</label>
-                    <input type="password" id="changeNewPassword" class="form-input">
-                    <div class="field-error" id="changeNewPasswordError"></div>
-                    <p class="form-hint" id="changePasswordHint">Minimum 8 characters</p>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" class="form-input">
-                    <div class="field-error" id="confirmNewPasswordError"></div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Change Password</button>
-                    <button type="button" onclick="hideChangePasswordModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                </div>
-            </form>
-        </div>
+            <div class="fieldrow">
+                <label for="changeNewPassword">New password</label>
+                <input type="password" id="changeNewPassword" class="input">
+                <div class="field-error" id="changeNewPasswordError"></div>
+                <p class="form-hint" id="changePasswordHint">Minimum 8 characters</p>
+            </div>
+            <div class="fieldrow">
+                <label for="confirmNewPassword">Confirm new password</label>
+                <input type="password" id="confirmNewPassword" class="input">
+                <div class="field-error" id="confirmNewPasswordError"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="hideChangePasswordModal()" class="btn ghost">Cancel</button>
+                <button type="submit" class="btn">Change Password</button>
+            </div>
+        </form>
     </div>
 
     <script src="/static/js/components.js"></script>
