@@ -270,9 +270,9 @@ async function fetchStatus() {
         const servicesContainer = document.getElementById('servicesContainer');
         servicesContainer.innerHTML = `
             <div class="loading-state">
-                <div style="opacity: 0.3; width: 48px; height: 48px; margin: 0 auto 1rem;">${icons.alertTriangle}</div>
-                <p style="color: var(--status-down);">Failed to load status information</p>
-                <p style="font-size: 0.75rem; color: var(--text-tertiary);">Retrying in 30 seconds...</p>
+                <div style="opacity: 0.4; width: 40px; height: 40px; margin: 0 auto 1rem;">${icons.alertTriangle}</div>
+                <p style="color: var(--danger-ink);">Failed to load status information</p>
+                <p style="font-size: 11.5px; color: var(--ink-3);">Retrying in 30 seconds...</p>
             </div>
         `;
 

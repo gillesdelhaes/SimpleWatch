@@ -47,9 +47,15 @@ let currentMaintenanceServiceId = null;
 async function openMaintenanceModal(serviceId, serviceName) {
     currentMaintenanceServiceId = serviceId;
 
-    // Create modal if it doesn't exist
+    // Create modal (and its scrim) if they don't exist
     let modal = document.getElementById('maintenanceModal');
     if (!modal) {
+        const scrim = document.createElement('div');
+        scrim.id = 'maintenanceModalScrim';
+        scrim.className = 'scrim';
+        scrim.addEventListener('click', closeMaintenanceModal);
+        document.body.appendChild(scrim);
+
         modal = createMaintenanceModal();
         document.body.appendChild(modal);
     }
@@ -64,7 +70,8 @@ async function openMaintenanceModal(serviceId, serviceName) {
     await loadMaintenanceWindows(serviceId);
 
     // Show modal
-    modal.classList.remove('hidden');
+    document.getElementById('maintenanceModalScrim').classList.add('open');
+    modal.classList.add('open');
 
     // Reset form
     resetMaintenanceForm();
@@ -75,9 +82,9 @@ async function openMaintenanceModal(serviceId, serviceName) {
  */
 function closeMaintenanceModal() {
     const modal = document.getElementById('maintenanceModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    const scrim = document.getElementById('maintenanceModalScrim');
+    if (modal) modal.classList.remove('open');
+    if (scrim) scrim.classList.remove('open');
     currentMaintenanceServiceId = null;
 }
 
@@ -87,18 +94,17 @@ function closeMaintenanceModal() {
 function createMaintenanceModal() {
     const modal = document.createElement('div');
     modal.id = 'maintenanceModal';
-    modal.className = 'modal hidden';
+    modal.className = 'modal modal-scroll';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
 
     modal.innerHTML = `
-        <div class="modal-content maintenance-modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="maintenanceModalTitle">
+            <div class="modal-head">
+                <h2 id="maintenanceModalTitle" class="maintenance-modal-title">
                     <span class="icon">${maintenanceIcons.wrench}</span>
                     Maintenance Windows
-                </h3>
-                <button onclick="closeMaintenanceModal()" class="modal-close">
-                    ${icons.x}
-                </button>
+                </h2>
+                <button onclick="closeMaintenanceModal()" class="so-close" aria-label="Close">✕</button>
             </div>
 
             <div id="maintenanceList" class="maintenance-list">
@@ -112,14 +118,14 @@ function createMaintenanceModal() {
                 </h4>
 
                 <form id="maintenanceForm" onsubmit="submitMaintenanceForm(event)">
-                    <div class="datetime-row">
-                        <div class="form-group">
-                            <label class="form-label">Start Time</label>
-                            <input type="datetime-local" id="maintenanceStartTime" class="form-input" required>
+                    <div class="formgrid">
+                        <div class="fieldrow">
+                            <label>Start time</label>
+                            <input type="datetime-local" id="maintenanceStartTime" class="input" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">End Time</label>
-                            <input type="datetime-local" id="maintenanceEndTime" class="form-input" required>
+                        <div class="fieldrow">
+                            <label>End time</label>
+                            <input type="datetime-local" id="maintenanceEndTime" class="input" required>
                         </div>
                     </div>
 
@@ -179,29 +185,21 @@ function createMaintenanceModal() {
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Reason (optional)</label>
-                        <input type="text" id="maintenanceReason" class="form-input" placeholder="e.g., Server updates, Database migration...">
+                    <div class="fieldrow">
+                        <label>Reason (optional)</label>
+                        <input type="text" id="maintenanceReason" class="input" placeholder="e.g., Server updates, Database migration...">
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <button type="submit" class="btn" style="width: 100%;">
                         Schedule Maintenance
                     </button>
                 </form>
             </div>
-        </div>
     `;
 
     // Add event listeners for recurrence options
     modal.querySelectorAll('input[name="recurrence"]').forEach(radio => {
         radio.addEventListener('change', handleRecurrenceChange);
-    });
-
-    // Close on background click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeMaintenanceModal();
-        }
     });
 
     return modal;
@@ -298,12 +296,12 @@ function renderMaintenanceItem(window) {
                 </span>
                 <div class="maintenance-item-actions">
                     ${window.status === 'active' ? `
-                        <button class="icon-btn" onclick="cancelMaintenance(${window.id})" title="End maintenance early">
+                        <button class="act-btn" onclick="cancelMaintenance(${window.id})" title="End maintenance early">
                             ${maintenanceIcons.stopCircle}
                         </button>
                     ` : ''}
                     ${window.status === 'scheduled' ? `
-                        <button class="icon-btn delete" onclick="deleteMaintenance(${window.id})" title="Delete">
+                        <button class="act-btn danger" onclick="deleteMaintenance(${window.id})" title="Delete">
                             ${icons.trash}
                         </button>
                     ` : ''}

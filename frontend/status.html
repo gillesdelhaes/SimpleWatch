@@ -1,56 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>System Status - SimpleWatch</title>
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
+    <link rel="stylesheet" href="/static/css/glasshouse.css">
+    <link rel="stylesheet" href="/static/css/watch.css">
     <link rel="stylesheet" href="/static/css/status.css">
     <link rel="stylesheet" href="/static/css/maintenance.css">
 </head>
 <body>
-    <!-- Public Status Page - No Auth Required -->
+    <!-- Public status page - no auth required -->
+    <div class="aura" aria-hidden="true"></div>
 
     <div class="status-container">
-        <!-- Header with Overall System Status -->
+        <!-- Header with overall system status -->
         <header class="status-header">
             <div class="status-brand">
-                <h1 class="status-logo">
-                    <span class="status-logo__simple">Simple</span><span class="status-logo__app">Watch</span>
-                </h1>
-                <p class="status-tagline">System Status</p>
+                <div class="wordmark status-wordmark">
+                    <span class="lite">Simple</span><span class="brand">Watch</span>
+                </div>
+                <p class="status-tagline">System status</p>
             </div>
-            <div class="status-header-controls">
-                <div id="overallStatus" class="overall-status">
-                    <div class="overall-status-indicator">
-                        <div class="status-pulse"></div>
-                    </div>
-                    <div class="overall-status-text">
-                        <div class="overall-status-label">Loading...</div>
-                        <div class="overall-status-subtitle">Checking systems</div>
-                    </div>
+            <div id="overallStatus" class="overall-status panel">
+                <div class="overall-status-indicator">
+                    <div class="status-pulse"></div>
+                </div>
+                <div class="overall-status-text">
+                    <div class="overall-status-label">Loading…</div>
+                    <div class="overall-status-subtitle">Checking systems</div>
                 </div>
             </div>
         </header>
 
-        <!-- Announcement Banner (hidden by default) -->
+        <!-- Announcement banner (hidden by default) -->
         <div id="statusBanner" class="status-banner-container hidden"></div>
 
-        <!-- Services Grid -->
+        <!-- Services grid -->
         <main class="status-main">
             <div id="servicesContainer" class="services-grid">
                 <!-- Services will be dynamically rendered here -->
                 <div class="loading-state">
                     <div class="loading-spinner"></div>
-                    <p>Loading status information...</p>
+                    <p>Loading status information…</p>
                 </div>
             </div>
 
-            <!-- Empty State -->
-            <div id="emptyState" class="empty-status hidden">
-                <div class="empty-status-icon">✓</div>
-                <h2>All Systems Operational</h2>
+            <!-- Empty state -->
+            <div id="emptyState" class="panel empty-state hidden">
+                <div class="empty-ico empty-brand">✓</div>
+                <h2>All systems operational</h2>
                 <p>No services are currently being monitored publicly.</p>
             </div>
         </main>
