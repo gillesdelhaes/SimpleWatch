@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>SimpleWatch</title>
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
+    <link rel="stylesheet" href="/static/css/glasshouse.css" />
     <script>
         // Check setup status first, then redirect appropriately
         async function checkAndRedirect() {
@@ -40,6 +47,7 @@
     </script>
 </head>
 <body>
-    <p>Redirecting...</p>
+    <div class="aura"></div>
+    <p style="padding:24px;font-size:13px;color:var(--ink-2)">Redirecting…</p>
 </body>
 </html>

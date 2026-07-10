@@ -109,6 +109,25 @@ input[type="checkbox"] { accent-color: var(--b1); width: 15px; height: 15px; cur
 .icon { display: inline-flex; align-items: center; justify-content: center; width: 1em; height: 1em; vertical-align: middle; flex: 0 0 auto; }
 .icon svg { width: 100%; height: 100%; display: block; }
 
+/* ── Login page extras ─────────────────────────────────────── */
+.login-error {
+  display: none; margin-bottom: 4px; padding: 10px 12px;
+  background: var(--danger-bg); color: var(--danger-ink);
+  border: 1px solid color-mix(in oklab, var(--danger-ink) 30%, transparent);
+  border-radius: var(--r-control);
+  font-size: 12.5px; font-weight: 500; line-height: 1.45;
+}
+.login-error.visible { display: block; animation: sw-shake .4s ease-in-out; }
+.pw-toggle {
+  position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--ink-3); display: flex; align-items: center;
+  transition: color var(--t-fast);
+}
+.pw-toggle:hover { color: var(--ink); }
+.spin { animation: sw-spin .8s linear infinite; }
+@keyframes sw-spin { to { transform: rotate(360deg); } }
+
 /* ── Empty states ──────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 56px 24px; }
 .empty-state .empty-ico { width: 40px; height: 40px; margin: 0 auto 14px; color: var(--ink-3); }

@@ -1,530 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
-  <title>Sign In — SimpleWatch</title>
-  <link rel="stylesheet" href="/static/css/theme.css" />
-  <style>
-    /* ── Standalone auth layout (no sidebar) ── */
-    body {
-      min-height: 100vh;
-      display: flex;
-      overflow: hidden;
-      background: var(--ink-50);
-    }
-
-    /* ── Left brand panel ── */
-    .auth-brand {
-      display: none;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      position: relative;
-      background: var(--ink-950);
-      flex-shrink: 0;
-    }
-    @media (min-width: 1024px) {
-      .auth-brand { display: flex; width: 58%; }
-    }
-
-    .auth-brand__rule {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      z-index: 10;
-      background: var(--sw-gradient-h);
-    }
-
-    .auth-brand__dots {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 28px 28px;
-    }
-
-    .auth-brand__glow-a {
-      position: absolute;
-      pointer-events: none;
-      top: -160px; left: -160px;
-      width: 560px; height: 560px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #00C896 0%, transparent 70%);
-      opacity: 0.07;
-      filter: blur(50px);
-    }
-
-    .auth-brand__glow-b {
-      position: absolute;
-      pointer-events: none;
-      bottom: -100px; right: -100px;
-      width: 520px; height: 520px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #3B82F6 0%, transparent 70%);
-      opacity: 0.09;
-      filter: blur(50px);
-    }
-
-    /* Decorative dashboard-shape (monitoring motif) */
-    .auth-brand__deco-a {
-      position: absolute;
-      pointer-events: none;
-      bottom: 80px; right: -60px;
-      width: 460px; height: 300px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, rgba(0,200,150,0.07) 0%, rgba(59,130,246,0.05) 100%);
-      border: 1px solid rgba(0,200,150,0.10);
-      transform: rotate(-12deg);
-    }
-
-    .auth-brand__deco-b {
-      position: absolute;
-      pointer-events: none;
-      bottom: 140px; right: 20px;
-      width: 300px; height: 200px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(0,200,150,0.04) 0%, rgba(59,130,246,0.04) 100%);
-      border: 1px solid rgba(59,130,246,0.09);
-      transform: rotate(-6deg);
-    }
-
-    /* Animated status dots — monitoring motif */
-    .auth-brand__status-dots {
-      position: absolute;
-      bottom: 198px; right: 269px;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .auth-brand__status-dots span {
-      display: block;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-    }
-
-    .auth-brand__content {
-      position: relative;
-      z-index: 10;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 80px 64px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1),
-                  transform 0.8s cubic-bezier(0.16,1,0.3,1);
-    }
-
-    .auth-brand__content.in { opacity: 1; transform: translateY(0); }
-
-    .auth-wordmark {
-      line-height: 1;
-      letter-spacing: -0.04em;
-      user-select: none;
-      margin-bottom: 64px;
-    }
-
-    .auth-wordmark__size {
-      font-size: clamp(48px, 5.5vw, 78px);
-    }
-
-    .auth-wordmark__simple {
-      font-weight: 200;
-      color: rgba(255,255,255,0.90);
-    }
-
-    .auth-wordmark__app {
-      font-weight: 800;
-      background: var(--sw-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .auth-wordmark__sub {
-      display: block;
-      margin-top: 18px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 400;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(115,115,115,0.60);
-    }
-
-    .auth-callouts {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .auth-callout {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .auth-callout__icon {
-      width: 36px; height: 36px;
-      border-radius: 9px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,200,150,0.08);
-      border: 1px solid rgba(0,200,150,0.15);
-      color: rgba(0,200,150,0.75);
-    }
-
-    .auth-callout__label {
-      font-size: 14px;
-      font-weight: 400;
-      color: rgba(242,242,242,0.50);
-      letter-spacing: 0.01em;
-    }
-
-    .auth-brand__version {
-      position: relative;
-      z-index: 10;
-      padding: 0 64px 32px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: rgba(115,115,115,0.35);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    /* ── Right form panel ── */
-    .auth-form-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 40px 48px;
-      opacity: 0;
-      transform: translateX(16px);
-      transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s,
-                  transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s;
-    }
-
-    .auth-form-panel.in { opacity: 1; transform: translateX(0); }
-
-    /* Mobile wordmark */
-    .auth-mobile-wordmark {
-      display: block;
-      text-align: center;
-      margin-bottom: 40px;
-      font-size: 38px;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      user-select: none;
-    }
-    @media (min-width: 1024px) { .auth-mobile-wordmark { display: none; } }
-
-    .auth-form-wrap {
-      width: 100%;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .auth-heading { margin-bottom: 28px; }
-
-    .auth-heading h2 {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      color: var(--ink-950);
-      margin: 0 0 6px;
-    }
-
-    .auth-heading p {
-      font-size: 14px;
-      color: var(--ink-500);
-      margin: 0;
-    }
-
-    .auth-fields { display: flex; flex-direction: column; gap: 16px; }
-
-    .auth-field { display: flex; flex-direction: column; gap: 6px; }
-
-    .auth-field label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--ink-800);
-      letter-spacing: 0.01em;
-      margin: 0;
-      text-transform: none;
-    }
-
-    .auth-field .field-wrap { position: relative; }
-
-    .auth-field input {
-      height: 46px;
-      padding: 0 44px 0 14px;
-      border-radius: 12px;
-      border: 1px solid var(--ink-200);
-      background: white;
-
-      font-size: 14px;
-      color: var(--ink-950);
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      width: 100%;
-    }
-
-    .auth-field input.no-icon { padding: 0 14px; }
-
-    .auth-field input:focus {
-      border-color: var(--sw-primary);
-      box-shadow: 0 0 0 3px var(--sw-focus-ring);
-    }
-
-    .auth-field input::placeholder { color: #C4C4C4; }
-
-    .pw-toggle {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--ink-400);
-      padding: 0;
-      display: flex;
-      align-items: center;
-      transition: color 0.15s;
-    }
-    .pw-toggle:hover { color: var(--ink-800); }
-
-    .auth-error {
-      border-radius: 10px;
-      padding: 10px 14px;
-      background: rgba(239,68,68,0.06);
-      border: 1px solid rgba(239,68,68,0.20);
-      font-size: 13px;
-      color: #DC2626;
-      line-height: 1.5;
-      display: none;
-    }
-    .auth-error.visible { display: block; }
-
-    .auth-submit {
-      width: 100%;
-      height: 48px;
-      border-radius: 12px;
-      border: none;
-      background: var(--sw-gradient);
-      color: white;
-
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,200,150,0.22);
-      transition: opacity 0.15s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    .auth-submit:hover { opacity: 0.9; }
-    .auth-submit:active { transform: scale(0.99); }
-    .auth-submit:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { animation: spin 0.7s linear infinite; }
-  </style>
+  <title>Sign in — SimpleWatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script>
+    // Restore persisted theme before first paint to avoid a flash.
+    // ?theme=light|dark overrides for previews without touching the saved choice.
+    const param = new URLSearchParams(location.search).get('theme')
+    document.documentElement.dataset.theme =
+      param === 'light' || param === 'dark'
+        ? param
+        : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+  </script>
+  <link rel="stylesheet" href="/static/css/glasshouse.css" />
+  <link rel="stylesheet" href="/static/css/watch.css" />
 </head>
 <body>
 
-  <!-- Left brand panel -->
-  <div class="auth-brand">
-    <div class="auth-brand__rule"></div>
-    <div class="auth-brand__dots"></div>
-    <div class="auth-brand__glow-a"></div>
-    <div class="auth-brand__glow-b"></div>
-    <div class="auth-brand__deco-a"></div>
-    <div class="auth-brand__deco-b"></div>
-
-    <div class="auth-brand__status-dots">
-      <span style="background:rgba(0,200,150,0.25);"></span>
-      <span style="background:rgba(0,200,150,0.18);"></span>
-      <span style="background:rgba(59,130,246,0.20);"></span>
-      <span style="background:rgba(0,200,150,0.12);"></span>
-      <span style="background:rgba(59,130,246,0.15);"></span>
+<div class="split">
+  <section class="brand-side">
+    <div class="wordmark-xl"><span class="lite">Simple</span><span class="brand">Watch</span></div>
+    <p class="tag">Monitor your services in under 60 seconds. Websites, APIs, certificates, heartbeats — no coding required.</p>
+    <div class="shard s1">
+      <span class="ico"><svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 9h3l2-4.5L10 13l2.5-6 1.5 2h2.5"/></svg></span>
+      <span><b>13 monitor types</b><br>set up in the UI, no code</span>
     </div>
+    <div class="shard s2">
+      <span class="ico"><svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l2.5 2.5"/></svg></span>
+      <span><b>Incident tracking</b><br>MTTR &amp; uptime built in</span>
+    </div>
+  </section>
 
-    <div class="auth-brand__content" id="brandContent">
-      <div class="auth-wordmark">
-        <div class="auth-wordmark__size">
-          <span class="auth-wordmark__simple">Simple</span><span class="auth-wordmark__app">Watch</span>
-        </div>
-        <span class="auth-wordmark__sub">Monitor your services in under 60 seconds</span>
+  <section class="form-side">
+    <form class="login-card" id="loginForm">
+      <h1>Welcome back</h1>
+      <p class="sub">Sign in to your SimpleWatch workspace.</p>
+
+      <div id="loginError" class="login-error"></div>
+
+      <div class="fieldrow">
+        <label for="username">Username</label>
+        <input class="input" id="username" type="text" placeholder="your-username" autocomplete="username" required autofocus />
       </div>
 
-      <div class="auth-callouts">
-        <div class="auth-callout">
-          <div class="auth-callout__icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      <div class="fieldrow">
+        <label for="password">Password</label>
+        <div style="position:relative">
+          <input class="input" id="password" type="password" placeholder="••••••••••" autocomplete="current-password" required style="padding-right:42px" />
+          <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
+            <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
             </svg>
-          </div>
-          <span class="auth-callout__label">13 monitor types — no coding required</span>
-        </div>
-        <div class="auth-callout">
-          <div class="auth-callout__icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-          </div>
-          <span class="auth-callout__label">Real-time status · 10-second polling</span>
-        </div>
-        <div class="auth-callout">
-          <div class="auth-callout__icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 20V10M12 20V4M6 20v-6"/>
-            </svg>
-          </div>
-          <span class="auth-callout__label">Incident tracking · MTTR · uptime analytics</span>
-        </div>
-        <div class="auth-callout">
-          <div class="auth-callout__icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <span class="auth-callout__label">Slack, Discord &amp; email alerts built in</span>
+          </button>
         </div>
       </div>
-    </div>
 
-    <div class="auth-brand__version">v1.0 · Self-hosted</div>
-  </div>
+      <button class="btn" type="submit" id="submitBtn">Sign in</button>
 
-  <!-- Right form panel -->
-  <div class="auth-form-panel" id="formPanel">
+      <p class="ssonote"><i></i> Self-hosted · your data stays yours</p>
+    </form>
+  </section>
+</div>
 
-    <span class="auth-mobile-wordmark">
-      <span style="font-weight:200;color:var(--ink-950);">Simple</span><span class="gradient-text" style="font-weight:800;">Watch</span>
-    </span>
-
-    <div class="auth-form-wrap">
-      <div class="auth-heading">
-        <h2>Sign in</h2>
-        <p>Welcome back to your monitoring workspace</p>
-      </div>
-
-      <form id="loginForm" class="auth-fields">
-        <div id="loginError" class="auth-error"></div>
-
-        <div class="auth-field">
-          <label for="username">Username</label>
-          <input type="text" id="username" class="no-icon" placeholder="your-username"
-                 autocomplete="username" required />
-        </div>
-
-        <div class="auth-field">
-          <label for="password">Password</label>
-          <div class="field-wrap">
-            <input type="password" id="password" placeholder="••••••••"
-                   autocomplete="current-password" required />
-            <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password">
-              <!-- eye icon -->
-              <svg id="eyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <button type="submit" class="auth-submit" id="submitBtn">
-          Sign In
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <script src="/static/js/theme.js"></script>
-  <script src="/static/js/api.js"></script>
-  <script>
-    // Entry animation
-    window.addEventListener('load', () => {
-      document.getElementById('brandContent').classList.add('in');
-      document.getElementById('formPanel').classList.add('in');
-    });
-
-    // Check setup status on load
-    async function checkSetupStatus() {
-      try {
-        const res = await fetch('/api/v1/setup/status');
-        const data = await res.json();
-        if (!data.setup_completed) {
-          window.location.href = '/static/setup.html';
-        }
-      } catch (e) {
-        console.error('Setup check failed', e);
+<script src="/static/js/theme.js"></script>
+<script src="/static/js/api.js"></script>
+<script>
+  // Check setup status on load
+  async function checkSetupStatus() {
+    try {
+      const res = await fetch('/api/v1/setup/status');
+      const data = await res.json();
+      if (!data.setup_completed) {
+        window.location.href = '/static/setup.html';
       }
+    } catch (e) {
+      console.error('Setup check failed', e);
     }
-    checkSetupStatus();
+  }
+  checkSetupStatus();
 
-    // Redirect if already authenticated
-    if (localStorage.getItem('token')) {
+  // Redirect if already authenticated
+  if (localStorage.getItem('token')) {
+    window.location.href = '/static/dashboard.html';
+  }
+
+  // Password visibility toggle
+  const pwInput  = document.getElementById('password');
+  const pwToggle = document.getElementById('pwToggle');
+  const eyeIcon  = document.getElementById('eyeIcon');
+
+  const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+
+  pwToggle.addEventListener('click', () => {
+    const show = pwInput.type === 'password';
+    pwInput.type = show ? 'text' : 'password';
+    eyeIcon.innerHTML = show ? eyeOff : eyeOpen;
+    pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  });
+
+  // Login form
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl   = document.getElementById('loginError');
+    const submitBtn = document.getElementById('submitBtn');
+
+    errorEl.classList.remove('visible');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `
+      <svg class="spin" width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-opacity="0.3" stroke-width="2"/>
+        <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Signing in…`;
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      await api.login(username, password);
       window.location.href = '/static/dashboard.html';
+    } catch (err) {
+      errorEl.textContent = err.message || 'Sign in failed — check your username and password.';
+      errorEl.classList.add('visible');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign in';
     }
-
-    // Password visibility toggle
-    const pwInput  = document.getElementById('password');
-    const pwToggle = document.getElementById('pwToggle');
-    const eyeIcon  = document.getElementById('eyeIcon');
-
-    const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
-    const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
-
-    pwToggle.addEventListener('click', () => {
-      const show = pwInput.type === 'password';
-      pwInput.type = show ? 'text' : 'password';
-      eyeIcon.innerHTML = show ? eyeOff : eyeOpen;
-    });
-
-    // Login form
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const errorEl  = document.getElementById('loginError');
-      const submitBtn = document.getElementById('submitBtn');
-
-      errorEl.classList.remove('visible');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `
-        <svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          <path d="M8 2a6 6 0 0 1 6 6" stroke="white" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Signing in…`;
-
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      try {
-        await api.login(username, password);
-        window.location.href = '/static/dashboard.html';
-      } catch (err) {
-        errorEl.textContent = err.message || 'Login failed. Please check your credentials.';
-        errorEl.classList.add('visible');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
-      }
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
