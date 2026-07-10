@@ -227,7 +227,7 @@ export default {
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Title Tag</div>
                 <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                    ${monitor.metadata.title ? `${monitor.metadata.title_length || monitor.metadata.title.length} chars: "${monitor.metadata.title}"` : '<span style="color: var(--status-down);">Missing</span>'}
+                    ${monitor.metadata.title ? `${monitor.metadata.title_length || monitor.metadata.title.length} chars: "${monitor.metadata.title}"` : '<span style="color: var(--danger-ink);">Missing</span>'}
                 </div>
             </div>
             ` : ''}
@@ -235,7 +235,7 @@ export default {
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Meta Description</div>
                 <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                    ${monitor.metadata.description ? `${monitor.metadata.description_length || monitor.metadata.description.length} chars: "${monitor.metadata.description.substring(0, 80)}${monitor.metadata.description.length > 80 ? '...' : ''}"` : '<span style="color: var(--status-degraded);">Missing</span>'}
+                    ${monitor.metadata.description ? `${monitor.metadata.description_length || monitor.metadata.description.length} chars: "${monitor.metadata.description.substring(0, 80)}${monitor.metadata.description.length > 80 ? '...' : ''}"` : '<span style="color: var(--warn-ink);">Missing</span>'}
                 </div>
             </div>
             ` : ''}
@@ -243,9 +243,9 @@ export default {
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Open Graph Tags</div>
                 <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.6;">
-                    og:title: ${monitor.metadata.og_title ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}<br>
-                    og:description: ${monitor.metadata.og_description ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}<br>
-                    og:image: ${monitor.metadata.og_image ? '<span style="color: var(--status-operational);">✓</span>' : '<span style="color: var(--status-degraded);">✗</span>'}
+                    og:title: ${monitor.metadata.og_title ? '<span style="color: var(--brand-ink);">✓</span>' : '<span style="color: var(--warn-ink);">✗</span>'}<br>
+                    og:description: ${monitor.metadata.og_description ? '<span style="color: var(--brand-ink);">✓</span>' : '<span style="color: var(--warn-ink);">✗</span>'}<br>
+                    og:image: ${monitor.metadata.og_image ? '<span style="color: var(--brand-ink);">✓</span>' : '<span style="color: var(--warn-ink);">✗</span>'}
                 </div>
             </div>
             ` : ''}
@@ -253,7 +253,7 @@ export default {
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Canonical Link</div>
                 <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem; word-break: break-all;">
-                    ${monitor.metadata.canonical || '<span style="color: var(--status-degraded);">Not set</span>'}
+                    ${monitor.metadata.canonical || '<span style="color: var(--warn-ink);">Not set</span>'}
                 </div>
             </div>
             ` : ''}
@@ -261,14 +261,14 @@ export default {
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Robots Meta</div>
                 <div class="monitor-metric-value" style="font-family: var(--font-mono); font-size: 0.8125rem;">
-                    ${monitor.metadata.robots || '<span style="color: var(--status-degraded);">Not set</span>'}
+                    ${monitor.metadata.robots || '<span style="color: var(--warn-ink);">Not set</span>'}
                 </div>
             </div>
             ` : ''}
             ${monitor.metadata.issues && monitor.metadata.issues.length > 0 ? `
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Critical Issues</div>
-                <div class="monitor-metric-value" style="color: var(--status-down); font-size: 0.8125rem; line-height: 1.6;">
+                <div class="monitor-metric-value" style="color: var(--danger-ink); font-size: 0.8125rem; line-height: 1.6;">
                     ${monitor.metadata.issues.map(issue => `• ${issue}`).join('<br>')}
                 </div>
             </div>
@@ -276,7 +276,7 @@ export default {
             ${monitor.metadata.warnings && monitor.metadata.warnings.length > 0 ? `
             <div class="monitor-metric">
                 <div class="monitor-metric-label">Warnings</div>
-                <div class="monitor-metric-value" style="color: var(--status-degraded); font-size: 0.8125rem; line-height: 1.6;">
+                <div class="monitor-metric-value" style="color: var(--warn-ink); font-size: 0.8125rem; line-height: 1.6;">
                     ${monitor.metadata.warnings.map(warning => `• ${warning}`).join('<br>')}
                 </div>
             </div>

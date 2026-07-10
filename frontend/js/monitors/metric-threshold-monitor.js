@@ -139,11 +139,11 @@ export default {
             const criticalThreshold = monitor.config.critical_threshold;
 
             // Determine color based on status
-            let valueColor = 'var(--status-operational)';
+            let valueColor = 'var(--brand-ink)';
             if (monitor.status === 'degraded') {
-                valueColor = 'var(--status-degraded)';
+                valueColor = 'var(--warn-ink)';
             } else if (monitor.status === 'down') {
-                valueColor = 'var(--status-down)';
+                valueColor = 'var(--danger-ink)';
             }
 
             currentValueHtml = `

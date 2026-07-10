@@ -842,11 +842,11 @@ export default {
 
         // Show current value if available
         if (monitor.metadata && monitor.metadata.value !== undefined) {
-            let valueColor = 'var(--status-operational)';
+            let valueColor = 'var(--brand-ink)';
             if (monitor.status === 'degraded') {
-                valueColor = 'var(--status-degraded)';
+                valueColor = 'var(--warn-ink)';
             } else if (monitor.status === 'down') {
-                valueColor = 'var(--status-down)';
+                valueColor = 'var(--danger-ink)';
             }
 
             metricsHtml += `
