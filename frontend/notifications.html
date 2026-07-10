@@ -1,204 +1,205 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-app="watch">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <title>Notifications - SimpleWatch</title>
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+        const param = new URLSearchParams(location.search).get('theme')
+        document.documentElement.dataset.theme =
+          param === 'light' || param === 'dark' ? param
+            : localStorage.getItem('sw-theme') === 'light' ? 'light' : 'dark'
+    </script>
+    <link rel="stylesheet" href="/static/css/glasshouse.css">
+    <link rel="stylesheet" href="/static/css/watch.css">
     <link rel="stylesheet" href="/static/css/notifications.css">
     <link rel="stylesheet" href="/static/css/ai-sre.css">
 </head>
 <body>
     <div id="navigation" data-page="notifications"></div>
 
-    <div class="main-container">
-        <!-- SMTP Configuration Section -->
-        <div class="page-section">
-            <h2 class="section-title">
-                <span class="section-icon" id="smtpIcon"></span>
-                Email (SMTP) Configuration
-                <span id="smtpStatusBadge"></span>
-            </h2>
+    <!-- SMTP configuration -->
+    <section class="panel form-panel">
+        <div class="panel-head">
+            <h2>Email (SMTP) configuration</h2>
+            <span id="smtpStatusBadge"></span>
+        </div>
+        <div class="panel-body">
             <p class="section-desc">Configure SMTP settings to send email notifications when service status changes.</p>
 
             <form id="smtpForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">SMTP Host</label>
-                        <input type="text" id="smtpHost" class="form-input" placeholder="smtp.gmail.com" required>
+                <div class="formgrid">
+                    <div class="fieldrow">
+                        <label for="smtpHost">SMTP host</label>
+                        <input type="text" id="smtpHost" class="input" placeholder="smtp.gmail.com" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">SMTP Port</label>
-                        <input type="number" id="smtpPort" class="form-input" placeholder="587" value="587" required>
+                    <div class="fieldrow">
+                        <label for="smtpPort">SMTP port</label>
+                        <input type="number" id="smtpPort" class="input" placeholder="587" value="587" required>
+                    </div>
+                    <div class="fieldrow">
+                        <label for="smtpUsername">Username</label>
+                        <input type="text" id="smtpUsername" class="input" placeholder="your-email@gmail.com" required>
+                    </div>
+                    <div class="fieldrow">
+                        <label for="smtpFromAddress">From address</label>
+                        <input type="email" id="smtpFromAddress" class="input" placeholder="noreply@simplewatch.local" required>
+                    </div>
+                    <div class="fieldrow full">
+                        <label for="smtpPassword">Password</label>
+                        <input type="password" id="smtpPassword" class="input" placeholder="Leave blank to keep existing password">
+                    </div>
+                    <div class="fieldrow full">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="smtpUseTls" checked>
+                            <span>Use TLS (recommended)</span>
+                        </label>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Username</label>
-                        <input type="text" id="smtpUsername" class="form-input" placeholder="your-email@gmail.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">From Address</label>
-                        <input type="email" id="smtpFromAddress" class="form-input" placeholder="noreply@simplewatch.local" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="smtpPassword" class="form-input" placeholder="Leave blank to keep existing password">
-                </div>
-
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="smtpUseTls" class="form-checkbox" checked>
-                        <span>Use TLS (recommended)</span>
-                    </label>
-                </div>
-
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary">Save SMTP Settings</button>
-                    <button type="button" onclick="testSMTP()" class="btn btn-secondary" id="testSMTPBtn">Test Email</button>
+                <div class="form-actions">
+                    <button type="button" onclick="testSMTP()" class="btn ghost" id="testSMTPBtn">Test Email</button>
+                    <button type="submit" class="btn">Save SMTP Settings</button>
                 </div>
             </form>
         </div>
+    </section>
 
-        <!-- Webhook Channels Section -->
-        <div class="page-section">
-            <h2 class="section-title">
-                Webhook Channels
-            </h2>
-            <p class="section-desc">Add Slack, Discord, or custom webhook endpoints to receive notifications.</p>
-
-            <div style="margin-bottom: 2rem;">
-                <button onclick="showAddChannelModal()" class="btn btn-primary">+ Add Webhook Channel</button>
+    <!-- Webhook channels -->
+    <section class="panel form-panel">
+        <div class="panel-head">
+            <h2>Webhook channels</h2>
+            <div class="head-tools">
+                <button onclick="showAddChannelModal()" class="btn sm">+ Add Webhook Channel</button>
             </div>
+        </div>
+        <div class="panel-body">
+            <p class="section-desc">Add Slack, Discord, or custom webhook endpoints to receive notifications.</p>
 
             <div id="channelsList">
                 <!-- Channels will be loaded here -->
             </div>
 
             <div id="emptyChannelsState" class="empty-state hidden">
-                <div class="empty-state-icon" id="emptyIcon"></div>
-                <p>No webhook channels configured yet.</p>
-                <p style="font-size: 0.875rem; margin-top: 0.5rem;">Click "Add Webhook Channel" to get started.</p>
+                <h2>No webhook channels yet</h2>
+                <p>Click "Add Webhook Channel" to get started.</p>
             </div>
         </div>
+    </section>
 
-        <!-- Notification Log Section -->
-        <div class="page-section" id="logSection">
-            <div class="log-header" onclick="toggleLogSection()">
-                <div class="log-header-left">
-                    <svg class="log-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+    <!-- Notification log -->
+    <section class="panel section-panel" id="logSection">
+        <div class="log-header" onclick="toggleLogSection()">
+            <div class="log-header-left">
+                <svg class="log-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+                <h2 class="log-title">Notification log</h2>
+            </div>
+        </div>
+        <div class="log-content">
+            <div class="log-content-inner">
+                <div class="log-table-container tablewrap">
+                    <div id="logLoading" class="log-loading hidden">
+                        Loading notification history…
+                    </div>
+                    <div id="logEmptyState" class="empty-state hidden">
+                        <h2>No notifications sent yet</h2>
+                        <p>Notifications will appear here when services change status.</p>
+                    </div>
+                    <table class="log-table" id="logTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Service</th>
+                                <th>Channel</th>
+                                <th>Status Change</th>
+                                <th>Delivery</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn ghost sm log-export-btn" onclick="exportNotificationLog()" id="exportBtn" style="display: none;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    <h2 class="log-title">Notification Log</h2>
-                </div>
-            </div>
-            <div class="log-content">
-                <div class="log-content-inner">
-                    <div class="log-table-container">
-                        <div id="logLoading" class="log-loading hidden">
-                            Loading notification history...
-                        </div>
-                        <div id="logEmptyState" class="log-empty-state hidden">
-                            <div class="empty-state-icon" id="logEmptyIcon"></div>
-                            <p style="font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem;">No notifications sent yet</p>
-                            <p style="font-size: 0.8125rem;">Notifications will appear here when services change status</p>
-                        </div>
-                        <table class="log-table" id="logTable" style="display: none;">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Service</th>
-                                    <th>Channel</th>
-                                    <th>Status Change</th>
-                                    <th>Delivery</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <button class="btn btn-export log-export-btn" onclick="exportNotificationLog()" id="exportBtn" style="display: none;">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        Download Full Log (CSV)
-                    </button>
-                </div>
+                    Download Full Log (CSV)
+                </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Add/Edit Channel Modal -->
-    <div id="channelModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3 id="channelModalTitle">Add Webhook Channel</h3>
-                <button onclick="hideChannelModal()" class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="channelForm">
-                    <input type="hidden" id="channelId">
-
-                    <div class="form-group">
-                        <label class="form-label">Channel Label</label>
-                        <input type="text" id="channelLabel" class="form-input" placeholder="Production Slack" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Channel Type</label>
-                        <select id="channelType" class="form-input" onchange="updateChannelTypeHelp()" required>
-                            <optgroup label="Chat Platforms">
-                                <option value="slack">Slack</option>
-                                <option value="discord">Discord</option>
-                                <option value="teams">Microsoft Teams</option>
-                                <option value="telegram">Telegram</option>
-                                <option value="matrix">Matrix</option>
-                            </optgroup>
-                            <optgroup label="Incident Management">
-                                <option value="pagerduty">PagerDuty</option>
-                                <option value="opsgenie">Opsgenie</option>
-                            </optgroup>
-                            <optgroup label="Push Notifications">
-                                <option value="ntfy">ntfy.sh</option>
-                            </optgroup>
-                            <optgroup label="Custom">
-                                <option value="generic">Generic Webhook</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" id="webhookUrlLabel">Webhook URL</label>
-                        <input type="text" id="channelWebhookUrl" class="form-input" placeholder="https://hooks.slack.com/services/..." required>
-                        <div id="webhookHelp" style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;"></div>
-                    </div>
-
-                    <div class="form-group" id="secretTokenGroup">
-                        <label class="form-label" id="secretTokenLabel">Secret Token (Optional)</label>
-                        <input type="text" id="channelSecretToken" class="form-input" placeholder="Optional authentication token">
-                        <div id="secretTokenHelp" style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;"></div>
-                    </div>
-
-                    <div class="form-group" id="customTemplateGroup" style="display: none;">
-                        <label class="form-label">Custom Payload Template (JSON)</label>
-                        <textarea id="channelCustomTemplate" class="form-input" rows="8" placeholder='{"message": "{{service_name}} is {{new_status}}"}'></textarea>
-                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">
-                            Available variables: {{service_name}}, {{old_status}}, {{new_status}}, {{status_emoji}}, {{affected_count}}, {{operational_count}}, {{total_count}}, {{timestamp}}
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                        <button type="button" onclick="hideChannelModal()" class="btn btn-secondary">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Channel</button>
-                    </div>
-                </form>
-            </div>
+    <!-- Add/Edit channel modal -->
+    <div id="channelModalScrim" class="scrim" onclick="hideChannelModal()"></div>
+    <div id="channelModal" class="modal modal-scroll" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2 id="channelModalTitle">Add webhook channel</h2>
+            <button onclick="hideChannelModal()" class="so-close" aria-label="Close">✕</button>
         </div>
+        <form id="channelForm">
+            <input type="hidden" id="channelId">
+
+            <div class="fieldrow">
+                <label for="channelLabel">Channel label</label>
+                <input type="text" id="channelLabel" class="input" placeholder="Production Slack" required>
+            </div>
+
+            <div class="fieldrow">
+                <label for="channelType">Channel type</label>
+                <div class="selectwrap">
+                    <select id="channelType" class="select" onchange="updateChannelTypeHelp()" required>
+                        <optgroup label="Chat Platforms">
+                            <option value="slack">Slack</option>
+                            <option value="discord">Discord</option>
+                            <option value="teams">Microsoft Teams</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="matrix">Matrix</option>
+                        </optgroup>
+                        <optgroup label="Incident Management">
+                            <option value="pagerduty">PagerDuty</option>
+                            <option value="opsgenie">Opsgenie</option>
+                        </optgroup>
+                        <optgroup label="Push Notifications">
+                            <option value="ntfy">ntfy.sh</option>
+                        </optgroup>
+                        <optgroup label="Custom">
+                            <option value="generic">Generic Webhook</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+
+            <div class="fieldrow">
+                <label for="channelWebhookUrl" id="webhookUrlLabel">Webhook URL</label>
+                <input type="text" id="channelWebhookUrl" class="input" placeholder="https://hooks.slack.com/services/..." required>
+                <div id="webhookHelp" class="form-hint"></div>
+            </div>
+
+            <div class="fieldrow" id="secretTokenGroup">
+                <label for="channelSecretToken" id="secretTokenLabel">Secret token (optional)</label>
+                <input type="text" id="channelSecretToken" class="input" placeholder="Optional authentication token">
+                <div id="secretTokenHelp" class="form-hint"></div>
+            </div>
+
+            <div class="fieldrow" id="customTemplateGroup" style="display: none;">
+                <label for="channelCustomTemplate">Custom payload template (JSON)</label>
+                <textarea id="channelCustomTemplate" class="input" rows="8" placeholder='{"message": "{{service_name}} is {{new_status}}"}'></textarea>
+                <div class="form-hint">
+                    Available variables: {{service_name}}, {{old_status}}, {{new_status}}, {{status_emoji}}, {{affected_count}}, {{operational_count}}, {{total_count}}, {{timestamp}}
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" onclick="hideChannelModal()" class="btn ghost">Cancel</button>
+                <button type="submit" class="btn">Save Channel</button>
+            </div>
+        </form>
     </div>
 
     <script src="/static/js/components.js"></script>

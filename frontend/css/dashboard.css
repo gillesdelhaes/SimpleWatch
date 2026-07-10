@@ -4,7 +4,6 @@
    ============================================================ */
 
 /* ── Panel head tools ─────────────────────────────────────── */
-.panel-head .head-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .panel-head .sub#lastUpdate { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
 #filterButton { position: relative; }
 .filter-dot {
