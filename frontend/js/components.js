@@ -302,29 +302,33 @@ window.showConfirm = (message, options = {}) => {
             title = 'Confirm Action',
             confirmText = 'Delete',
             cancelText = 'Cancel',
-            icon = icons.warning,
             confirmClass = 'btn-danger'
         } = options;
 
-        // Create backdrop
-        const backdrop = document.createElement('div');
-        backdrop.className = 'confirm-modal-backdrop';
+        // Legacy class names map onto glasshouse button variants
+        const confirmBtnClass = confirmClass === 'btn-danger' ? 'btn ghost danger' : 'btn';
 
-        // Create modal
+        const backdrop = document.createElement('div');
+        backdrop.className = 'scrim';
+
         const modal = document.createElement('div');
-        modal.className = 'confirm-modal';
+        modal.className = 'modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         modal.innerHTML = `
-            <div class="confirm-modal-icon">${icon}</div>
-            <h3 class="confirm-modal-title">${title}</h3>
-            <p class="confirm-modal-message">${message}</p>
-            <div class="confirm-modal-actions">
-                <button class="btn btn-secondary" data-action="cancel">${cancelText}</button>
-                <button class="btn ${confirmClass}" data-action="confirm">${confirmText}</button>
+            <h2>${title}</h2>
+            <p class="sub">${message}</p>
+            <div class="modal-actions">
+                <button class="btn ghost" data-action="cancel">${cancelText}</button>
+                <button class="${confirmBtnClass}" data-action="confirm">${confirmText}</button>
             </div>
         `;
 
-        backdrop.appendChild(modal);
-        document.body.appendChild(backdrop);
+        document.body.append(backdrop, modal);
+        requestAnimationFrame(() => {
+            backdrop.classList.add('open');
+            modal.classList.add('open');
+        });
 
         // Focus confirm button
         setTimeout(() => {
@@ -333,15 +337,14 @@ window.showConfirm = (message, options = {}) => {
 
         // Handle actions
         const cleanup = () => {
-            backdrop.classList.add('fade-out');
-            setTimeout(() => backdrop.remove(), 200);
+            backdrop.classList.remove('open');
+            modal.classList.remove('open');
+            setTimeout(() => { backdrop.remove(); modal.remove(); }, 220);
         };
 
-        backdrop.addEventListener('click', (e) => {
-            if (e.target === backdrop) {
-                cleanup();
-                resolve(false);
-            }
+        backdrop.addEventListener('click', () => {
+            cleanup();
+            resolve(false);
         });
 
         modal.querySelector('[data-action="cancel"]').addEventListener('click', () => {

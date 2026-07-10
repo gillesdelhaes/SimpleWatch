@@ -1,19 +1,20 @@
 /**
- * SimpleWatch — Sidebar navigation
- * Replaces the <div id="navigation" data-page="..."> placeholder
- * with the full app shell: sidebar + main-area (topbar + page content).
+ * SimpleWatch — Sidebar navigation (Glasshouse shell)
+ * Replaces the <div id="navigation" data-page="..."> placeholder with the
+ * full app shell: .aura background + .shell > .sidebar + main (.topbar + page
+ * content). Theme toggle lives in the topbar and delegates to themeManager.
  */
 
 // ── Page metadata ──────────────────────────────────────────────────────────────
 
 const PAGE_META = {
-  dashboard:     { title: 'Dashboard',      icon: 'dashboard' },
-  services:      { title: 'Services',       icon: 'services'  },
-  incidents:     { title: 'Incidents',      icon: 'incidents' },
-  notifications: { title: 'Notifications',  icon: 'bell'      },
-  settings:      { title: 'Settings',       icon: 'settings'  },
-  users:         { title: 'Users',          icon: 'users'     },
-  status:        { title: 'Status Page',    icon: null        }, // public page, no shell
+  dashboard:     { title: 'Dashboard' },
+  services:      { title: 'Services' },
+  incidents:     { title: 'Incidents' },
+  notifications: { title: 'Notifications' },
+  settings:      { title: 'Settings' },
+  users:         { title: 'Users' },
+  status:        { title: 'Status Page' }, // public page, no shell
 };
 
 function getPageTitle(page) {
@@ -23,45 +24,44 @@ function getPageTitle(page) {
 // ── SVG nav icons ──────────────────────────────────────────────────────────────
 
 const NAV_ICONS = {
-  dashboard: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="1.5" y="1.5" width="6" height="6" rx="1.2"/>
-    <rect x="10.5" y="1.5" width="6" height="6" rx="1.2"/>
-    <rect x="1.5" y="10.5" width="6" height="6" rx="1.2"/>
-    <rect x="10.5" y="10.5" width="6" height="6" rx="1.2"/>
+  dashboard: `<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="1.5" y="1.5" width="6" height="6" rx="1.5"/>
+    <rect x="10.5" y="1.5" width="6" height="6" rx="1.5"/>
+    <rect x="1.5" y="10.5" width="6" height="6" rx="1.5"/>
+    <rect x="10.5" y="10.5" width="6" height="6" rx="1.5"/>
   </svg>`,
 
-  services: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  services: `<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <rect x="1.5" y="1.5" width="6.5" height="6.5" rx="1.5"/>
     <rect x="10" y="1.5" width="6.5" height="6.5" rx="1.5"/>
     <rect x="1.5" y="10" width="6.5" height="6.5" rx="1.5"/>
     <path d="M13.25 10v6M10 13.25h6"/>
   </svg>`,
 
-  incidents: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  incidents: `<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M2 13l3.5-5 3 3 3-4.5 4 5.5"/>
   </svg>`,
 
-  bell: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  bell: `<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M9 2a5.5 5.5 0 0 1 5.5 5.5c0 3 1.5 4.5 1.5 4.5H2s1.5-1.5 1.5-4.5A5.5 5.5 0 0 1 9 2z"/>
     <path d="M7.5 14.5a1.5 1.5 0 0 0 3 0"/>
   </svg>`,
 
-  settings: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  settings: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="3"/>
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
   </svg>`,
 
-  users: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  users: `<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="7" cy="6" r="3"/>
     <path d="M1.5 15c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5"/>
     <path d="M13 4a3 3 0 0 1 0 6M16.5 15c0-2-1.12-3.75-2.75-4.65"/>
   </svg>`,
 
-  logout: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  logout: `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>
     <path d="M11 11l3-3-3-3M14 8H6"/>
   </svg>`,
-
 };
 
 // ── Nav item definition ────────────────────────────────────────────────────────
@@ -85,53 +85,47 @@ function buildNavItems(items, activePage) {
     return `
       <a class="nav-item${active}" href="${item.href}">
         ${NAV_ICONS[item.icon] || ''}
-        ${item.label}
+        <span>${item.label}</span>
       </a>`;
   }).join('');
 }
 
 function buildSidebar(activePage, userInfo) {
   const initial = (userInfo.username || 'A').charAt(0).toUpperCase();
-  const rolePill = userInfo.isAdmin ? 'Admin' : 'User';
-  const showUsers = userInfo.isAdmin;
+  const role = userInfo.isAdmin ? 'Admin' : 'User';
 
   return `
 <aside class="sidebar" id="appSidebar">
-  <div class="sidebar__rule"></div>
-  <div class="sidebar__dots"></div>
-
-  <a class="sidebar__wordmark" href="/static/dashboard.html">
-    <span class="w-simple">Simple</span><span class="w-app">Watch</span>
+  <a class="wordmark" href="/static/dashboard.html">
+    <span class="lite">Simple</span><span class="brand">Watch</span>
   </a>
 
-  <nav class="sidebar__nav">
+  <nav aria-label="Main">
     ${buildNavItems(NAV_MAIN, activePage)}
 
-    ${showUsers ? `
+    <div class="nav-sep">System</div>
+    ${userInfo.isAdmin ? `
     <a class="nav-item${activePage === 'users' ? ' active' : ''}" href="/static/users.html">
       ${NAV_ICONS.users}
-      Users
+      <span>Users</span>
     </a>` : ''}
-
-    <span class="nav-section-label">System</span>
     ${buildNavItems(NAV_SYSTEM, activePage)}
   </nav>
 
-  <div class="sidebar__bottom">
-    <div class="sidebar__user">
-      <div class="sidebar__avatar">${initial}</div>
-      <div class="sidebar__user-info">
-        <span class="sidebar__username">${userInfo.username || 'Admin'}</span>
-        <span class="sidebar__role">${rolePill}</span>
-      </div>
-      <button class="sidebar__logout" onclick="logout()" title="Sign out">
-        ${NAV_ICONS.logout}
-      </button>
+  <button class="side-ai" id="sidebarAiIndicator" style="display:none;" onclick="toggleAIStatusPopup()">
+    <span class="dot unknown" id="sidebarAiDot"></span>
+    <span id="sidebarAiLabel">AI SRE</span>
+  </button>
+
+  <div class="side-foot">
+    <div class="avatar">${initial}</div>
+    <div class="who">
+      <b>${userInfo.username || 'Admin'}</b>
+      <span>${role}</span>
     </div>
-    <div class="sidebar__ai-indicator" id="sidebarAiIndicator" style="display:none;" onclick="toggleAIStatusPopup()">
-      <span class="sidebar__ai-dot" id="sidebarAiDot"></span>
-      <span class="sidebar__ai-label" id="sidebarAiLabel">AI SRE</span>
-    </div>
+    <button class="side-logout" onclick="logout()" aria-label="Sign out" title="Sign out">
+      ${NAV_ICONS.logout}
+    </button>
   </div>
 </aside>`;
 }
@@ -139,7 +133,8 @@ function buildSidebar(activePage, userInfo) {
 function buildTopbar(pageTitle) {
   return `
 <header class="topbar" id="appTopbar">
-  <h1 class="topbar__title">${pageTitle}</h1>
+  <h1>${pageTitle}</h1>
+  <button class="icon-btn" id="themeToggle" aria-label="Toggle theme"></button>
 </header>`;
 }
 
@@ -161,13 +156,13 @@ function updateAIStatusIndicator() {
     indicator.style.display = 'flex';
 
     if (status.connected === true) {
-      dot.style.background = '#00C896';
+      dot.className = 'dot op';
       label.textContent = `AI SRE · ${status.model || 'Connected'}`;
     } else if (status.connected === false) {
-      dot.style.background = '#EF4444';
+      dot.className = 'dot down';
       label.textContent = 'AI SRE · Disconnected';
     } else {
-      dot.style.background = '#F59E0B';
+      dot.className = 'dot deg';
       label.textContent = 'AI SRE · Unknown';
     }
   } catch {
@@ -200,14 +195,13 @@ function toggleAIStatusPopup() {
 
   const rect = indicator.getBoundingClientRect();
 
-  // Determine status display values
-  let statusText, statusColor, dotClass;
+  let statusText, statusColor;
   if (status.connected === true) {
-    statusText = 'Connected';   statusColor = 'var(--status-operational)'; dotClass = 'ai-status-connected';
+    statusText = 'Connected';    statusColor = 'var(--brand-ink)';
   } else if (status.connected === false) {
-    statusText = 'Disconnected'; statusColor = 'var(--status-down)';        dotClass = 'ai-status-disconnected';
+    statusText = 'Disconnected'; statusColor = 'var(--danger-ink)';
   } else {
-    statusText = 'Unknown';     statusColor = 'var(--status-degraded)';     dotClass = 'ai-status-unknown';
+    statusText = 'Unknown';      statusColor = 'var(--warn-ink)';
   }
 
   const lastQueryText = status.lastQueryAt
@@ -216,7 +210,7 @@ function toggleAIStatusPopup() {
 
   const popup = document.createElement('div');
   popup.id = 'aiStatusPopup';
-  popup.className = 'ai-status-popup ai-status-popup--sidebar';
+  popup.className = 'overlay-surface ai-pop';
   // Position to the right of the sidebar, aligned with the indicator
   popup.style.cssText = `
     position: fixed;
@@ -226,31 +220,17 @@ function toggleAIStatusPopup() {
   `;
 
   popup.innerHTML = `
-    <div class="ai-status-popup-header">
-      <span class="ai-status-popup-title">AI SRE Companion</span>
-      <span class="ai-status-dot ${dotClass}"></span>
+    <div class="ai-pop-head">
+      <b>AI SRE Companion</b>
+      <span class="dot" style="background:${statusColor}"></span>
     </div>
-    <div class="ai-status-popup-content">
-      <div class="ai-status-row">
-        <span class="ai-status-label">Status</span>
-        <span class="ai-status-value" style="color:${statusColor}">${statusText}</span>
-      </div>
-      ${status.provider ? `
-      <div class="ai-status-row">
-        <span class="ai-status-label">Provider</span>
-        <span class="ai-status-value">${status.provider}</span>
-      </div>` : ''}
-      ${status.model ? `
-      <div class="ai-status-row">
-        <span class="ai-status-label">Model</span>
-        <span class="ai-status-value">${status.model}</span>
-      </div>` : ''}
-      <div class="ai-status-row">
-        <span class="ai-status-label">Last Query</span>
-        <span class="ai-status-value">${lastQueryText}</span>
-      </div>
-    </div>
-    <a href="/static/settings.html" class="ai-status-popup-link">Configure Settings →</a>
+    <dl class="kv">
+      <dt>Status</dt><dd style="color:${statusColor}">${statusText}</dd>
+      ${status.provider ? `<dt>Provider</dt><dd>${status.provider}</dd>` : ''}
+      ${status.model ? `<dt>Model</dt><dd class="mono">${status.model}</dd>` : ''}
+      <dt>Last query</dt><dd>${lastQueryText}</dd>
+    </dl>
+    <a href="/static/settings.html" class="ai-pop-link">Configure settings →</a>
   `;
 
   document.body.appendChild(popup);
@@ -301,6 +281,13 @@ function formatRelativeTime(isoString) {
 
 window.formatRelativeTime = formatRelativeTime;
 
+// ── Theme toggle ───────────────────────────────────────────────────────────────
+
+function _syncThemeToggle() {
+  const btn = document.getElementById('themeToggle');
+  if (btn && window.themeManager) btn.innerHTML = themeManager.icon();
+}
+
 // ── DOM injection ──────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -318,39 +305,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const userInfo = (typeof getUserInfo === 'function') ? getUserInfo() : { username: '', isAdmin: false };
 
-  // Build sidebar element
+  // Aura background (sits behind the shell)
+  const aura = document.createElement('div');
+  aura.className = 'aura';
+  aura.setAttribute('aria-hidden', 'true');
+
+  // Shell: sidebar + main
+  const shell = document.createElement('div');
+  shell.className = 'shell';
+
   const sidebarWrap = document.createElement('div');
   sidebarWrap.innerHTML = buildSidebar(activePage, userInfo).trim();
   const sidebar = sidebarWrap.firstElementChild;
 
-  // Collect all body siblings that come after the placeholder
+  const main = document.createElement('main');
+  main.innerHTML = buildTopbar(pageTitle);
+
+  // Move everything after the placeholder into <main>
   const siblings = [];
   let sibling = placeholder.nextSibling;
   while (sibling) {
     siblings.push(sibling);
     sibling = sibling.nextSibling;
   }
+  siblings.forEach(node => main.appendChild(node));
 
-  // Build main-area
-  const mainArea = document.createElement('div');
-  mainArea.className = 'main-area';
-  mainArea.innerHTML = buildTopbar(pageTitle);
+  shell.append(sidebar, main);
+  placeholder.replaceWith(shell);
+  document.body.prepend(aura);
 
-  // Content wrapper (replaces .main-container role)
-  const pageContent = document.createElement('div');
-  pageContent.className = 'page-content';
-  siblings.forEach(node => pageContent.appendChild(node));
-  mainArea.appendChild(pageContent);
-
-  // Replace placeholder with sidebar + main-area
-  placeholder.replaceWith(sidebar, mainArea);
-
-  // Mark body as app-layout
-  document.body.classList.add('app-layout');
+  // Theme toggle
+  const toggle = document.getElementById('themeToggle');
+  if (toggle) toggle.addEventListener('click', () => themeManager.toggle());
+  document.addEventListener('themechange', _syncThemeToggle);
+  _syncThemeToggle();
 
   // Update AI indicator
   updateAIStatusIndicator();
-
 });
 
 // ── Legacy createNavigation stub (called by nothing, but guards against errors) ─
