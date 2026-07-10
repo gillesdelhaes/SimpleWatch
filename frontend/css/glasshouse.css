@@ -1,0 +1,480 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLASSHOUSE — the Simple* galaxy design system
+   Canonical stylesheet. One file, no build step, no dependencies.
+
+   Usage:
+     <html data-theme="dark" data-app="gear">
+     <link rel="stylesheet" href="glasshouse.css">
+     <div class="aura" aria-hidden="true"></div>   ← first child of <body>
+
+   The entire per-app identity is --b1/--b2, set by [data-app].
+   The entire theme is set by [data-theme]. Nothing else changes.
+   Full documentation: GLASSHOUSE_DESIGN_SYSTEM.md
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@200..800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ── 1. Brand tokens — the ONLY per-app values ──────────────────────────── */
+:root[data-app="gear"]    { --b1:#84CC16; --b2:#15803D; }
+:root[data-app="tickets"] { --b1:#FF4713; --b2:#AD1164; }
+:root[data-app="watch"]   { --b1:#00C896; --b2:#3B82F6; }
+:root[data-app="vendor"]  { --b1:#8B5CF6; --b2:#4338CA; }
+:root[data-app="onboard"] { --b1:#F59E0B; --b2:#C2410C; }
+:root[data-app="core"]    { --b1:#94A3B8; --b2:#475569; }
+
+/* ── 2. Theme tokens ────────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --bg:#0A0C10;
+  --ink:#F2F4F8; --ink-2:#9AA3B2; --ink-3:#5E6675;
+  --glass:rgba(23,26,33,.55);        /* tier 1: page panels        */
+  --glass-strong:rgba(23,26,33,.86); /* tier 2: overlays           */
+  --edge:rgba(255,255,255,.09); --edge-hi:rgba(255,255,255,.14);
+  --specular:rgba(255,255,255,.10);
+  --shadow:0 16px 48px rgba(0,0,0,.45);
+  --overlay-shadow:0 24px 70px rgba(0,0,0,.4);
+  --aura-a:.34; --aura-b:.22;
+  --field:rgba(255,255,255,.05);
+  --row-hover:rgba(255,255,255,.04);
+  --row-active:rgba(255,255,255,.07);
+  --track:rgba(255,255,255,.07);
+  --scrim:rgba(5,7,10,.55);
+  /* semantic */
+  --brand-ink:color-mix(in oklab, var(--b1) 78%, #fff);
+  --warn-ink:#FBBF24;  --warn-bg:rgba(245,158,11,.14);
+  --danger-ink:#F87171; --danger-bg:rgba(239,68,68,.13);
+}
+:root[data-theme="light"] {
+  --bg:#E9EBEF;
+  --ink:#171A20; --ink-2:#5B6270; --ink-3:#9299A6;
+  --glass:rgba(255,255,255,.55);
+  --glass-strong:rgba(255,255,255,.90);
+  --edge:rgba(255,255,255,.70); --edge-hi:rgba(255,255,255,.95);
+  --specular:rgba(255,255,255,.85);
+  --shadow:0 16px 48px rgba(23,28,40,.10);
+  --overlay-shadow:0 24px 70px rgba(23,28,40,.22);
+  --aura-a:.30; --aura-b:.18;
+  --field:rgba(255,255,255,.55);
+  --row-hover:rgba(255,255,255,.45);
+  --row-active:rgba(255,255,255,.75);
+  --track:rgba(23,28,40,.07);
+  --scrim:rgba(30,36,48,.35);
+  /* semantic */
+  --brand-ink:color-mix(in oklab, var(--b2) 80%, var(--ink));
+  --warn-ink:#B45309;  --warn-bg:rgba(245,158,11,.14);
+  --danger-ink:#DC2626; --danger-bg:rgba(239,68,68,.13);
+}
+:root {
+  /* derived, theme-independent */
+  --brand-grad:linear-gradient(120deg,var(--b1),var(--b2));
+  --brand-tint:color-mix(in oklab, var(--b1) 15%, transparent);
+  --brand-glow:color-mix(in oklab, var(--b2) 35%, transparent);
+  /* radii scale */
+  --r-panel:22px; --r-overlay:26px; --r-block:16px; --r-control:12px; --r-pill:999px;
+  /* motion */
+  --t-fast:.15s; --t-med:.3s; --ease-out:cubic-bezier(.2,.9,.25,1);
+}
+
+/* ── 3. Base ────────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:'Onest',system-ui,sans-serif; font-size:14px;
+  background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+:focus-visible{outline:2px solid var(--b1); outline-offset:2px; border-radius:8px}
+.mono{font-family:'JetBrains Mono',monospace}
+kbd{font-family:'JetBrains Mono',monospace; font-size:10.5px;
+  padding:2px 6px; border-radius:6px; border:1px solid var(--edge); color:var(--ink-3)}
+
+/* ── 4. The aura — the room is lit in the app's color ───────────────────── */
+.aura{position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(42rem 30rem at 12% -8%,  color-mix(in oklab, var(--b1) calc(var(--aura-a)*100%), transparent), transparent 65%),
+    radial-gradient(50rem 36rem at 105% 42%, color-mix(in oklab, var(--b2) calc(var(--aura-b)*100%), transparent), transparent 68%),
+    radial-gradient(30rem 24rem at 55% 115%, color-mix(in oklab, var(--b1) calc(var(--aura-b)*70%), transparent), transparent 70%);
+  transition:background .6s ease;
+}
+
+/* ── 5. Glass tiers ─────────────────────────────────────────────────────── */
+/* Tier 1 — page panels. Content sits directly on these. */
+.panel{
+  background:var(--glass);
+  backdrop-filter:blur(24px) saturate(1.5); -webkit-backdrop-filter:blur(24px) saturate(1.5);
+  border:1px solid var(--edge); border-radius:var(--r-panel);
+  box-shadow:inset 0 1px 0 var(--specular), var(--shadow);
+}
+/* Tier 2 — overlays (slide-over, modal, dropdown). More opaque: content
+   underneath must never compete with content on top. */
+.overlay-surface{
+  background:var(--glass-strong);
+  backdrop-filter:blur(32px) saturate(1.6); -webkit-backdrop-filter:blur(32px) saturate(1.6);
+  border:1px solid var(--edge); border-radius:var(--r-overlay);
+  box-shadow:inset 0 1px 0 var(--specular), var(--overlay-shadow);
+}
+/* Graceful degradation: solidify glass where backdrop-filter is missing */
+@supports not (backdrop-filter:blur(1px)) {
+  .panel,.overlay-surface,.search,.chip,.btn.ghost,.icon-btn{
+    background:color-mix(in srgb, var(--bg) 25%, var(--glass-strong))}
+}
+
+/* ── 6. Shell & sidebar ─────────────────────────────────────────────────── */
+.shell{position:relative; z-index:1; display:flex; min-height:100vh}
+.sidebar{
+  position:sticky; top:0; align-self:flex-start;
+  width:232px; flex:0 0 232px;
+  height:calc(100vh - 28px); margin:14px 0 14px 14px;
+  display:flex; flex-direction:column;
+  background:var(--glass);
+  backdrop-filter:blur(24px) saturate(1.5); -webkit-backdrop-filter:blur(24px) saturate(1.5);
+  border:1px solid var(--edge); border-radius:24px;
+  box-shadow:inset 0 1px 0 var(--specular), var(--shadow);
+  padding:22px 14px 14px;
+}
+.wordmark{padding:0 10px 20px; font-size:19px; letter-spacing:-.01em}
+.wordmark .lite{font-weight:250}
+.wordmark .brand{font-weight:800; background:var(--brand-grad);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+
+.sidebar nav{display:flex; flex-direction:column; gap:2px}
+.nav-item{
+  display:flex; align-items:center; gap:11px;
+  padding:9px 12px; border-radius:var(--r-control);
+  color:var(--ink-2); font-size:13.5px; font-weight:500;
+  text-decoration:none; transition:background var(--t-fast), color var(--t-fast);
+}
+.nav-item svg{flex:0 0 auto; opacity:.9}
+.nav-item:hover{background:var(--field); color:var(--ink)}
+.nav-item.active{
+  background:var(--brand-grad); color:#fff; font-weight:600;
+  box-shadow:0 8px 24px color-mix(in oklab, var(--b2) 38%, transparent), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.nav-sep{margin:14px 12px 8px; font-size:10.5px; font-weight:600; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-3)}
+
+.side-foot{margin-top:auto; display:flex; align-items:center; gap:10px;
+  padding:10px; border-radius:14px; background:var(--field); border:1px solid var(--edge)}
+.side-foot .who{line-height:1.2; min-width:0}
+.side-foot .who b{display:block; font-size:12.5px; font-weight:600}
+.side-foot .who span{font-size:11px; color:var(--ink-3)}
+
+/* ── 7. Main & topbar ───────────────────────────────────────────────────── */
+main{flex:1; min-width:0; padding:24px 28px 40px}
+.topbar{display:flex; align-items:center; gap:16px; margin-bottom:22px}
+.topbar h1{font-size:21px; font-weight:700; letter-spacing:-.01em; margin:0}
+.topbar .crumb{font-size:12px; color:var(--ink-3); margin-top:2px}
+.search{
+  margin-left:auto; display:flex; align-items:center; gap:9px;
+  width:min(320px,32vw); padding:9px 14px; border-radius:var(--r-pill);
+  background:var(--glass); border:1px solid var(--edge);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  color:var(--ink-3); font-size:13px;
+  box-shadow:inset 0 1px 0 var(--specular);
+}
+.search kbd{margin-left:auto}
+
+/* ── 8. Buttons ─────────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:9px 16px; border-radius:var(--r-pill); border:1px solid transparent;
+  font:inherit; font-size:13px; font-weight:600; cursor:pointer;
+  background:var(--brand-grad); color:#fff;
+  box-shadow:0 8px 22px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:filter var(--t-fast);
+}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{
+  background:var(--glass); color:var(--ink); border-color:var(--edge);
+  box-shadow:inset 0 1px 0 var(--specular);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+}
+.btn.ghost:hover{filter:none; background:var(--field)}
+.btn.danger{color:var(--danger-ink)}
+.btn.sm{padding:8px 14px; font-size:12.5px}
+.icon-btn{width:38px; height:38px; border-radius:var(--r-pill); display:grid; place-items:center;
+  background:var(--glass); border:1px solid var(--edge); color:var(--ink-2); cursor:pointer;
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  box-shadow:inset 0 1px 0 var(--specular)}
+.icon-btn:hover{color:var(--ink)}
+
+/* ── 9. Forms ───────────────────────────────────────────────────────────── */
+.fieldrow{display:flex; flex-direction:column; gap:6px; margin-bottom:16px}
+.fieldrow label{display:flex; justify-content:space-between; align-items:baseline;
+  font-size:12px; font-weight:600; color:var(--ink-2)}
+.fieldrow label a{font-size:11.5px; font-weight:600; text-decoration:none; color:var(--brand-ink)}
+.input,.select{
+  width:100%; font:inherit; font-size:13.5px; color:var(--ink);
+  padding:10px 13px; border-radius:var(--r-control);
+  background:var(--field); border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 var(--specular);
+  outline:none; transition:border-color var(--t-fast), box-shadow var(--t-fast); appearance:none;
+}
+.input::placeholder{color:var(--ink-3)}
+.input:focus,.select:focus{border-color:color-mix(in oklab, var(--b1) 55%, transparent);
+  box-shadow:0 0 0 3px color-mix(in oklab, var(--b1) 18%, transparent)}
+.selectwrap{position:relative}
+.selectwrap::after{content:"▾"; position:absolute; right:13px; top:50%; transform:translateY(-50%);
+  font-size:11px; color:var(--ink-3); pointer-events:none}
+.formgrid{display:grid; grid-template-columns:1fr 1fr; gap:13px 12px}
+.formgrid .fieldrow{margin-bottom:0}
+.formgrid .fieldrow.full{grid-column:1 / -1}
+.divider{display:flex; align-items:center; gap:12px; margin:20px 0;
+  font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+.divider::before,.divider::after{content:""; flex:1; height:1px; background:var(--edge)}
+
+/* ── 10. Small identity pieces ──────────────────────────────────────────── */
+.avatar{width:30px; height:30px; border-radius:10px; flex:0 0 auto;
+  background:linear-gradient(135deg,var(--b1),var(--b2));
+  display:grid; place-items:center; color:#fff; font-size:12px; font-weight:700}
+.pill{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+  padding:4px 11px; border-radius:var(--r-pill)}
+.pill::before{content:""; width:5px; height:5px; border-radius:50%; background:currentColor}
+.pill.use{background:var(--brand-tint); color:var(--brand-ink)}
+.pill.avail{background:var(--field); color:var(--ink-2); border:1px solid var(--edge)}
+.pill.repair,.pill.warn{background:var(--warn-bg); color:var(--warn-ink)}
+.pill.retired{background:var(--field); color:var(--ink-3); border:1px solid var(--edge)}
+.pill.danger{background:var(--danger-bg); color:var(--danger-ink)}
+.pill.plain::before{display:none}
+.chip{display:inline-flex; align-items:center; gap:7px;
+  padding:7px 13px; border-radius:var(--r-pill); cursor:pointer;
+  background:var(--glass); border:1px solid var(--edge);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  box-shadow:inset 0 1px 0 var(--specular);
+  font:inherit; font-size:12.5px; font-weight:550; color:var(--ink-2)}
+.chip b{color:var(--ink); font-weight:650}
+.chip svg{opacity:.6}
+.chip.on{border-color:color-mix(in oklab, var(--b1) 45%, transparent); color:var(--brand-ink)}
+.delta{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+  padding:3px 9px; border-radius:var(--r-pill);
+  color:var(--brand-ink); background:var(--brand-tint)}
+.delta.warn{color:var(--warn-ink); background:var(--warn-bg)}
+
+/* ── 11. Stat card ──────────────────────────────────────────────────────── */
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px}
+.stat{padding:18px 20px 16px}
+.stat .label{font-size:12px; font-weight:500; color:var(--ink-2)}
+.stat .value{font-size:34px; font-weight:650; letter-spacing:-.02em; margin:6px 0 8px;
+  font-variant-numeric:tabular-nums}
+
+/* ── 12. Panel header & content grid ────────────────────────────────────── */
+.grid{display:grid; grid-template-columns:1.62fr 1fr; gap:14px; margin-bottom:14px}
+.grid > .panel{display:flex; flex-direction:column}
+.grid .chart-wrap{flex:1; display:flex; flex-direction:column}
+.grid .chart{flex:1}
+.panel-head{display:flex; align-items:baseline; gap:10px; padding:18px 22px 0}
+.panel-head h2{margin:0; font-size:14.5px; font-weight:650}
+.panel-head .sub{font-size:12px; color:var(--ink-3)}
+.panel-head .more{margin-left:auto; font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--brand-ink)}
+
+/* ── 13. Chart (single-series bars) ─────────────────────────────────────── */
+.chart-wrap{padding:18px 22px 16px}
+.chart{display:flex; align-items:flex-end; gap:10px; height:172px;
+  border-bottom:1px solid var(--track); position:relative}
+.chart .gridline{position:absolute; left:0; right:0; height:1px; background:var(--track)}
+.bar{flex:1; position:relative; display:flex; flex-direction:column; justify-content:flex-end; height:100%}
+.bar i{display:block; border-radius:7px 7px 2px 2px;
+  background:linear-gradient(180deg,var(--b1),var(--b2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28);
+  transition:filter var(--t-fast)}
+.bar:hover i{filter:brightness(1.12)}
+.bar.dim i{background:var(--track); box-shadow:none}
+.bar .tip{position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% - 14px);
+  opacity:0; pointer-events:none; transition:opacity var(--t-fast);
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600;
+  background:var(--glass-strong); border:1px solid var(--edge); border-radius:8px;
+  padding:3px 8px; white-space:nowrap; color:var(--ink);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px)}
+.bar:hover .tip{opacity:1}
+.bar .peak{position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% - 12px);
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:var(--ink-2)}
+.chart-x{display:flex; gap:10px; margin-top:9px}
+.chart-x span{flex:1; text-align:center; font-family:'JetBrains Mono',monospace;
+  font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.06em}
+
+/* ── 14. Table ──────────────────────────────────────────────────────────── */
+.tablewrap{padding:6px 10px 12px; overflow-x:auto}
+table{width:100%; border-collapse:collapse; font-size:13px}
+th{font-size:10.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); text-align:left; padding:14px 12px 9px; white-space:nowrap}
+td{padding:11px 12px; border-top:1px solid var(--track); white-space:nowrap}
+tbody tr{transition:background var(--t-fast)}
+tbody tr:hover{background:var(--row-hover)}
+tbody tr[aria-selected="true"]{background:var(--row-active); box-shadow:inset 2.5px 0 0 var(--b1)}
+tbody tr.clickable{cursor:pointer}
+td .name{font-weight:650}
+td .model{font-size:11.5px; color:var(--ink-3)}
+td .sn{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-2)}
+td .who{display:flex; align-items:center; gap:8px}
+td .who i{width:22px; height:22px; border-radius:8px; font-style:normal; font-size:9.5px; font-weight:700;
+  display:grid; place-items:center; color:#fff; flex:0 0 auto;
+  background:linear-gradient(135deg,var(--b1),var(--b2))}
+td .who.none{color:var(--ink-3); font-size:12.5px}
+
+/* warranty / countdown meter */
+.warr{display:flex; align-items:center; gap:9px}
+.warr .d{font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; color:var(--ink-2); width:44px}
+.warr .d.hot{color:var(--danger-ink)}
+.warr .m{width:52px; height:4px; border-radius:3px; background:var(--track); overflow:hidden}
+.warr .m i{display:block; height:100%; border-radius:3px; background:linear-gradient(90deg,var(--b1),var(--b2))}
+.warr .m i.hot{background:var(--danger-ink)}
+
+/* ── 15. List rows (dashboard-style lists) ──────────────────────────────── */
+.explist{padding:12px 12px 14px; display:flex; flex-direction:column; gap:4px}
+.exp{display:flex; align-items:center; gap:12px; padding:10px 10px; border-radius:14px;
+  transition:background var(--t-fast)}
+.exp:hover{background:var(--row-hover)}
+.exp .ico{width:34px; height:34px; border-radius:11px; flex:0 0 auto; display:grid; place-items:center;
+  background:var(--brand-tint); color:var(--brand-ink)}
+.exp .what{min-width:0; line-height:1.25}
+.exp .what b{display:block; font-size:13px; font-weight:600; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis}
+.exp .what span{font-size:11.5px; color:var(--ink-3)}
+.exp .days{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+  padding:4px 9px; border-radius:var(--r-pill); white-space:nowrap;
+  background:var(--field); border:1px solid var(--edge); color:var(--ink-2)}
+.exp .days.hot{background:var(--danger-bg); border-color:transparent; color:var(--danger-ink)}
+
+/* ── 16. Detail blocks (slide-over content) ─────────────────────────────── */
+.so-block{border:1px solid var(--edge); border-radius:var(--r-block); background:var(--field);
+  box-shadow:inset 0 1px 0 var(--specular); padding:14px 16px; margin-bottom:12px}
+.so-block .bl{font-size:10.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); margin-bottom:10px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:8px 18px; font-size:12.5px; margin:0}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0; text-align:right; font-weight:550}
+.kv dd.mono{font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:500}
+.hist{display:flex; flex-direction:column}
+.hist .h{display:flex; gap:11px; padding:7px 0; position:relative}
+.hist .h::before{content:""; position:absolute; left:4.5px; top:22px; bottom:-4px; width:1px; background:var(--track)}
+.hist .h:last-child::before{display:none}
+.hist .h i{width:10px; height:10px; border-radius:50%; margin-top:4px; flex:0 0 auto;
+  background:linear-gradient(135deg,var(--b1),var(--b2))}
+.hist .h .t{font-size:12.5px; line-height:1.35}
+.hist .h .t span{display:block; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink-3); margin-top:1px}
+
+/* ── 17. Slide-over ─────────────────────────────────────────────────────── */
+.slideover{
+  position:fixed; z-index:6; top:14px; right:14px; bottom:14px; width:min(372px, 92vw);
+  display:flex; flex-direction:column; overflow:hidden;
+  background:var(--glass-strong);
+  backdrop-filter:blur(32px) saturate(1.6); -webkit-backdrop-filter:blur(32px) saturate(1.6);
+  border:1px solid var(--edge); border-radius:var(--r-overlay);
+  box-shadow:inset 0 1px 0 var(--specular), var(--overlay-shadow);
+  transform:translateX(calc(100% + 20px)); transition:transform var(--t-med) var(--ease-out);
+}
+.slideover.open{transform:translateX(0)}
+.so-scroll{overflow-y:auto; padding:24px 24px 20px; flex:1}
+.so-head{display:flex; align-items:flex-start; gap:13px; margin-bottom:18px}
+.so-head .tile{width:44px; height:44px; border-radius:14px; flex:0 0 auto; display:grid; place-items:center;
+  color:#fff; background:linear-gradient(135deg,var(--b1),var(--b2));
+  box-shadow:0 8px 20px var(--brand-glow)}
+.so-head h2{margin:0; font-size:16.5px; font-weight:700; letter-spacing:-.01em; line-height:1.25}
+.so-head .sn{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3)}
+.so-close{margin-left:auto; width:30px; height:30px; border-radius:var(--r-pill); border:1px solid var(--edge);
+  background:var(--field); color:var(--ink-2); cursor:pointer; display:grid; place-items:center; font-size:13px}
+.so-close:hover{color:var(--ink)}
+.so-actions{display:flex; gap:8px; padding:14px 24px 20px; border-top:1px solid var(--track)}
+.so-actions .btn{flex:1; padding:10px 8px; font-size:12.5px}
+
+/* ── 18. Modal ──────────────────────────────────────────────────────────── */
+.scrim{position:fixed; inset:0; z-index:8; background:var(--scrim);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  opacity:0; pointer-events:none; transition:opacity .2s}
+.scrim.open{opacity:1; pointer-events:auto}
+.modal{
+  position:fixed; z-index:9; left:50%; top:50%; width:min(520px, 94vw);
+  transform:translate(-50%,-50%) scale(.97); opacity:0; pointer-events:none;
+  transition:transform .22s var(--ease-out), opacity .2s;
+  background:var(--glass-strong);
+  backdrop-filter:blur(32px) saturate(1.6); -webkit-backdrop-filter:blur(32px) saturate(1.6);
+  border:1px solid var(--edge); border-radius:var(--r-overlay);
+  box-shadow:inset 0 1px 0 var(--specular), 0 30px 90px rgba(0,0,0,.45);
+  padding:26px 26px 22px;
+}
+.modal.open{transform:translate(-50%,-50%) scale(1); opacity:1; pointer-events:auto}
+.modal h2{margin:0 0 4px; font-size:18px; font-weight:700; letter-spacing:-.01em}
+.modal .sub{margin:0 0 18px; font-size:13px; color:var(--ink-2)}
+.modal-actions{display:flex; justify-content:flex-end; gap:9px; margin-top:20px}
+.modal-actions .btn{width:auto}
+
+/* AI affordance strip (dashed = drop target) */
+.ai-strip{display:flex; align-items:center; gap:12px; margin-bottom:18px;
+  padding:13px 16px; border-radius:var(--r-block); cursor:pointer;
+  border:1.5px dashed color-mix(in oklab, var(--b1) 45%, transparent);
+  background:color-mix(in oklab, var(--b1) 8%, transparent);
+  font-size:12.5px; color:var(--ink-2)}
+.ai-strip .spark{width:32px; height:32px; border-radius:11px; flex:0 0 auto; display:grid; place-items:center;
+  color:#fff; background:linear-gradient(135deg,var(--b1),var(--b2))}
+.ai-strip b{color:var(--ink)}
+
+/* ── 19. Login ──────────────────────────────────────────────────────────── */
+.split{display:flex; min-height:100vh}
+.brand-side{
+  flex:1.1; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:center; gap:18px;
+  padding:64px; color:#F2F4F8;
+  background:
+    radial-gradient(46rem 34rem at 18% 8%,  color-mix(in oklab, var(--b1) 30%, transparent), transparent 64%),
+    radial-gradient(50rem 40rem at 92% 92%, color-mix(in oklab, var(--b2) 34%, transparent), transparent 66%),
+    #08090C;
+  transition:background .6s ease;
+}
+.wordmark-xl{font-size:clamp(38px,4.4vw,56px); letter-spacing:-.02em; line-height:1}
+.wordmark-xl .lite{font-weight:200}
+.wordmark-xl .brand{font-weight:800; background:var(--brand-grad);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+.brand-side .tag{margin:0; max-width:34ch; font-size:16.5px; font-weight:300; line-height:1.55;
+  color:rgba(242,244,248,.72)}
+.shard{
+  position:absolute; display:flex; align-items:center; gap:10px;
+  padding:13px 17px; border-radius:var(--r-block);
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(18px) saturate(1.4); -webkit-backdrop-filter:blur(18px) saturate(1.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 20px 50px rgba(0,0,0,.35);
+  font-size:12.5px; color:rgba(242,244,248,.85);
+  animation:gh-float 7s ease-in-out infinite;
+}
+.shard b{font-size:15px; font-weight:700; letter-spacing:-.01em}
+.shard .ico{width:30px; height:30px; border-radius:10px; display:grid; place-items:center; color:#fff;
+  background:linear-gradient(135deg,var(--b1),var(--b2))}
+@keyframes gh-float{ 0%,100%{translate:0 0} 50%{translate:0 -12px} }
+/* default shard placements for the login brand side (max two shards) */
+.shard.s1{top:14%; right:12%; rotate:2deg}
+.shard.s2{bottom:20%; right:22%; rotate:-2deg; animation-delay:-3.5s}
+.form-side{
+  flex:1; position:relative; display:grid; place-items:center; padding:32px;
+  background:
+    radial-gradient(30rem 24rem at 80% 0%,  color-mix(in oklab, var(--b1) calc(var(--aura-b)*60%), transparent), transparent 68%),
+    radial-gradient(28rem 22rem at 10% 100%, color-mix(in oklab, var(--b2) calc(var(--aura-b)*50%), transparent), transparent 70%),
+    var(--bg);
+  transition:background .6s ease;
+}
+.login-card{
+  width:min(392px,100%); padding:34px 32px 30px;
+  background:var(--glass);
+  backdrop-filter:blur(24px) saturate(1.5); -webkit-backdrop-filter:blur(24px) saturate(1.5);
+  border:1px solid var(--edge); border-radius:var(--r-overlay);
+  box-shadow:inset 0 1px 0 var(--specular), var(--shadow);
+}
+.login-card h1{margin:0 0 4px; font-size:22px; font-weight:700; letter-spacing:-.01em}
+.login-card .sub{margin:0 0 26px; font-size:13.5px; color:var(--ink-2)}
+.login-card .btn{width:100%; padding:12px 16px; font-size:14px}
+.ssonote{display:flex; align-items:center; justify-content:center; gap:7px;
+  margin:20px 0 0; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-3)}
+.ssonote i{width:6px; height:6px; border-radius:50%; background:var(--b1); box-shadow:0 0 8px var(--b1)}
+
+/* ── 20. Responsive & motion ────────────────────────────────────────────── */
+@media (max-width:1080px){ .stats{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr} }
+@media (max-width:940px){
+  .split{flex-direction:column} .brand-side{padding:48px 32px; min-height:44vh} .shard{display:none}
+}
+@media (max-width:880px){
+  .sidebar{width:70px; flex-basis:70px; padding:22px 10px 14px}
+  .sidebar .wordmark,.nav-item span,.nav-sep,.side-foot .who{display:none}
+  .nav-item{justify-content:center; padding:11px}
+  .side-foot{justify-content:center; background:transparent; border:0}
+  .search{display:none}
+  .formgrid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }

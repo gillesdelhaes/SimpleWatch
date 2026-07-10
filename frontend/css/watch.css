@@ -1,0 +1,117 @@
+/* ============================================================
+   SimpleWatch — app-specific styles on top of glasshouse.css
+   Layout + behaviors the design system doesn't cover.
+   Rules: glasshouse tokens only — no hard-coded brand hexes,
+   no edits to glasshouse.css (it is canonical, re-copied as-is).
+   ============================================================ */
+
+/* ── Utilities ─────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Status vocabulary ─────────────────────────────────────────
+   operational → brand (the app's "good" color — no green token)
+   degraded    → warn · down → danger · unknown/paused → neutral
+   Pills come from glasshouse (.pill.use/.warn/.danger/.retired);
+   dots are app-specific for compact places. */
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.dot.op      { background: var(--brand-ink); }
+.dot.deg     { background: var(--warn-ink); }
+.dot.down    { background: var(--danger-ink); }
+.dot.unknown { background: var(--ink-3); }
+
+/* ── Toasts (tier-2 surface, app-specific component) ───────── */
+.toast-container {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none; max-width: 90vw; width: 440px;
+}
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; pointer-events: all;
+  background: var(--glass-strong);
+  backdrop-filter: blur(32px) saturate(1.6); -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  border: 1px solid var(--edge); border-radius: var(--r-block);
+  box-shadow: inset 0 1px 0 var(--specular), var(--overlay-shadow);
+  font-size: 13px; animation: sw-toast-in .25s var(--ease-out);
+}
+.toast.toast-success { color: var(--brand-ink); }
+.toast.toast-error   { color: var(--danger-ink); }
+.toast.toast-warning { color: var(--warn-ink); }
+.toast.toast-info    { color: var(--ink-2); }
+.toast-icon { width: 17px; height: 17px; flex: 0 0 auto; }
+.toast-icon svg { width: 100%; height: 100%; display: block; }
+.toast-message { flex: 1; color: var(--ink); line-height: 1.45; }
+.toast-close {
+  background: none; border: none; color: var(--ink-3); cursor: pointer;
+  padding: 2px; width: 18px; height: 18px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+}
+.toast-close:hover { color: var(--ink); }
+.toast-close svg { width: 100%; height: 100%; }
+.toast.toast-exit { animation: sw-toast-out .2s forwards; }
+
+@keyframes sw-toast-in  { from { opacity: 0; transform: translateY(-12px) scale(.97); } }
+@keyframes sw-toast-out { to   { opacity: 0; transform: translateY(-10px) scale(.96); } }
+
+/* ── Form validation states (on glasshouse .input/.select) ── */
+.input.invalid, .select.invalid {
+  border-color: color-mix(in oklab, var(--danger-ink) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger-ink) 14%, transparent);
+}
+.input.valid, .select.valid {
+  border-color: color-mix(in oklab, var(--b1) 45%, transparent);
+}
+.field-error {
+  display: none; margin-top: 4px;
+  font-size: 12px; font-weight: 500; color: var(--danger-ink);
+}
+.field-error.visible { display: block; animation: sw-shake .4s ease-in-out; }
+.form-hint { font-size: 11.5px; color: var(--ink-3); margin-top: 4px; line-height: 1.5; }
+
+@keyframes sw-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* ── Checkbox rows ─────────────────────────────────────────── */
+input[type="checkbox"] { accent-color: var(--b1); width: 15px; height: 15px; cursor: pointer; flex: 0 0 auto; }
+.checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px; color: var(--ink); }
+
+/* ── Modal sizing variants (glasshouse .modal is 520px) ────── */
+.modal.wide  { width: min(720px, 94vw); }
+.modal-scroll { max-height: calc(100vh - 120px); overflow-y: auto; }
+
+/* ── Code / endpoint display ───────────────────────────────── */
+.code-block {
+  background: var(--field); border: 1px solid var(--edge); border-radius: var(--r-control);
+  padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  color: var(--ink-2); overflow-x: auto; line-height: 1.6; white-space: pre-wrap; word-break: break-all;
+}
+
+/* ── Collapsible ───────────────────────────────────────────── */
+.collapsible { margin: 10px 0; border: 1px solid var(--edge); border-radius: var(--r-block); overflow: hidden; width: 100%; background: var(--field); }
+.collapsible-trigger {
+  width: 100%; padding: 10px 14px; background: transparent; border: none;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 600;
+  transition: background var(--t-fast);
+}
+.collapsible-trigger:hover { background: var(--row-hover); }
+.collapsible-icon { width: 14px; height: 14px; flex: 0 0 auto; transition: transform var(--t-fast); }
+.collapsible-icon svg { width: 100%; height: 100%; display: block; }
+.collapsible.is-open .collapsible-icon { transform: rotate(90deg); }
+.collapsible-content { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+.collapsible.is-open .collapsible-content, .collapsible-content.expanded { max-height: 2000px; }
+.collapsible-content-inner { padding: 14px; border-top: 1px solid var(--track); }
+
+/* ── Generic icon wrapper (legacy markup helper) ───────────── */
+.icon { display: inline-flex; align-items: center; justify-content: center; width: 1em; height: 1em; vertical-align: middle; flex: 0 0 auto; }
+.icon svg { width: 100%; height: 100%; display: block; }
+
+/* ── Empty states ──────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 56px 24px; }
+.empty-state .empty-ico { width: 40px; height: 40px; margin: 0 auto 14px; color: var(--ink-3); }
+.empty-state .empty-ico svg { width: 100%; height: 100%; }
+.empty-state h2 { margin: 0 0 6px; font-size: 15px; font-weight: 650; color: var(--ink); }
+.empty-state p { margin: 0 0 16px; font-size: 13px; color: var(--ink-2); }
