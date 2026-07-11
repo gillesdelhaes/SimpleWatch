@@ -1,218 +1,85 @@
-# SimpleWatch
+# Simple**Watch**
 
-AI-powered monitoring for teams who just want to know when something breaks.
+Uptime monitoring without the observability stack. Know when a website, API, server
+or cron job breaks — and when it recovers — deployed with one command.
 
-Most monitoring tools are designed for large infrastructures and dedicated ops teams.
-They are powerful, flexible, and far more complex than what many small teams actually need.
+Part of a suite of simple, self-hosted ops tools: each app does one thing well,
+runs from a single `docker compose up`, and needs zero configuration to start.
 
-SimpleWatch takes a different approach.
+![Dashboard](docs/screenshots/dashboard-dark.png)
 
-It is a self-hosted monitoring dashboard built for small businesses and small teams who want to:
+## What it does
 
-- Know when a service goes down
-- Get notified without noise
-- Understand uptime and incidents over time
-- Move on with their day
+- **13 monitor types, zero code** — website, API, port, ping, DNS, SSL certificate,
+  deadman/heartbeat, metric threshold, SNMP, SEO, GitHub Actions, local LLM, expiration —
+  all configured in the UI in under a minute
+- **Services with multiple monitors** — group checks per service; status aggregates
+  automatically (operational / degraded / down)
+- **Incidents** — opened and resolved automatically on status changes, with MTTR,
+  uptime analytics, timelines and CSV export
+- **Alerts that stay quiet** — email, Slack, Discord, Teams, Telegram, PagerDuty,
+  Opsgenie, Matrix, ntfy.sh or any webhook; cooldowns prevent spam, recovery always notifies
+- **Public status page** — opt-in per service, with announcement banner and scheduled
+  maintenance windows that suppress alerts
+- **AI SRE companion (optional)** — incident analysis, remediation suggestions and
+  one-click post-mortems via Ollama, OpenAI or Anthropic; human approval by default
+- **SLA tracking** — per-service uptime targets with error budgets
+- **Backup & restore** — export and import service configurations as JSON
 
-```bash
-docker pull gdelhaes/simplewatch
-docker run -d -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
-# Open http://localhost:5050
-```
+![Services](docs/screenshots/services-dark.png)
 
----
+![Monitor detail](docs/screenshots/monitor-detail-dark.png)
 
-## Who SimpleWatch is for
+Dark and light themes, toggled from the top bar — the choice persists per user.
 
-SimpleWatch is a good fit if you:
+![Dashboard light](docs/screenshots/dashboard-light.png)
 
-- Run a small business, internal tools, or side projects
-- Monitor a few websites, APIs, servers, or background jobs
-- Do not want to maintain a monitoring stack
-- Want alerts that are clear and calm
-
-SimpleWatch is not a metrics platform, a query engine, or a full observability solution.
-Those tools exist and work very well for large and complex environments.
-
----
-
-## What SimpleWatch does
-
-- Monitor services with a few clicks
-- Send alerts only on meaningful status changes
-- Track incidents automatically
-- Show uptime and recovery metrics
-- Share status with customers (public status pages)
-- Schedule maintenance windows to suppress alerts
-- Stay quiet when everything is fine
-
-Everything is configured through the web interface.
-No configuration files. No scripting.
-
----
-
-## AI SRE Companion
-
-SimpleWatch includes an optional AI assistant that helps you respond to incidents faster.
-
-When something breaks, the AI can:
-
-- Analyze incidents automatically and suggest remediation actions
-- Generate post-mortem reports with a single click
-- Learn from your service context and known issues
-- Execute approved actions via configurable webhooks
-
-The AI works with:
-
-- **Ollama** - Run models locally, no data leaves your server
-- **OpenAI** - GPT-4o and other models
-- **Anthropic** - Claude models
-
-All AI actions require human approval by default. You stay in control.
-
----
-
-## Monitors
-
-SimpleWatch includes 13 ready-to-use monitor types:
-
-- **Website** - HTTP/HTTPS endpoint checks
-- **API** - JSON API validation with custom headers
-- **Metric Threshold** - Push metrics from scripts, alert on thresholds
-- **Port** - TCP port availability checks
-- **Deadman/Heartbeat** - Alert if no ping received (perfect for cron jobs)
-- **SSL Certificate** - Expiration tracking with configurable warnings
-- **DNS** - Verify DNS records resolve to expected values (A, AAAA, CNAME, MX, TXT)
-- **Ping/ICMP** - Host reachability, latency, and packet loss measurement
-- **SEO** - Comprehensive SEO health checks (title, meta, headings, structured data)
-- **Ollama/Local LLM** - Monitor local LLM APIs (Ollama, LM Studio, LocalAI)
-- **GitHub Actions** - Monitor CI/CD workflow status and build success rates
-- **SNMP** - Query network devices via SNMP v1/v2c/v3 with preset OIDs for common checks
-- **Expiration** - Track license, domain, and contract expiry dates with renewal reminders
-
-Monitors are designed to be practical, not endlessly configurable.
-
----
-
-## Alerts and notifications
-
-- Alerts trigger only on status changes
-- Built-in cooldown to avoid notification spam
-- Pause/resume at service or monitor level
-- Notification history is kept for traceability
-
-**Supported channels:**
-
-- Email (SMTP)
-- Slack
-- Discord
-- Custom webhooks
-
-The notification system is extensible.
-
----
-
-## Incidents and reliability
-
-When something goes down, SimpleWatch creates an incident automatically.
-
-You can:
-
-- View incident timelines
-- See uptime percentages
-- Review mean time to recovery (MTTR)
-- Filter by service or time range
-- Export incident logs
-
-This provides reliability insight without becoming an incident management platform.
-
----
+![Login](docs/screenshots/login-dark.png)
 
 ## Quick start
 
-### Pull the image
+```bash
+docker run -d -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
+```
+
+or from source:
 
 ```bash
-docker pull gdelhaes/simplewatch
-```
-
-### Run SimpleWatch
-
-```bash
-docker run -d \
-  --name simplewatch \
-  -p 5050:5050 \
-  -v simplewatch-data:/data \
-  gdelhaes/simplewatch
-```
-
-### Open the interface
-
-Open your browser at:
-
-```
-http://localhost:5050
-```
-
-On first launch you will:
-
-1. Create an admin account
-2. Optionally enable demo monitors
-3. Start adding your own services
-
-**Important:** Mounting `/data` is required to persist the database across restarts.
-
-### Using docker compose
-
-```bash
+git clone https://github.com/gillesdelhaes/simplewatch.git
+cd simplewatch
 docker compose up -d
 ```
 
-The bundled `docker-compose.yml` stores the database and logs in named Docker volumes
-(`simplewatch-data`, `simplewatch-logs`) rather than loose files, so they can be snapshotted,
-backed up, and moved with standard Docker tooling.
+Open **http://localhost:5050** — a one-time setup screen creates your admin account
+(optionally with sample monitors to explore). No config files, no env vars.
 
-### Backup and restore
+## Push monitoring
 
-The entire database lives in the `simplewatch-data` volume. To back it up:
-
-```bash
-docker run --rm \
-  -v simplewatch-data:/data \
-  -v "$PWD":/backup \
-  alpine tar czf /backup/simplewatch-backup.tgz -C /data .
-```
-
-To restore it into a fresh volume:
+Passive monitors accept data from your own scripts and jobs:
 
 ```bash
-docker run --rm \
-  -v simplewatch-data:/data \
-  -v "$PWD":/backup \
-  alpine sh -c "cd /data && tar xzf /backup/simplewatch-backup.tgz"
+# Report a metric (evaluated against your thresholds)
+curl -X POST http://localhost:5050/api/v1/metric/Database%20Server/cpu%20load \
+  -H "Content-Type: application/json" \
+  -d '{"api_key": "YOUR_API_KEY", "value": 42.5}'
+
+# Heartbeat from a cron job (alerts if it stops arriving)
+curl -X POST http://localhost:5050/api/v1/heartbeat/Nightly%20Backups/backup%20job \
+  -H "Content-Type: application/json" \
+  -d '{"api_key": "YOUR_API_KEY"}'
 ```
 
----
+See [API_DOCS.md](API_DOCS.md) for the full API and [USER_GUIDE.md](USER_GUIDE.md)
+for monitor setup guides.
 
-## Documentation
+## Stack
 
-SimpleWatch includes a complete user manual that covers all features, configuration options, and advanced usage.
-
-If you need more details, see:
-
-- **User Guide:** [USER_GUIDE.md](USER_GUIDE.md)
-- **API Documentation:** [API_DOCS.md](API_DOCS.md)
-
----
+- **Backend:** Python + FastAPI, SQLite, APScheduler — one process, no broker, no external DB
+- **Frontend:** vanilla JavaScript, no build step
+- **Deploy:** a single container via Docker Compose, one volume for data
 
 ## License
 
-SimpleWatch is open source under the **AGPL-3.0** license.
-See the [LICENSE](LICENSE) file for details.
-
-For commercial or proprietary use cases, a commercial license is available.
-See [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for more information.
-
----
-
-**SimpleWatch** - Monitor what matters. Ignore the rest.
+Dual-licensed: free for self-hosted use (even commercial) under
+[AGPL-3.0](LICENSE); a [commercial license](LICENSE-COMMERCIAL) is available for
+offering SimpleWatch as a service without the AGPL obligations.
