@@ -208,13 +208,6 @@ async function fetchBanner() {
     }
 }
 
-// Escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 // Fetch and render status
 async function fetchStatus() {
     try {

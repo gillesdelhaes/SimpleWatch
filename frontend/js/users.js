@@ -57,13 +57,11 @@ async function loadUsers() {
 }
 
 function showAddUserModal() {
-    document.getElementById('addUserModalScrim').classList.add('open');
-    document.getElementById('addUserModal').classList.add('open');
+    openModal('addUserModal');
 }
 
 function hideAddUserModal() {
-    document.getElementById('addUserModalScrim').classList.remove('open');
-    document.getElementById('addUserModal').classList.remove('open');
+    closeModal('addUserModal');
     document.getElementById('addUserForm').reset();
     clearAllFieldErrors();
 }
@@ -80,13 +78,11 @@ function showChangePasswordModal(userId, username) {
         document.getElementById('currentPassword').required = false;
     }
 
-    document.getElementById('changePasswordModalScrim').classList.add('open');
-    document.getElementById('changePasswordModal').classList.add('open');
+    openModal('changePasswordModal');
 }
 
 function hideChangePasswordModal() {
-    document.getElementById('changePasswordModalScrim').classList.remove('open');
-    document.getElementById('changePasswordModal').classList.remove('open');
+    closeModal('changePasswordModal');
     document.getElementById('changePasswordForm').reset();
     clearAllFieldErrors();
     changingUserId = null;

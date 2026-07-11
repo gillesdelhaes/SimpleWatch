@@ -410,3 +410,43 @@ function escapeHtml(text) {
 }
 
 window.escapeHtml = escapeHtml;
+
+// ============================================
+// Modal helpers
+// ============================================
+// Glasshouse modals come in pairs: a fixed centered .modal with id "fooModal"
+// and a sibling .scrim with id "fooModalScrim". Both toggle the .open class.
+
+window.openModal = (id) => {
+    document.getElementById(id + 'Scrim')?.classList.add('open');
+    document.getElementById(id)?.classList.add('open');
+};
+
+window.closeModal = (id) => {
+    document.getElementById(id + 'Scrim')?.classList.remove('open');
+    document.getElementById(id)?.classList.remove('open');
+};
+
+// ============================================
+// Theme-aware color resolution
+// ============================================
+// Canvas APIs (Chart.js) can't parse color-mix() tokens, so resolve a CSS
+// custom property to a concrete rgb() color. Cached per theme.
+
+const _cssColorCache = {};
+
+window.resolveCssColor = (varName) => {
+    const key = varName + ':' + document.documentElement.dataset.theme;
+    if (_cssColorCache[key]) return _cssColorCache[key];
+    const probe = document.createElement('span');
+    probe.style.color = `var(${varName})`;
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+    _cssColorCache[key] = resolved;
+    return resolved;
+};
+
+window.withAlpha = (rgbColor, alpha) =>
+    rgbColor.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);

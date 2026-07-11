@@ -15,23 +15,7 @@
 @media (max-width: 1080px) { .charts-grid { grid-template-columns: 1fr; } }
 .charts-grid .chart-wrap { height: 260px; position: relative; }
 
-/* ── Collapsible section panels ───────────────────────────── */
-.section-panel { margin-bottom: 14px; }
-.collapsible-header {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 16px 22px; cursor: pointer; user-select: none;
-}
-.collapsible-header-left { display: flex; align-items: center; gap: 10px; }
-.collapsible-header-right { display: flex; align-items: center; gap: 8px; }
-.collapsible-title { margin: 0; font-size: 14.5px; font-weight: 650; }
-.collapsible-chevron {
-    width: 15px; height: 15px; color: var(--ink-3); flex-shrink: 0;
-    transition: transform var(--t-fast);
-}
-.collapsible-header.open .collapsible-chevron { transform: rotate(90deg); }
-.section-panel .collapsible-content { max-height: 0; overflow: hidden; transition: max-height .3s var(--ease-out); }
-.section-panel .collapsible-content.expanded { max-height: 4000px; }
-.section-panel .collapsible-content-inner { padding: 0 12px 12px; border-top: 1px solid var(--track); }
+/* Collapsible section panels come from watch.css */
 
 /* ── Incident table pieces ────────────────────────────────── */
 .incidents-table td { white-space: normal; }

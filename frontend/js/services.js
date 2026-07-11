@@ -214,23 +214,12 @@ async function resumeMonitor(id) {
 // Modal Functions
 // ============================================
 
-// Glasshouse modal helpers: each modal pairs with a sibling scrim
-function _openModal(id) {
-    document.getElementById(id + 'Scrim')?.classList.add('open');
-    document.getElementById(id)?.classList.add('open');
-}
-
-function _closeModal(id) {
-    document.getElementById(id + 'Scrim')?.classList.remove('open');
-    document.getElementById(id)?.classList.remove('open');
-}
-
 function showAddServiceModal() {
-    _openModal('addServiceModal');
+    openModal('addServiceModal');
 }
 
 function hideAddServiceModal() {
-    _closeModal('addServiceModal');
+    closeModal('addServiceModal');
 }
 
 async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = false, slaTarget = null, slaTimeframeDays = null) {
@@ -254,11 +243,11 @@ async function showEditServiceModal(id, name, desc, cat, showOnStatusPage = fals
         hideWebhookForm(); // Reset webhook form state
     }
 
-    _openModal('editServiceModal');
+    openModal('editServiceModal');
 }
 
 function hideEditServiceModal() {
-    _closeModal('editServiceModal');
+    closeModal('editServiceModal');
 }
 
 // ============================================
@@ -725,7 +714,7 @@ function openMonitorModal(mode, options = {}) {
     };
 
     // Show modal
-    _openModal('unifiedMonitorModal');
+    openModal('unifiedMonitorModal');
 
     // Render appropriate view
     if (currentModalState.step === 'type_selection') {
@@ -739,7 +728,7 @@ function openMonitorModal(mode, options = {}) {
  * Close the unified monitor modal
  */
 function closeMonitorModal() {
-    _closeModal('unifiedMonitorModal');
+    closeModal('unifiedMonitorModal');
     resetModalState();
 }
 

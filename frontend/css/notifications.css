@@ -34,23 +34,7 @@
 }
 .channel-header .actions { display: flex; gap: 2px; }
 
-/* ── Notification log (collapsible) ───────────────────────── */
-.section-panel { margin-bottom: 14px; }
-.log-header {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 16px 22px; cursor: pointer; user-select: none;
-}
-.log-header-left { display: flex; align-items: center; gap: 10px; }
-.log-title { margin: 0; font-size: 14.5px; font-weight: 650; }
-.log-chevron {
-    width: 15px; height: 15px; color: var(--ink-3); flex-shrink: 0;
-    transition: transform var(--t-fast);
-}
-#logSection.expanded .log-chevron { transform: rotate(90deg); }
-.log-content { max-height: 0; overflow: hidden; transition: max-height .3s var(--ease-out); }
-#logSection.expanded .log-content { max-height: 3000px; }
-.log-content-inner { padding: 0 12px 12px; border-top: 1px solid var(--track); }
-
+/* ── Notification log (collapsible panel comes from watch.css) ── */
 .log-loading { text-align: center; padding: 28px; font-size: 13px; color: var(--ink-3); }
 .log-table { width: 100%; }
 .log-timestamp { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-2); }

@@ -1,19 +1,5 @@
-// Incidents page - uses global api, showSuccess, showError, requireAuth, getUserInfo from loaded scripts
-
-// Resolve a CSS token to a concrete color Chart.js can consume
-function resolveCssColor(varName) {
-    const probe = document.createElement('span');
-    probe.style.color = `var(${varName})`;
-    probe.style.display = 'none';
-    document.body.appendChild(probe);
-    const resolved = getComputedStyle(probe).color;
-    probe.remove();
-    return resolved;
-}
-
-function withAlpha(rgbColor, alpha) {
-    return rgbColor.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
-}
+// Incidents page - uses globals from loaded scripts: api, showSuccess, showError,
+// requireAuth, resolveCssColor, withAlpha, openModal/closeModal (components.js)
 
 let timelineChart = null;
 let serviceChart = null;
@@ -431,13 +417,11 @@ async function generateIncidentPostmortem(incidentId) {
 }
 
 function openReportGeneratorModal() {
-    document.getElementById('reportGeneratorModalScrim').classList.add('open');
-    document.getElementById('reportGeneratorModal').classList.add('open');
+    openModal('reportGeneratorModal');
 }
 
 function closeReportGeneratorModal() {
-    document.getElementById('reportGeneratorModalScrim').classList.remove('open');
-    document.getElementById('reportGeneratorModal').classList.remove('open');
+    closeModal('reportGeneratorModal');
 }
 
 async function generateServiceReport() {
@@ -494,13 +478,11 @@ function showPostmortemModal(markdown) {
 
     // Render markdown (basic conversion)
     content.innerHTML = renderMarkdown(markdown);
-    document.getElementById('postmortemModalScrim').classList.add('open');
-    modal.classList.add('open');
+    openModal('postmortemModal');
 }
 
 function closePostmortemModal() {
-    document.getElementById('postmortemModalScrim').classList.remove('open');
-    document.getElementById('postmortemModal').classList.remove('open');
+    closeModal('postmortemModal');
 }
 
 function renderMarkdown(md) {

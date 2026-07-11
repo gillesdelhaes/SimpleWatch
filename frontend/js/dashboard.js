@@ -238,21 +238,7 @@ function statusPillClass(status) {
            status === 'maintenance' ? 'avail' : 'retired';
 }
 
-// Resolve a CSS custom property to a concrete color Chart.js can consume
-// (tokens may be color-mix() expressions the canvas API can't parse).
-const _colorCache = {};
-function resolveCssColor(varName) {
-    const key = varName + ':' + document.documentElement.dataset.theme;
-    if (_colorCache[key]) return _colorCache[key];
-    const probe = document.createElement('span');
-    probe.style.color = `var(${varName})`;
-    probe.style.display = 'none';
-    document.body.appendChild(probe);
-    const resolved = getComputedStyle(probe).color;
-    probe.remove();
-    _colorCache[key] = resolved;
-    return resolved;
-}
+// resolveCssColor / withAlpha come from components.js
 
 function getStatusText(status) {
     const texts = {
@@ -690,7 +676,7 @@ function renderGraph(data) {
     const lineColor = metric.color || resolveCssColor('--brand-ink');
     const fillColor = lineColor.startsWith('#')
         ? lineColor + '20'
-        : lineColor.replace('rgb(', 'rgba(').replace(')', ', 0.13)');
+        : withAlpha(lineColor, 0.13);
     const gridColor = resolveCssColor('--track');
     const tickColor = resolveCssColor('--ink-3');
 
@@ -880,13 +866,11 @@ function openMonitorModal(serviceId) {
         document.getElementById('modalAiSuggestions').classList.add('hidden');
     }
 
-    document.getElementById('monitorModalScrim').classList.add('open');
-    document.getElementById('monitorDetailsModal').classList.add('open');
+    openModal('monitorDetailsModal');
 }
 
 function closeMonitorModal() {
-    document.getElementById('monitorModalScrim').classList.remove('open');
-    document.getElementById('monitorDetailsModal').classList.remove('open');
+    closeModal('monitorDetailsModal');
 }
 
 async function checkMonitorNow(monitorId, btn) {

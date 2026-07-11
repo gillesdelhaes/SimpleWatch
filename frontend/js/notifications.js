@@ -157,13 +157,11 @@ function showAddChannelModal() {
     document.getElementById('channelForm').reset();
     document.getElementById('channelId').value = '';
     updateChannelTypeHelp();
-    document.getElementById('channelModalScrim').classList.add('open');
-    document.getElementById('channelModal').classList.add('open');
+    openModal('channelModal');
 }
 
 function hideChannelModal() {
-    document.getElementById('channelModalScrim').classList.remove('open');
-    document.getElementById('channelModal').classList.remove('open');
+    closeModal('channelModal');
 }
 
 function updateChannelTypeHelp() {
@@ -351,8 +349,7 @@ async function editChannel(id) {
     document.getElementById('channelCustomTemplate').value = channel.custom_payload_template || '';
 
     updateChannelTypeHelp();
-    document.getElementById('channelModalScrim').classList.add('open');
-    document.getElementById('channelModal').classList.add('open');
+    openModal('channelModal');
 }
 
 async function deleteChannel(id) {
@@ -411,19 +408,17 @@ let logRefreshInterval = null;
 function toggleLogSection() {
     const section = document.getElementById('logSection');
     logExpanded = !logExpanded;
+    section.querySelector('.collapsible-content').classList.toggle('expanded', logExpanded);
+    section.querySelector('.collapsible-header').classList.toggle('open', logExpanded);
 
     if (logExpanded) {
-        section.classList.add('expanded');
         loadNotificationLogs();
         // Auto-refresh every 10 seconds when expanded
         logRefreshInterval = setInterval(loadNotificationLogs, 10000);
-    } else {
-        section.classList.remove('expanded');
+    } else if (logRefreshInterval) {
         // Stop auto-refresh when collapsed
-        if (logRefreshInterval) {
-            clearInterval(logRefreshInterval);
-            logRefreshInterval = null;
-        }
+        clearInterval(logRefreshInterval);
+        logRefreshInterval = null;
     }
 }
 

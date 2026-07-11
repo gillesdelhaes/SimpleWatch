@@ -70,8 +70,7 @@ async function openMaintenanceModal(serviceId, serviceName) {
     await loadMaintenanceWindows(serviceId);
 
     // Show modal
-    document.getElementById('maintenanceModalScrim').classList.add('open');
-    modal.classList.add('open');
+    openModal('maintenanceModal');
 
     // Reset form
     resetMaintenanceForm();
@@ -81,10 +80,7 @@ async function openMaintenanceModal(serviceId, serviceName) {
  * Close maintenance modal
  */
 function closeMaintenanceModal() {
-    const modal = document.getElementById('maintenanceModal');
-    const scrim = document.getElementById('maintenanceModalScrim');
-    if (modal) modal.classList.remove('open');
-    if (scrim) scrim.classList.remove('open');
+    closeModal('maintenanceModal');
     currentMaintenanceServiceId = null;
 }
 
@@ -610,15 +606,6 @@ function formatDateTime(isoString) {
         minute: '2-digit',
         hour12: false
     });
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 // ============================================

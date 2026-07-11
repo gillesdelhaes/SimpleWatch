@@ -123,7 +123,7 @@ textarea.input { resize: vertical; }
 .modal-scroll { max-height: calc(100vh - 120px); overflow-y: auto; }
 
 /* ── Code / endpoint display ───────────────────────────────── */
-.code-block {
+.code-block, .code-example {
   background: var(--field); border: 1px solid var(--edge); border-radius: var(--r-control);
   padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
   color: var(--ink-2); overflow-x: auto; line-height: 1.6; white-space: pre-wrap; word-break: break-all;
@@ -149,40 +149,27 @@ textarea.input { resize: vertical; }
 .icon { display: inline-flex; align-items: center; justify-content: center; width: 1em; height: 1em; vertical-align: middle; flex: 0 0 auto; }
 .icon svg { width: 100%; height: 100%; display: block; }
 
-/* ── Legacy markup aliases ─────────────────────────────────────
+/* ── Legacy field aliases ──────────────────────────────────────
    Dynamically generated markup (monitor plugins, registry forms)
-   still emits .form-group/.form-label/.form-input and the old
-   button variants. Map them onto the glasshouse form/button
-   recipes so every generator doesn't need rewriting. */
+   still emits .form-group/.form-label/.form-input, and the
+   settings page has its own field class names. There is exactly
+   ONE copy of the glasshouse field recipe outside glasshouse.css:
+   this one. Everything else aliases into it. */
 .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .form-label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
-.form-input {
+.form-input, .settings-input, .retention-input {
   width: 100%; font: inherit; font-size: 13.5px; color: var(--ink);
   padding: 10px 13px; border-radius: var(--r-control);
   background: var(--field); border: 1px solid var(--edge);
   box-shadow: inset 0 1px 0 var(--specular);
   outline: none; transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
-.form-input::placeholder { color: var(--ink-3); }
-.form-input:focus {
+.form-input::placeholder, .settings-input::placeholder { color: var(--ink-3); }
+.form-input:focus, .settings-input:focus, .retention-input:focus {
   border-color: color-mix(in oklab, var(--b1) 55%, transparent);
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--b1) 18%, transparent);
 }
-textarea.form-input { resize: vertical; }
-
-.btn.btn-secondary {
-  background: var(--glass); color: var(--ink); border-color: var(--edge);
-  box-shadow: inset 0 1px 0 var(--specular);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-}
-.btn.btn-secondary:hover { filter: none; background: var(--field); }
-.btn.btn-danger {
-  background: var(--glass); color: var(--danger-ink); border-color: var(--edge);
-  box-shadow: inset 0 1px 0 var(--specular);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-}
-.btn.btn-danger:hover { filter: none; background: var(--danger-bg); }
-.btn.btn-sm, .btn-sm { padding: 8px 14px; font-size: 12.5px; }
+textarea.form-input, textarea.settings-input { resize: vertical; }
 
 /* ── Small inline action buttons (row/card actions) ────────── */
 .act-btn {
@@ -202,21 +189,23 @@ textarea.form-input { resize: vertical; }
 .monitor-metric-value.warning { color: var(--warn-ink); }
 .monitor-metric-value.error   { color: var(--danger-ink); }
 
-/* ── Code example (plugin collapsibles) ────────────────────── */
-.code-example {
-  background: var(--field); border: 1px solid var(--edge); border-radius: var(--r-control);
-  padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
-  color: var(--ink-2); overflow-x: auto; line-height: 1.6; white-space: pre-wrap; word-break: break-all;
-}
-
-/* ── Login page extras ─────────────────────────────────────── */
-.login-error {
-  display: none; margin-bottom: 4px; padding: 10px 12px;
-  background: var(--danger-bg); color: var(--danger-ink);
-  border: 1px solid color-mix(in oklab, var(--danger-ink) 30%, transparent);
+/* ── Auth pages (login + setup) ────────────────────────────── */
+/* One inline message-box recipe for both pages: .login-error is
+   toggled with .visible, .setup-message is injected per-type. */
+.login-error, .setup-message {
+  padding: 10px 12px; margin-bottom: 14px;
   border-radius: var(--r-control);
   font-size: 12.5px; font-weight: 500; line-height: 1.45;
 }
+.login-error, .setup-message.error {
+  background: var(--danger-bg); color: var(--danger-ink);
+  border: 1px solid color-mix(in oklab, var(--danger-ink) 30%, transparent);
+}
+.setup-message.success {
+  background: var(--brand-tint); color: var(--brand-ink);
+  border: 1px solid color-mix(in oklab, var(--b1) 30%, transparent);
+}
+.login-error { display: none; margin-bottom: 4px; }
 .login-error.visible { display: block; animation: sw-shake .4s ease-in-out; }
 .pw-toggle {
   position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
@@ -227,21 +216,6 @@ textarea.form-input { resize: vertical; }
 .pw-toggle:hover { color: var(--ink); }
 .spin { animation: sw-spin .8s linear infinite; }
 @keyframes sw-spin { to { transform: rotate(360deg); } }
-
-/* ── Setup page extras ─────────────────────────────────────── */
-.setup-message {
-  padding: 10px 12px; margin-bottom: 14px;
-  border-radius: var(--r-control);
-  font-size: 12.5px; font-weight: 500; line-height: 1.45;
-}
-.setup-message.error {
-  background: var(--danger-bg); color: var(--danger-ink);
-  border: 1px solid color-mix(in oklab, var(--danger-ink) 30%, transparent);
-}
-.setup-message.success {
-  background: var(--brand-tint); color: var(--brand-ink);
-  border: 1px solid color-mix(in oklab, var(--b1) 30%, transparent);
-}
 .examples-card {
   border: 1px solid var(--edge); border-radius: var(--r-block);
   background: var(--field); padding: 13px 15px; margin-bottom: 16px;
@@ -253,6 +227,40 @@ textarea.form-input { resize: vertical; }
 .examples-card-text { display: block; }
 .examples-card-title { display: block; font-size: 13px; font-weight: 650; color: var(--ink); margin-bottom: 2px; }
 .examples-card-desc { display: block; font-size: 11.5px; color: var(--ink-2); line-height: 1.5; }
+
+/* ── Status/announcement banner ─────────────────────────────────
+   Shared by the public status page and the settings live preview. */
+.status-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 17px; border-radius: var(--r-block);
+  font-size: 13px; font-weight: 500;
+}
+.status-banner-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+.status-banner-icon svg { width: 100%; height: 100%; }
+.status-banner.banner-info     { background: var(--brand-tint); color: var(--brand-ink); border: 1px solid color-mix(in oklab, var(--b1) 30%, transparent); }
+.status-banner.banner-warning  { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid color-mix(in oklab, var(--warn-ink) 30%, transparent); }
+.status-banner.banner-critical { background: var(--danger-bg); color: var(--danger-ink); border: 1px solid color-mix(in oklab, var(--danger-ink) 30%, transparent); }
+.status-banner-text { color: var(--ink); }
+
+/* ── Collapsible section panels ─────────────────────────────────
+   A .panel whose body folds under a clickable header. Shared by
+   incidents (log, AI history) and notifications (log). */
+.section-panel { margin-bottom: 14px; }
+.collapsible-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 22px; cursor: pointer; user-select: none;
+}
+.collapsible-header-left { display: flex; align-items: center; gap: 10px; }
+.collapsible-header-right { display: flex; align-items: center; gap: 8px; }
+.collapsible-title { margin: 0; font-size: 14.5px; font-weight: 650; }
+.collapsible-chevron {
+  width: 15px; height: 15px; color: var(--ink-3); flex-shrink: 0;
+  transition: transform var(--t-fast);
+}
+.collapsible-header.open .collapsible-chevron { transform: rotate(90deg); }
+.section-panel .collapsible-content { max-height: 0; overflow: hidden; transition: max-height .3s var(--ease-out); }
+.section-panel .collapsible-content.expanded { max-height: 4000px; }
+.section-panel .collapsible-content-inner { padding: 0 12px 12px; border-top: 1px solid var(--track); }
 
 /* ── Empty states ──────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 56px 24px; }
