@@ -68,7 +68,23 @@ const NAV_ICONS = {
     <path d="M10.5 2.5H15.5V7.5"/>
     <path d="M15.5 2.5L8 10"/>
   </svg>`,
+
+  chevronLeft: `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 3L5 8l5 5"/>
+  </svg>`,
+
+  chevronRight: `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3l5 5-5 5"/>
+  </svg>`,
 };
+
+// ── Collapse state (persisted, manual override of the ≤880px breakpoint) ──────
+
+const SIDEBAR_COLLAPSED_KEY = 'sw_sidebar_collapsed';
+
+function isSidebarCollapsed() {
+  return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+}
 
 // ── Nav item definition ────────────────────────────────────────────────────────
 
@@ -94,7 +110,7 @@ function buildNavItems(items, activePage) {
     const active = item.page === activePage ? ' active' : '';
     const target = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
     return `
-      <a class="nav-item${active}" href="${item.href}"${target}>
+      <a class="nav-item${active}" href="${item.href}"${target} title="${item.label}">
         ${NAV_ICONS[item.icon] || ''}
         <span>${item.label}</span>
       </a>`;
@@ -104,9 +120,10 @@ function buildNavItems(items, activePage) {
 function buildSidebar(activePage, userInfo) {
   const initial = (userInfo.username || 'A').charAt(0).toUpperCase();
   const role = userInfo.isAdmin ? 'Admin' : 'User';
+  const collapsed = isSidebarCollapsed() ? ' collapsed' : '';
 
   return `
-<aside class="sidebar" id="appSidebar">
+<aside class="sidebar${collapsed}" id="appSidebar">
   <a class="wordmark" href="/static/dashboard.html">
     <span class="lite">Simple</span><span class="brand">Watch</span>
   </a>
@@ -116,7 +133,7 @@ function buildSidebar(activePage, userInfo) {
 
     <div class="nav-sep">System</div>
     ${userInfo.isAdmin ? `
-    <a class="nav-item${activePage === 'users' ? ' active' : ''}" href="/static/users.html">
+    <a class="nav-item${activePage === 'users' ? ' active' : ''}" href="/static/users.html" title="Users">
       ${NAV_ICONS.users}
       <span>Users</span>
     </a>` : ''}
@@ -140,7 +157,19 @@ function buildSidebar(activePage, userInfo) {
       </button>
     </div>
   </div>
+
+  <button class="collapse-toggle" id="sidebarCollapseToggle" aria-label="${isSidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'}" title="${isSidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'}">
+    ${isSidebarCollapsed() ? NAV_ICONS.chevronRight : NAV_ICONS.chevronLeft}
+  </button>
 </aside>`;
+}
+
+function _syncCollapseToggle(sidebar, toggle) {
+  const collapsed = sidebar.classList.contains('collapsed');
+  toggle.innerHTML = collapsed ? NAV_ICONS.chevronRight : NAV_ICONS.chevronLeft;
+  const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  toggle.setAttribute('aria-label', label);
+  toggle.setAttribute('title', label);
 }
 
 function buildTopbar(pageTitle) {
@@ -359,6 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (toggle) toggle.addEventListener('click', () => themeManager.toggle());
   document.addEventListener('themechange', _syncThemeToggle);
   _syncThemeToggle();
+
+  // Sidebar collapse toggle
+  const collapseToggle = document.getElementById('sidebarCollapseToggle');
+  if (collapseToggle) {
+    collapseToggle.addEventListener('click', () => {
+      const collapsed = sidebar.classList.toggle('collapsed');
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed));
+      _syncCollapseToggle(sidebar, collapseToggle);
+    });
+  }
 
   // Update AI indicator
   updateAIStatusIndicator();

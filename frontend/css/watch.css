@@ -74,6 +74,33 @@ a.wordmark { display: block; text-decoration: none; color: var(--ink); }
   .side-ai .side-ai-label { display: none; }
   .side-foot-stack.has-ai .side-foot { border: 0; }
 }
+
+/* ── Sidebar manual collapse (mirrors the ≤880px breakpoint above, but as a
+   user toggle at any width — see .collapse-toggle) ─────────────────────── */
+.sidebar.collapsed { width: 70px; flex-basis: 70px; padding: 22px 10px 14px; }
+.sidebar.collapsed .wordmark,
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .nav-sep,
+.sidebar.collapsed .side-foot .who { display: none; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 11px; }
+.sidebar.collapsed .side-foot { flex-direction: column; justify-content: center; background: transparent; border: 0; }
+.sidebar.collapsed .side-foot-stack.has-ai .side-foot { border: 0; }
+.sidebar.collapsed .side-ai { justify-content: center; background: transparent; border: 0; padding: 6px 0; }
+.sidebar.collapsed .side-ai .side-ai-label { display: none; }
+
+.collapse-toggle {
+  margin-top: 10px; width: 100%; padding: 5px 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--field); border: 1px solid var(--edge); border-radius: 10px;
+  color: var(--ink-3); cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.collapse-toggle:hover { color: var(--ink); }
+@media (max-width: 880px) {
+  /* the breakpoint already forces icon-only; hide the redundant manual toggle */
+  .collapse-toggle { display: none; }
+}
+
 .ai-pop { width: 252px; padding: 16px; }
 .ai-pop-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; }
 .ai-pop-head .dot { margin-left: auto; }
