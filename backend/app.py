@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SimpleWatch",
     description="Self-hosted monitoring dashboard for business users",
-    version="1.0.0",
+    version="2.2.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
