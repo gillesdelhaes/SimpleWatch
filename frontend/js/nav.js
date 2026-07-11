@@ -62,6 +62,12 @@ const NAV_ICONS = {
     <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>
     <path d="M11 11l3-3-3-3M14 8H6"/>
   </svg>`,
+
+  external: `<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.5 2.5H3a1 1 0 0 0-1 1V15a1 1 0 0 0 1 1h11.5a1 1 0 0 0 1-1v-4.5"/>
+    <path d="M10.5 2.5H15.5V7.5"/>
+    <path d="M15.5 2.5L8 10"/>
+  </svg>`,
 };
 
 // ── Nav item definition ────────────────────────────────────────────────────────
@@ -77,13 +83,18 @@ const NAV_SYSTEM = [
   { page: 'settings', href: '/static/settings.html', label: 'Settings', icon: 'settings' },
 ];
 
+const NAV_EXTERNAL = [
+  { href: '/status', label: 'Status Page', icon: 'external', external: true },
+];
+
 // ── HTML builders ─────────────────────────────────────────────────────────────
 
 function buildNavItems(items, activePage) {
   return items.map(item => {
     const active = item.page === activePage ? ' active' : '';
+    const target = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
     return `
-      <a class="nav-item${active}" href="${item.href}">
+      <a class="nav-item${active}" href="${item.href}"${target}>
         ${NAV_ICONS[item.icon] || ''}
         <span>${item.label}</span>
       </a>`;
@@ -110,6 +121,7 @@ function buildSidebar(activePage, userInfo) {
       <span>Users</span>
     </a>` : ''}
     ${buildNavItems(NAV_SYSTEM, activePage)}
+    ${buildNavItems(NAV_EXTERNAL, activePage)}
   </nav>
 
   <div class="side-foot-stack" id="sideFootStack">
