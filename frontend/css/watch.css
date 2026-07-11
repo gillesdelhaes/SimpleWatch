@@ -41,14 +41,39 @@ a.wordmark { display: block; text-decoration: none; color: var(--ink); }
   transition: color var(--t-fast);
 }
 .side-logout:hover { color: var(--danger-ink); }
+/* AI SRE status docks onto the user box as a footer stack: a slim
+   machine-status row (mono, glowing dot — the ssonote voice) joined
+   flush above the human identity row. */
+.side-foot-stack { margin-top: auto; display: flex; flex-direction: column; }
+.side-foot-stack .side-foot { margin-top: 0; }
+.side-foot-stack.has-ai .side-foot { border-radius: 0 0 14px 14px; border-top: none; }
 .side-ai {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-  padding: 8px 11px; width: 100%; border-radius: var(--r-control); cursor: pointer;
-  background: color-mix(in oklab, var(--b1) 6%, transparent);
-  border: 1px dashed color-mix(in oklab, var(--b1) 35%, transparent);
-  font: inherit; font-size: 11px; font-weight: 550; color: var(--ink-2); text-align: left;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; width: 100%;
+  background: var(--field); border: 1px solid var(--edge);
+  border-bottom: 1px solid var(--track);
+  border-radius: 14px 14px 0 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: .05em; color: var(--ink-3);
+  cursor: pointer; text-align: left;
+  transition: color var(--t-fast);
 }
-.side-ai:hover { background: color-mix(in oklab, var(--b1) 11%, transparent); }
+.side-ai[hidden] { display: none; }
+.side-ai:hover { color: var(--ink-2); }
+.side-ai .side-ai-label {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.side-ai .dot { width: 6px; height: 6px; }
+.side-ai .dot.op   { box-shadow: 0 0 8px var(--brand-ink); }
+.side-ai .dot.deg  { box-shadow: 0 0 8px var(--warn-ink); }
+.side-ai .dot.down { box-shadow: 0 0 8px var(--danger-ink); }
+@media (max-width: 880px) {
+  /* collapsed sidebar: the glasshouse side-foot goes borderless, so the
+     AI row reduces to its glowing dot */
+  .side-ai { justify-content: center; background: transparent; border: 0; padding: 6px 0; }
+  .side-ai .side-ai-label { display: none; }
+  .side-foot-stack.has-ai .side-foot { border: 0; }
+}
 .ai-pop { width: 252px; padding: 16px; }
 .ai-pop-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; }
 .ai-pop-head .dot { margin-left: auto; }

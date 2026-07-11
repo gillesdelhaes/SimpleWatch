@@ -112,20 +112,21 @@ function buildSidebar(activePage, userInfo) {
     ${buildNavItems(NAV_SYSTEM, activePage)}
   </nav>
 
-  <button class="side-ai" id="sidebarAiIndicator" style="display:none;" onclick="toggleAIStatusPopup()">
-    <span class="dot unknown" id="sidebarAiDot"></span>
-    <span id="sidebarAiLabel">AI SRE</span>
-  </button>
-
-  <div class="side-foot">
-    <div class="avatar">${initial}</div>
-    <div class="who">
-      <b>${userInfo.username || 'Admin'}</b>
-      <span>${role}</span>
-    </div>
-    <button class="side-logout" onclick="logout()" aria-label="Sign out" title="Sign out">
-      ${NAV_ICONS.logout}
+  <div class="side-foot-stack" id="sideFootStack">
+    <button class="side-ai" id="sidebarAiIndicator" hidden onclick="toggleAIStatusPopup()" title="AI SRE status">
+      <span class="dot unknown" id="sidebarAiDot"></span>
+      <span class="side-ai-label" id="sidebarAiLabel">AI SRE</span>
     </button>
+    <div class="side-foot">
+      <div class="avatar">${initial}</div>
+      <div class="who">
+        <b>${userInfo.username || 'Admin'}</b>
+        <span>${role}</span>
+      </div>
+      <button class="side-logout" onclick="logout()" aria-label="Sign out" title="Sign out">
+        ${NAV_ICONS.logout}
+      </button>
+    </div>
   </div>
 </aside>`;
 }
@@ -142,31 +143,38 @@ function buildTopbar(pageTitle) {
 
 function updateAIStatusIndicator() {
   const indicator = document.getElementById('sidebarAiIndicator');
+  const stack     = document.getElementById('sideFootStack');
   const dot       = document.getElementById('sidebarAiDot');
   const label     = document.getElementById('sidebarAiLabel');
   if (!indicator) return;
 
+  const hide = () => {
+    indicator.hidden = true;
+    stack?.classList.remove('has-ai');
+  };
+
   try {
     const statusStr = localStorage.getItem('ai_status');
-    if (!statusStr) { indicator.style.display = 'none'; return; }
+    if (!statusStr) { hide(); return; }
 
     const status = JSON.parse(statusStr);
-    if (!status.enabled) { indicator.style.display = 'none'; return; }
+    if (!status.enabled) { hide(); return; }
 
-    indicator.style.display = 'flex';
+    indicator.hidden = false;
+    stack?.classList.add('has-ai');
 
     if (status.connected === true) {
       dot.className = 'dot op';
-      label.textContent = `AI SRE · ${status.model || 'Connected'}`;
+      label.textContent = `AI SRE · ${status.model || 'connected'}`;
     } else if (status.connected === false) {
       dot.className = 'dot down';
-      label.textContent = 'AI SRE · Disconnected';
+      label.textContent = 'AI SRE · disconnected';
     } else {
       dot.className = 'dot deg';
-      label.textContent = 'AI SRE · Unknown';
+      label.textContent = 'AI SRE · unknown';
     }
   } catch {
-    indicator.style.display = 'none';
+    hide();
   }
 }
 
