@@ -346,8 +346,15 @@ function createStatusWidget(service) {
 
     const uptimePct = service.uptime ? Math.min(100, parseFloat(service.uptime.percentage)) : null;
 
+    // Surface WHY a service is unhealthy right on the card: the reason from
+    // the worst failing monitor, so triage doesn't require opening the modal.
+    const failingMonitor = hasIssue
+        ? (service.monitors || []).find(m => m.status === 'down' && m.metadata?.reason)
+          || (service.monitors || []).find(m => m.status === 'degraded' && m.metadata?.reason)
+        : null;
+
     return `
-        <div class="service-card${inMaintenance ? ' in-maintenance' : ''}" onclick="openMonitorModal(${service.service_id})">
+        <div class="service-card ${getStatusClass(service.status)}${inMaintenance ? ' in-maintenance' : ''}" onclick="openMonitorModal(${service.service_id})">
             ${maintenanceBadge}
             <div class="sc-header">
                 <div class="sc-name">${escapeHtml(service.service)}</div>
@@ -358,6 +365,7 @@ function createStatusWidget(service) {
                     ? `<span class="sc-monitor-count">${service.monitor_count} monitor${service.monitor_count !== 1 ? 's' : ''}</span>${monitorSummary ? `<span class="sc-monitor-summary">${monitorSummary}</span>` : ''}`
                     : '<span class="sc-no-monitors">No monitors</span>'}
             </div>
+            ${failingMonitor ? `<div class="sc-reason">${escapeHtml(failingMonitor.metadata.reason)}</div>` : ''}
             <div class="sc-footer">
                 ${uptimePct !== null ? `
                 <div class="sc-uptime-row">
@@ -672,14 +680,6 @@ function renderGraph(data) {
         });
     }
 
-    // Line color: metric-defined, else the app brand token
-    const lineColor = metric.color || resolveCssColor('--brand-ink');
-    const fillColor = lineColor.startsWith('#')
-        ? lineColor + '20'
-        : withAlpha(lineColor, 0.13);
-    const gridColor = resolveCssColor('--track');
-    const tickColor = resolveCssColor('--ink-3');
-
     const ctx = canvas.getContext('2d');
     monitorChart = new Chart(ctx, {
         type: 'line',
@@ -688,8 +688,10 @@ function renderGraph(data) {
             datasets: [{
                 label: metric.label,
                 data: values,
-                borderColor: lineColor,
-                backgroundColor: fillColor,
+                // Theme identity: brand gradient stroke, fading brand fill
+                borderColor: (c) => chartBrandGradient(c.chart),
+                backgroundColor: (c) => chartFadeGradient(c.chart, '--b1', 0.18),
+                pointHoverBackgroundColor: () => resolveCssColor('--b2'),
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3,
@@ -710,11 +712,9 @@ function renderGraph(data) {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    ...chartTooltipOptions(),
                     titleFont: { size: 12 },
                     bodyFont: { size: 12 },
-                    padding: 10,
-                    displayColors: false,
                     callbacks: {
                         title: function(items) {
                             const date = new Date(items[0].parsed.x);
@@ -740,30 +740,23 @@ function renderGraph(data) {
                             day: 'MMM d'
                         }
                     },
-                    grid: {
-                        color: gridColor
-                    },
-                    ticks: {
-                        color: tickColor,
-                        maxRotation: 0
-                    }
+                    ...chartAxisOptions({ maxRotation: 0 })
                 },
                 y: {
                     beginAtZero: metric.key !== 'status_code',
-                    grid: {
-                        color: gridColor
-                    },
-                    ticks: {
-                        color: tickColor,
+                    ...chartAxisOptions({
                         callback: function(value) {
                             return value + (metric.unit ? ' ' + metric.unit : '');
                         }
-                    }
+                    })
                 }
             }
         }
     });
 }
+
+// Re-resolve chart colors when the theme flips (scriptable options re-run)
+document.addEventListener('themechange', () => monitorChart?.update());
 
 function openMonitorModal(serviceId) {
     const service = currentServiceData.find(s => s.service_id === serviceId);

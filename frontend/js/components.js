@@ -450,3 +450,58 @@ window.resolveCssColor = (varName) => {
 
 window.withAlpha = (rgbColor, alpha) =>
     rgbColor.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+
+// ============================================
+// Chart.js theme helpers
+// ============================================
+// Canvas gradients built from the app identity tokens (--b1 → --b2), for use
+// in scriptable color options: `(ctx) => chartBrandGradient(ctx.chart)`.
+// Scriptables re-run on chart.update(), so charts follow theme toggles.
+
+// Horizontal brand gradient (b1 → b2) across the plot area — for line strokes.
+window.chartBrandGradient = (chart, alpha = 1) => {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return resolveCssColor('--b1');
+    const g = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+    g.addColorStop(0, withAlpha(resolveCssColor('--b1'), alpha));
+    g.addColorStop(1, withAlpha(resolveCssColor('--b2'), alpha));
+    return g;
+};
+
+// Vertical brand gradient (b1 → b2) down the plot area — for bar fills,
+// matching the glasshouse .bar recipe.
+window.chartBrandBarGradient = (chart) => {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return resolveCssColor('--b1');
+    const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    g.addColorStop(0, resolveCssColor('--b1'));
+    g.addColorStop(1, resolveCssColor('--b2'));
+    return g;
+};
+
+// Vertical fade of a token color to transparent — for area fills under lines.
+window.chartFadeGradient = (chart, varName, alphaTop = 0.22) => {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return 'transparent';
+    const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    const c = resolveCssColor(varName);
+    g.addColorStop(0, withAlpha(c, alphaTop));
+    g.addColorStop(1, withAlpha(c, 0));
+    return g;
+};
+
+// Shared themed pieces: axes and tooltip. Colors are scriptable so a
+// chart.update() after a theme toggle re-resolves them.
+window.chartAxisOptions = (extra = {}) => ({
+    grid: { color: () => resolveCssColor('--track') },
+    ticks: { color: () => resolveCssColor('--ink-3'), ...extra }
+});
+
+window.chartTooltipOptions = () => ({
+    backgroundColor: () => withAlpha(resolveCssColor('--ink'), 0.92),
+    titleColor: () => resolveCssColor('--bg'),
+    bodyColor: () => resolveCssColor('--bg'),
+    padding: 10,
+    cornerRadius: 10,
+    displayColors: false
+});

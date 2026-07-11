@@ -216,6 +216,7 @@ textarea.form-input, textarea.settings-input { resize: vertical; }
 .pw-toggle:hover { color: var(--ink); }
 .spin { animation: sw-spin .8s linear infinite; }
 @keyframes sw-spin { to { transform: rotate(360deg); } }
+@keyframes sw-pulse { 50% { opacity: .55; } }
 .examples-card {
   border: 1px solid var(--edge); border-radius: var(--r-block);
   background: var(--field); padding: 13px 15px; margin-bottom: 16px;

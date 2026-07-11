@@ -156,14 +156,10 @@ async function renderCharts(timeWindow) {
         timelineChart.destroy();
     }
 
-    const dangerColor = resolveCssColor('--danger-ink');
-    const brandColor = resolveCssColor('--brand-ink');
-    const gridColor = resolveCssColor('--track');
-    const tickColor = resolveCssColor('--ink-3');
-    const axisOpts = {
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: tickColor }, grid: { color: gridColor } },
-        x: { ticks: { color: tickColor }, grid: { color: gridColor } }
-    };
+    const axisOpts = () => ({
+        y: { beginAtZero: true, ...chartAxisOptions({ stepSize: 1 }) },
+        x: { ...chartAxisOptions() }
+    });
 
     timelineChart = new Chart(timelineCtx, {
         type: 'line',
@@ -171,9 +167,10 @@ async function renderCharts(timeWindow) {
             labels: timelineData.labels.map(formatChartLabel),
             datasets: [{
                 label: 'Incidents',
+                // Incidents are danger-colored: token stroke, fading token fill
                 data: timelineData.data,
-                borderColor: dangerColor,
-                backgroundColor: withAlpha(dangerColor, 0.1),
+                borderColor: () => resolveCssColor('--danger-ink'),
+                backgroundColor: (c) => chartFadeGradient(c.chart, '--danger-ink', 0.18),
                 tension: 0.3,
                 fill: true
             }]
@@ -182,9 +179,10 @@ async function renderCharts(timeWindow) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: chartTooltipOptions()
             },
-            scales: axisOpts
+            scales: axisOpts()
         }
     });
 
@@ -208,21 +206,30 @@ async function renderCharts(timeWindow) {
             datasets: [{
                 label: 'Incidents',
                 data: serviceData.map(s => s.count),
-                backgroundColor: withAlpha(brandColor, 0.5),
-                borderColor: brandColor,
-                borderWidth: 1
+                // Brand identity bars: vertical b1 → b2, like the glasshouse .bar
+                backgroundColor: (c) => chartBrandBarGradient(c.chart),
+                borderWidth: 0,
+                borderRadius: 6,
+                maxBarThickness: 46
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: chartTooltipOptions()
             },
-            scales: axisOpts
+            scales: axisOpts()
         }
     });
 }
+
+// Re-resolve chart colors when the theme flips (scriptable options re-run)
+document.addEventListener('themechange', () => {
+    timelineChart?.update();
+    serviceChart?.update();
+});
 
 function renderIncidentsTable(incidents) {
     const section = document.getElementById('incidentLogSection');

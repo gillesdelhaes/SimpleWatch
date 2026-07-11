@@ -119,6 +119,39 @@
 }
 .service-card.paused { opacity: .6; border-style: dashed; }
 
+/* Unhealthy services must pop out of the wall of quiet glass: a status
+   accent bar (echoing the public status page), a tinted surface, and —
+   for down only — an outer glow and a pulsing pill dot. */
+.service-card.down {
+    background: var(--danger-bg);
+    border-color: color-mix(in oklab, var(--danger-ink) 40%, transparent);
+    box-shadow: inset 3px 0 0 var(--danger-ink),
+                0 8px 28px color-mix(in oklab, var(--danger-ink) 20%, transparent);
+}
+.service-card.down:hover {
+    background: color-mix(in oklab, var(--danger-ink) 13%, transparent);
+    border-color: color-mix(in oklab, var(--danger-ink) 55%, transparent);
+}
+.service-card.down .pill.danger::before { animation: sw-pulse 1.1s ease-in-out infinite; }
+.service-card.degraded {
+    background: var(--warn-bg);
+    border-color: color-mix(in oklab, var(--warn-ink) 35%, transparent);
+    box-shadow: inset 3px 0 0 var(--warn-ink);
+}
+.service-card.degraded:hover {
+    background: color-mix(in oklab, var(--warn-ink) 13%, transparent);
+    border-color: color-mix(in oklab, var(--warn-ink) 50%, transparent);
+}
+
+/* Failing monitor's reason, surfaced on the card for at-a-glance triage */
+.sc-reason {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.45;
+    color: var(--danger-ink); margin: -4px 0 12px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; word-break: break-word;
+}
+.service-card.degraded .sc-reason { color: var(--warn-ink); }
+
 .sc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .sc-name { font-size: 13.5px; font-weight: 650; color: var(--ink); letter-spacing: -.01em; line-height: 1.3; }
 .sc-header .pill { flex-shrink: 0; }
