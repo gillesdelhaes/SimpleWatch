@@ -22,8 +22,12 @@ class APIClient {
 
         const response = await fetch(url, { ...options, headers });
 
-        if (response.status === 401) {
-            if (!_retry && !url.includes('/auth/login') && !url.includes('/auth/refresh')) {
+        // 401 on the auth endpoints means bad credentials — fall through so the
+        // caller gets the server's message (the login page shows it inline).
+        // Anywhere else it means the session died: try a refresh, then log out.
+        const isAuthCall = url.includes('/auth/login') || url.includes('/auth/refresh');
+        if (response.status === 401 && !isAuthCall) {
+            if (!_retry) {
                 const refreshed = await this._tryRefresh();
                 if (refreshed) {
                     return this.request(url, options, true);
