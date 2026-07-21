@@ -63,19 +63,10 @@ def decrypt_api_key(encrypted_key: Optional[str]) -> Optional[str]:
 
     try:
         from cryptography.fernet import Fernet
-        from database import SessionLocal, EncryptionKey
+        from utils.db import get_encryption_key
 
-        db = SessionLocal()
-        try:
-            encryption_record = db.query(EncryptionKey).first()
-            if not encryption_record:
-                logger.error("No encryption key found in database")
-                return None
-
-            fernet = Fernet(encryption_record.key_value.encode())
-            return fernet.decrypt(encrypted_key.encode()).decode()
-        finally:
-            db.close()
+        fernet = Fernet(get_encryption_key().encode())
+        return fernet.decrypt(encrypted_key.encode()).decode()
     except Exception as e:
         logger.error(f"Failed to decrypt API key: {e}")
         return None
@@ -84,18 +75,9 @@ def decrypt_api_key(encrypted_key: Optional[str]) -> Optional[str]:
 def encrypt_api_key(api_key: str, db: Session) -> str:
     """Encrypt an API key for database storage."""
     from cryptography.fernet import Fernet
-    from database import EncryptionKey
+    from utils.db import get_encryption_key
 
-    # Get or create encryption key
-    encryption_record = db.query(EncryptionKey).first()
-    if not encryption_record:
-        # Generate new encryption key
-        key = Fernet.generate_key().decode()
-        encryption_record = EncryptionKey(key_value=key)
-        db.add(encryption_record)
-        db.commit()
-
-    fernet = Fernet(encryption_record.key_value.encode())
+    fernet = Fernet(get_encryption_key().encode())
     return fernet.encrypt(api_key.encode()).decode()
 
 

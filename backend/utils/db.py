@@ -2,8 +2,7 @@
 Database utility functions.
 """
 from sqlalchemy.orm import Session
-from database import User, Service, EncryptionKey, AppSettings
-from cryptography.fernet import Fernet
+from database import User, Service
 
 
 
@@ -23,57 +22,40 @@ def get_service_by_name(db: Session, name: str):
 
 
 
-def initialize_encryption_key(db: Session):
+def initialize_encryption_key() -> str:
     """
-    Initialize encryption key for SMTP password encryption.
-    Creates a new Fernet key on first deployment if not exists.
-    This is called automatically during app startup.
+    Load or generate the Fernet key used to encrypt SMTP passwords and AI
+    provider API keys. Lives in a local key file (see utils/secret_store.py),
+    never in the database - otherwise a copied .db file would carry both
+    the ciphertext and the key that opens it. Called automatically during
+    app startup.
     """
-    existing_key = db.query(EncryptionKey).first()
-    if not existing_key:
-        # Generate new Fernet key (32 url-safe base64-encoded bytes)
-        new_key = Fernet.generate_key()
-        encryption_key = EncryptionKey(
-            key_value=new_key.decode()  # Store as string
-        )
-        db.add(encryption_key)
-        db.commit()
-        print("Encryption key auto-generated and stored in database")
-        return new_key.decode()
-    return existing_key.key_value
+    from utils.secret_store import load_or_create_encryption_key
+    return load_or_create_encryption_key()
 
 
-def initialize_jwt_secret(db: Session) -> str:
+def initialize_jwt_secret() -> str:
     """
-    Load or generate the JWT signing secret.
-    On first startup, generates a random secret and persists it to AppSettings
-    so it survives container restarts. Respects SECRET_KEY env var if set.
+    Load or generate the JWT signing secret. Lives in a local key file (see
+    utils/secret_store.py), never in the database - a leaked DB backup
+    should not also hand over the key that can forge admin sessions.
+    Respects SECRET_KEY env var if set (advanced deployments can pin the
+    key explicitly).
     """
     import os
-    import secrets as sec_module
 
-    # Env var wins (advanced deployments can pin the key explicitly)
     env_key = os.getenv("SECRET_KEY")
     if env_key:
         return env_key
 
-    existing = db.query(AppSettings).filter(AppSettings.key == "jwt_secret").first()
-    if existing:
-        return existing.value
-
-    new_secret = sec_module.token_urlsafe(32)
-    db.add(AppSettings(key="jwt_secret", value=new_secret))
-    db.commit()
-    print("JWT secret auto-generated and stored in database")
-    return new_secret
+    from utils.secret_store import load_or_create_jwt_secret
+    return load_or_create_jwt_secret()
 
 
-def get_encryption_key(db: Session) -> str:
+def get_encryption_key() -> str:
     """
-    Get the encryption key from database.
+    Get the encryption key from its local key file.
     Returns the key as a string (base64-encoded).
     """
-    key_record = db.query(EncryptionKey).first()
-    if not key_record:
-        raise RuntimeError("Encryption key not initialized. This should not happen - check app startup.")
-    return key_record.key_value
+    from utils.secret_store import load_or_create_encryption_key
+    return load_or_create_encryption_key()

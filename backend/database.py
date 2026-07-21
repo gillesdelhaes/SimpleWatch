@@ -294,14 +294,6 @@ class MaintenanceWindow(Base):
     creator = relationship("User")
 
 
-class EncryptionKey(Base):
-    __tablename__ = "encryption_key"
-
-    id = Column(Integer, primary_key=True, index=True)
-    key_value = Column(String(255), nullable=False)  # Base64-encoded Fernet key
-    created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
-
-
 class AppSettings(Base):
     __tablename__ = "app_settings"
 

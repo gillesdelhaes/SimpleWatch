@@ -7,6 +7,11 @@ services:
     volumes:
       - simplewatch-data:/data
       - simplewatch-logs:/logs
+      # Master encryption key + JWT secret — deliberately its own volume,
+      # separate from simplewatch-data, so a backup/snapshot of the database
+      # doesn't also hand over the key that decrypts/signs what's in it.
+      # See backend/utils/secret_store.py.
+      - simplewatch-secret:/data/secret
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5050/health', timeout=5)"]
@@ -15,10 +20,13 @@ services:
       retries: 3
       start_period: 10s
 
-# Named volumes keep the database and logs under Docker's management (snapshot,
-# back up, and move them without a loose file in the project directory).
+# Named volumes keep the database, logs and secret key under Docker's management
+# (snapshot, back up, and move them without a loose file in the project directory).
+# The simplewatch-secret volume is deliberately excluded from the database backup
+# below - it should never travel with a copy of the .db file.
 # Back up:    docker run --rm -v simplewatch-data:/data -v "$PWD":/backup alpine tar czf /backup/simplewatch-backup.tgz -C /data .
 # Restore:    docker run --rm -v simplewatch-data:/data -v "$PWD":/backup alpine sh -c "cd /data && tar xzf /backup/simplewatch-backup.tgz"
 volumes:
   simplewatch-data:
   simplewatch-logs:
+  simplewatch-secret:

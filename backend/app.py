@@ -32,16 +32,12 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized")
 
-    db = SessionLocal()
-    try:
-        initialize_encryption_key(db)
-        logger.info("Encryption key initialized")
+    initialize_encryption_key()
+    logger.info("Encryption key initialized")
 
-        jwt_secret = initialize_jwt_secret(db)
-        set_secret_key(jwt_secret)
-        logger.info("JWT secret initialized")
-    finally:
-        db.close()
+    jwt_secret = initialize_jwt_secret()
+    set_secret_key(jwt_secret)
+    logger.info("JWT secret initialized")
 
     start_scheduler()
     logger.info("Scheduler started")

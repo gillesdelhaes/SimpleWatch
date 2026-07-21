@@ -39,7 +39,10 @@ Dark and light themes, toggled from the top bar — the choice persists per user
 ## Quick start
 
 ```bash
-docker run -d -p 5050:5050 -v simplewatch-data:/data gdelhaes/simplewatch
+docker run -d -p 5050:5050 \
+  -v simplewatch-data:/data \
+  -v simplewatch-secret:/data/secret \
+  gdelhaes/simplewatch
 ```
 
 or from source:
@@ -76,7 +79,8 @@ for monitor setup guides.
 
 - **Backend:** Python + FastAPI, SQLite, APScheduler — one process, no broker, no external DB
 - **Frontend:** vanilla JavaScript, no build step
-- **Deploy:** a single container via Docker Compose, one volume for data
+- **Deploy:** a single container via Docker Compose, with the encryption/JWT
+  key kept on its own volume, separate from the database it protects
 
 ## License
 

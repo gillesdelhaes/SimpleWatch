@@ -12,8 +12,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 
-RUN mkdir -p /data
-VOLUME ["/data"]
+# /data/secret holds the master encryption key and JWT secret, kept on
+# their own volume in docker-compose.yml so a backup of the database
+# volume never carries the keys that decrypt/sign what's in it.
+RUN mkdir -p /data /data/secret
+VOLUME ["/data", "/data/secret"]
 
 ENV PYTHONPATH=/app/backend
 

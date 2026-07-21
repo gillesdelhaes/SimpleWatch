@@ -18,27 +18,15 @@ VALID_CHANNEL_TYPES = [
     'telegram', 'ntfy', 'matrix', 'generic'
 ]
 
-# Encryption key is now managed in the database
-# Will be retrieved from utils.db.get_encryption_key() when needed
 _cipher_suite_cache = None
 
 
 def _get_cipher_suite():
-    """
-    Get Fernet cipher suite, using cached instance.
-    The encryption key is stored in the database and auto-generated on first deployment.
-    """
+    """Get Fernet cipher suite, using cached instance."""
     global _cipher_suite_cache
     if _cipher_suite_cache is None:
-        from database import SessionLocal
         from utils.db import get_encryption_key
-
-        db = SessionLocal()
-        try:
-            key = get_encryption_key(db)
-            _cipher_suite_cache = Fernet(key.encode())
-        finally:
-            db.close()
+        _cipher_suite_cache = Fernet(get_encryption_key().encode())
 
     return _cipher_suite_cache
 
